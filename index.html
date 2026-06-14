@@ -43,15 +43,105 @@
     <script>
         // --- DATA DEFAULT (SIMULASI DATABASE IN-MEMORY) ---
         const INITIAL_ACCOUNTS = [
-        ]
+            {
+                id: "user_main",
+                username: "budi_developer",
+                fullName: "Budi Gunawan",
+                password: "123",
+                avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=budi",
+                bio: "Siswa & Kreator Konten | Suka menulis kenangan seru bersama teman-teman 📝🚀",
+                followingIds: ["user_friend_siti", "user_bot_sherlock"], 
+                isBot: false
+            },
+            {
+                id: "user_friend_siti",
+                username: "siti_explorer",
+                fullName: "Siti Rahma",
+                password: "123",
+                avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=siti",
+                bio: "Suka berpetualang dan mendaki gunung indah 🏔️🎒",
+                followingIds: ["user_main"], 
+                isBot: false
+            },
+            {
+                id: "user_friend_dimas",
+                username: "dimas_art",
+                fullName: "Dimas Pratama",
+                password: "123",
+                avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=dimas",
+                bio: "Menggambar adalah caraku menceritakan keindahan dunia 🎨✨",
+                followingIds: ["user_main"],
+                isBot: false
+            },
+            {
+                id: "user_bot_sherlock",
+                username: "sherlock_bot",
+                fullName: "Sherlock Detective",
+                password: "123",
+                avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=sherlock",
+                bio: "Asisten Detektif Otomatis. Saya menjawab dengan deduksi logis! 🔍",
+                personality: "detektif",
+                autoReply: "Ah, menarik sekali! Dari struktur pertanyaanmu, saya mendeteksi rasa penasaran yang tinggi. Elemen dasar, sahabatku!",
+                followingIds: [],
+                isBot: true
+            },
+            {
+                id: "user_bot_motivator",
+                username: "motivator_bijak",
+                fullName: "Kak Mario Bot",
+                password: "123",
+                avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=mario",
+                bio: "Menyebarkan energi positif otomatis setiap detik! ✨",
+                personality: "motivator",
+                autoReply: "Luar biasa! Ingatlah bahwa rintangan hari ini adalah anak tangga menuju kesuksesan hari esok. Tetap semangat, Sahabat Dahsyatku!",
+                followingIds: [],
+                isBot: true
+            }
+        ];
 
         // Kenangan Awal (Sekarang bersifat global/publik dan diisi oleh berbagai akun)
         const INITIAL_MEMORIES = [
-        ]
+          {
+            id: 1,
+            userId: "user_main",
+            date: "2026-06-01",
+            title: "Belajar Coding Web Pertama",
+            image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80",
+            description: "Hari yang luar biasa! Berhasil membuat website interaktif sederhana menggunakan HTML & CSS. Rasanya seperti memiliki kekuatan sihir digital! 💻✨"
+          },
+          {
+            id: 2,
+            userId: "user_friend_siti",
+            date: "2026-06-10",
+            title: "Mendaki Gunung Prau",
+            image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80",
+            description: "Akhirnya sampai di puncak! Sunrise pagi ini sangat indah sekali ditemani udara dingin yang menusuk tulang. Perjuangan mendaki terbayar lunas!"
+          },
+          {
+            id: 3,
+            userId: "user_friend_dimas",
+            date: "2026-06-12",
+            title: "Pameran Seni Lukis",
+            image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80",
+            description: "Sangat senang bisa menampilkan salah satu karya lukis terbaik saya di galeri kota hari ini. Banyak teman-teman yang datang berkunjung!"
+          }
+        ];
 
         // Chat Awal
         const INITIAL_CHATS = {
-        }
+            "user_friend_siti": [
+                { sender: "user_friend_siti", text: "Hai Budi! Kemarin petualangan seru banget lho. Kamu ada kenangan baru apa hari ini?", time: "09.30" }
+            ],
+            "user_friend_dimas": [
+                { sender: "user_friend_dimas", text: "Halo bro! Lukisan baruku baru saja selesai. Bagaimana dengan websitemu?", time: "10.15" }
+            ],
+            "user_bot_sherlock": [
+                { sender: "user_bot_sherlock", text: "Halo! Saya Sherlock Bot. Ada petunjuk atau kenangan menarik hari ini?", time: "10.00" }
+            ],
+            "user_bot_motivator": [
+                { sender: "user_bot_motivator", text: "Salam dahsyat sahabatku! Sukses selalu mengiringi langkah kreatifmu.", time: "08.00" }
+            ]
+        };
 
         // --- STATE MANAGEMENT ---
         let accounts = JSON.parse(localStorage.getItem('mem_accounts')) || INITIAL_ACCOUNTS;
@@ -1314,6 +1404,11 @@
 
                             <p class="text-xs text-gray-400">Belum memiliki akun?</p>
                             <button onclick="toggleAuthMode()" class="text-xs text-igBlue font-bold hover:underline mt-1">Daftar Akun Baru</button>
+
+                            <div class="mt-8 bg-black/50 p-3 rounded border border-igBorder w-full text-center">
+                                <p class="text-[10px] text-gray-500 font-bold">Akun Demo Siap Pakai:</p>
+                                <p class="text-[10px] text-igBlue font-mono mt-0.5">budi_developer / siti_explorer / dimas_art</p>
+                                <p class="text-[10px] text-white">Sandi: <span class="text-igBlue font-bold">123</span></p>
                             </div>
                         </div>
                     </div>
