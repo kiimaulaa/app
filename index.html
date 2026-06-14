@@ -45,21 +45,21 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getFirestore, doc, setDoc, getDoc, getDocs, collection, 
-            updateDoc, onSnapshot, arrayUnion, arrayRemove, query, where 
+            updateDoc, onSnapshot, arrayUnion, arrayRemove, query, where, deleteDoc 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { 
             getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- KONFIGURASI FIREBASE & STATE ---
-        const firebaseConfig = JSON.parse(__firebase_config);
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? (typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config) : {};
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         // Bersihkan data lokal lama (Wipe out local cache untuk reset bersih)
-        const HAS_RESET = 'plengergram_wipe_v10';
+        const HAS_RESET = 'plengergram_wipe_v11';
         if (!localStorage.getItem(HAS_RESET)) {
             localStorage.clear();
             localStorage.setItem(HAS_RESET, 'true');
@@ -101,6 +101,11 @@
         const getPublicDataColRef = (collName) => collection(db, 'artifacts', appId, 'public', 'data', collName);
         const getPublicDataDocRef = (collName, docId) => doc(db, 'artifacts', appId, 'public', 'data', collName, docId);
 
+        // ID Ruang Chat unik antara dua user agar tidak bercampur dengan user lain
+        function getChatRoomId(userId1, userId2) {
+            return [userId1, userId2].sort().join('_');
+        }
+
         // Fungsi autentikasi awal sebelum query berjalan
         async function authenticateUser() {
             try {
@@ -122,13 +127,16 @@
             onSnapshot(getPublicDataColRef('accounts'), (snapshot) => {
                 accounts = [];
                 snapshot.forEach(doc => {
-                    accounts.push(doc.data());
+                    const data = doc.data();
+                    if (data && data.id) {
+                        accounts.push(data);
+                    }
                 });
                 
                 // Tambahkan Bot Asisten Default jika database masih baru/kosong
                 ensureDefaultBots();
                 
-                // Periksa sesi login tersimpan secara cloud-friendly
+                // Periksa sesi login tersimpan secara aman
                 const loggedInId = localStorage.getItem('pg_logged_in_id');
                 if (loggedInId && accounts.some(acc => acc.id === loggedInId)) {
                     currentUserId = loggedInId;
@@ -141,7 +149,10 @@
             onSnapshot(getPublicDataColRef('memories'), (snapshot) => {
                 memories = [];
                 snapshot.forEach(doc => {
-                    memories.push(doc.data());
+                    const data = doc.data();
+                    if (data && data.title && data.date) {
+                        memories.push(data);
+                    }
                 });
                 renderApp();
             }, (err) => console.error("Error syncing memories:", err));
@@ -151,7 +162,9 @@
                 chats = {};
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    chats[doc.id] = data.messages || [];
+                    if (data) {
+                        chats[doc.id] = data.messages || [];
+                    }
                 });
                 renderApp();
             }, (err) => console.error("Error syncing chats:", err));
@@ -501,9 +514,9 @@
                                         </p>
                                     </div>
                                     <div class="flex gap-1.5 mt-1">
-                                        <button onclick="viewMemoryDetails(${m.id})" class="flex-1 bg-igHover hover:bg-igBorder text-[9px] font-bold py-1 rounded transition">Detail</button>
+                                        <button onclick="viewMemoryDetails('${m.id}')" class="flex-1 bg-igHover hover:bg-igBorder text-[9px] font-bold py-1 rounded transition">Detail</button>
                                         ${activePage === 'messages' && currentChatWithId ? `
-                                            <button onclick="shareMemoryToChat(${m.id})" class="flex-1 bg-igBlue hover:bg-blue-600 text-[9px] font-bold py-1 rounded text-white transition"><i class="fa-solid fa-share"></i> Kirim</button>
+                                            <button onclick="shareMemoryToChat('${m.id}')" class="flex-1 bg-igBlue hover:bg-blue-600 text-[9px] font-bold py-1 rounded text-white transition"><i class="fa-solid fa-share"></i> Kirim</button>
                                         ` : ''}
                                     </div>
                                 </div>
@@ -670,7 +683,7 @@
                                                 
                                                 <!-- Hanya pembuat yang dapat menghapus kenangannya sendiri -->
                                                 ${isMyMemory ? `
-                                                    <button onclick="confirmDeleteMemory(${m.id})" class="text-xs text-gray-500 hover:text-red-500 transition px-2.5 py-1.5 rounded-lg hover:bg-red-950/20" title="Hapus Kenangan Anda"><i class="fa-regular fa-trash-can"></i></button>
+                                                    <button onclick="confirmDeleteMemory('${m.id}')" class="text-xs text-gray-500 hover:text-red-500 transition px-2.5 py-1.5 rounded-lg hover:bg-red-950/20" title="Hapus Kenangan Anda"><i class="fa-regular fa-trash-can"></i></button>
                                                 ` : `
                                                     <span class="text-[9px] bg-igBorder text-gray-400 px-2 py-1 rounded-md">Teman</span>
                                                 `}
@@ -865,10 +878,9 @@
             try {
                 // Hapus data secara permanen dari Cloud database
                 const memoryDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'memories', id);
-                // Kita gunakan setDoc kosong atau hapus manual di client. Firebase v11 deleteDoc:
-                // Namun untuk ketahanan optimal & pembatasan library import, setDoc kosong atau simulasikan di cloud:
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'memories', id), {}); 
-                // Untuk menghapus dokumen seutuhnya dari snapshots
+                await deleteDoc(memoryDocRef);
+                
+                // Sinkronisasi filter lokal responsif
                 memories = memories.filter(m => m.id !== id);
                 closeConfirmDelete();
                 showCustomToast("Plengeran berhasil dihapus.");
@@ -910,7 +922,8 @@
             }
 
             const activeFriend = accounts.find(a => a.id === currentChatWithId);
-            const chatHistory = currentChatWithId ? (chats[currentChatWithId] || []) : [];
+            const activeRoomId = activeFriend ? getChatRoomId(currentUser.id, activeFriend.id) : null;
+            const chatHistory = activeRoomId ? (chats[activeRoomId] || []) : [];
 
             return `
                 <div class="flex-1 flex h-screen overflow-hidden pb-16 md:pb-0">
@@ -944,7 +957,8 @@
                                 <div>
                                     <p class="text-[10px] text-gray-500 font-bold px-3 py-1.5 uppercase tracking-wider">Teman Anda</p>
                                     ${humanFriends.map(friend => {
-                                        const friendChats = chats[friend.id] || [];
+                                        const roomKey = getChatRoomId(currentUser.id, friend.id);
+                                        const friendChats = chats[roomKey] || [];
                                         const lastChat = friendChats[friendChats.length - 1] || { text: "Mulai percakapan...", time: "" };
                                         const isCurrent = friend.id === currentChatWithId;
                                         const isWeFollowing = isFollowingTarget(currentUser.id, friend.id);
@@ -974,7 +988,8 @@
                                 <div>
                                     <p class="text-[10px] text-gray-500 font-bold px-3 py-1.5 uppercase tracking-wider">Asisten Bot AI</p>
                                     ${botFriends.map(bot => {
-                                        const botChats = chats[bot.id] || [];
+                                        const roomKey = getChatRoomId(currentUser.id, bot.id);
+                                        const botChats = chats[roomKey] || [];
                                         const lastChat = botChats[botChats.length - 1] || { text: "Mulai obrolan...", time: "" };
                                         const isCurrent = bot.id === currentChatWithId;
 
@@ -1106,7 +1121,8 @@
             const now = new Date();
             const timeStr = `${now.getHours().toString().padStart(2, '0')}.${now.getMinutes().toString().padStart(2, '0')}`;
 
-            const activeHistory = chats[currentChatWithId] || [];
+            const activeRoomId = getChatRoomId(currentUser.id, currentChatWithId);
+            const activeHistory = chats[activeRoomId] || [];
             const updatedHistory = [...activeHistory, {
                 sender: currentUser.id,
                 text: `Plengeran: *${m.title}* - ${m.description}`,
@@ -1116,8 +1132,8 @@
             }];
 
             try {
-                // Simpan ke database global cloud Firestore
-                await setDoc(getPublicDataDocRef('chats', currentChatWithId), { messages: updatedHistory });
+                // Simpan ke database global cloud Firestore menggunakan ID room chat yang unik
+                await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: updatedHistory });
                 scrollToBottom();
 
                 const activeFriend = accounts.find(a => a.id === currentChatWithId);
@@ -1133,7 +1149,7 @@
                             text: replyText,
                             time: timeStr
                         }];
-                        await setDoc(getPublicDataDocRef('chats', currentChatWithId), { messages: finalHistory });
+                        await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: finalHistory });
                         if (typingIndicator) typingIndicator.classList.add('hidden');
                         scrollToBottom();
                     }, 1200);
@@ -1159,7 +1175,8 @@
             const now = new Date();
             const timeStr = `${now.getHours().toString().padStart(2, '0')}.${now.getMinutes().toString().padStart(2, '0')}`;
 
-            const activeHistory = chats[currentChatWithId] || [];
+            const activeRoomId = getChatRoomId(currentUser.id, currentChatWithId);
+            const activeHistory = chats[activeRoomId] || [];
             const updatedHistory = [...activeHistory, {
                 sender: currentUser.id,
                 text: text,
@@ -1167,8 +1184,8 @@
             }];
 
             try {
-                // Simpan pesan ke Cloud secara realtime
-                await setDoc(getPublicDataDocRef('chats', currentChatWithId), { messages: updatedHistory });
+                // Simpan pesan ke Cloud secara realtime pada room chat yang unik
+                await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: updatedHistory });
                 scrollToBottom();
 
                 const activeFriend = accounts.find(a => a.id === currentChatWithId);
@@ -1184,7 +1201,7 @@
                             text: reply,
                             time: timeStr
                         }];
-                        await setDoc(getPublicDataDocRef('chats', currentChatWithId), { messages: finalHistory });
+                        await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: finalHistory });
                         if (typingIndicator) typingIndicator.classList.add('hidden');
                         scrollToBottom();
                     }, 1200);
@@ -1631,7 +1648,10 @@
         }
 
         // --- INISIALISASI UTAMA & SINKRONISASI CLOUD ---
-        window.onload = async function() {
+        (async function init() {
+            // Render loading / auth screen awal demi kelancaran UX
+            renderApp();
+            
             // Jalankan autentikasi Firebase terlebih dahulu sesuai regulasi Rule 3
             await authenticateUser();
             
@@ -1639,9 +1659,11 @@
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     setupDataSync(user);
+                } else {
+                    renderApp();
                 }
             });
-        }
+        })();
     </script>
 </body>
 </html>
