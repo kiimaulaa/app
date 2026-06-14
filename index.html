@@ -51,15 +51,36 @@
             getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- KONFIGURASI FIREBASE & STATE ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? (typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config) : {};
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // --- DETEKSI & STRATEGI CLOUD PERSISTENCE ---
+        let firebaseConfig = {};
+        let useCloud = false;
+        let app, auth, db;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // Bersihkan data lokal lama (Wipe out local cache untuk reset bersih)
-        const HAS_RESET = 'plengergram_wipe_v11';
+        try {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+                if (firebaseConfig && firebaseConfig.apiKey) {
+                    useCloud = true;
+                }
+            }
+        } catch (e) {
+            console.warn("Konfigurasi Firebase belum terpasang atau tidak valid. Menggunakan penyimpanan Lokal.", e);
+        }
+
+        if (useCloud) {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+            } catch (e) {
+                console.error("Gagal melakukan inisialisasi Firebase SDK:", e);
+                useCloud = false;
+            }
+        }
+
+        // Bersihkan data lokal lama (Wipe out local cache untuk reset bersih versi stabil)
+        const HAS_RESET = 'plengergram_wipe_v12';
         if (!localStorage.getItem(HAS_RESET)) {
             localStorage.clear();
             localStorage.setItem(HAS_RESET, 'true');
@@ -95,19 +116,25 @@
             "Juli", "Agustus", "September", "Oktober", "November", "Desember"
         ];
 
+        // --- SYSTEM LOCAL FALLBACK UTILITIES ---
+        function saveLocalData() {
+            if (!useCloud) {
+                localStorage.setItem('pg_accounts', JSON.stringify(accounts));
+                localStorage.setItem('pg_memories', JSON.stringify(memories));
+                localStorage.setItem('pg_chats', JSON.stringify(chats));
+            }
+        }
+
         // --- SISTEM FIREBASE CLOUD PERSISTENCE ---
-        
-        // Jalur Koleksi Firebase Sesuai Aturan Ketat
         const getPublicDataColRef = (collName) => collection(db, 'artifacts', appId, 'public', 'data', collName);
         const getPublicDataDocRef = (collName, docId) => doc(db, 'artifacts', appId, 'public', 'data', collName, docId);
 
-        // ID Ruang Chat unik antara dua user agar tidak bercampur dengan user lain
         function getChatRoomId(userId1, userId2) {
             return [userId1, userId2].sort().join('_');
         }
 
-        // Fungsi autentikasi awal sebelum query berjalan
         async function authenticateUser() {
+            if (!useCloud) return;
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -116,12 +143,12 @@
                 }
             } catch (err) {
                 console.error("Auth error:", err);
+                useCloud = false; // Turun ke mode offline secara mulus jika gagal
             }
         }
 
-        // Mengatur sinkronisasi real-time data Akun, Kenangan, dan Chat
         function setupDataSync(user) {
-            if (!user) return;
+            if (!user || !useCloud) return;
 
             // 1. Sync Akun Pengguna
             onSnapshot(getPublicDataColRef('accounts'), (snapshot) => {
@@ -133,10 +160,8 @@
                     }
                 });
                 
-                // Tambahkan Bot Asisten Default jika database masih baru/kosong
                 ensureDefaultBots();
                 
-                // Periksa sesi login tersimpan secara aman
                 const loggedInId = localStorage.getItem('pg_logged_in_id');
                 if (loggedInId && accounts.some(acc => acc.id === loggedInId)) {
                     currentUserId = loggedInId;
@@ -170,7 +195,6 @@
             }, (err) => console.error("Error syncing chats:", err));
         }
 
-        // Memastikan tersedianya Bot Asisten bawaan sistem
         async function ensureDefaultBots() {
             const botId = 'bot_asisten_detektif';
             if (!accounts.some(acc => acc.id === botId)) {
@@ -186,7 +210,12 @@
                     autoReply: 'Saya mendeteksi sebuah petunjuk berharga dari pesan Anda!',
                     followingIds: []
                 };
-                await setDoc(getPublicDataDocRef('accounts', botId), defaultBot);
+                if (useCloud) {
+                    await setDoc(getPublicDataDocRef('accounts', botId), defaultBot);
+                } else {
+                    accounts.push(defaultBot);
+                    saveLocalData();
+                }
             }
         }
 
@@ -281,17 +310,28 @@
             }
 
             const isFollowing = currentUser.followingIds.includes(targetId);
-            const userDocRef = getPublicDataDocRef('accounts', currentUser.id);
             const targetAcc = accounts.find(a => a.id === targetId);
 
+            let updatedFollowing = [];
             if (isFollowing) {
-                const updatedFollowing = currentUser.followingIds.filter(id => id !== targetId);
-                await updateDoc(userDocRef, { followingIds: updatedFollowing });
+                updatedFollowing = currentUser.followingIds.filter(id => id !== targetId);
                 showCustomToast(`Anda berhenti mengikuti @${targetAcc.username}`);
             } else {
-                const updatedFollowing = [...currentUser.followingIds, targetId];
-                await updateDoc(userDocRef, { followingIds: updatedFollowing });
+                updatedFollowing = [...currentUser.followingIds, targetId];
                 showCustomToast(`Anda sekarang mengikuti @${targetAcc.username}!`);
+            }
+
+            try {
+                if (useCloud) {
+                    const userDocRef = getPublicDataDocRef('accounts', currentUser.id);
+                    await updateDoc(userDocRef, { followingIds: updatedFollowing });
+                } else {
+                    currentUser.followingIds = updatedFollowing;
+                    saveLocalData();
+                    renderApp();
+                }
+            } catch (err) {
+                console.error(err);
             }
         }
 
@@ -302,7 +342,6 @@
             const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
             const passwordInput = document.getElementById('login-password').value;
 
-            // Mencari user dalam data real-time accounts yang bersumber dari cloud db
             const user = accounts.find(acc => acc.username === usernameInput && acc.password === passwordInput);
             if (user) {
                 currentUserId = user.id;
@@ -348,8 +387,12 @@
             };
 
             try {
-                // Simpan akun ke database global cloud Firestore agar permanen & tetap dari manapun
-                await setDoc(getPublicDataDocRef('accounts', newId), newAccount);
+                if (useCloud) {
+                    await setDoc(getPublicDataDocRef('accounts', newId), newAccount);
+                } else {
+                    accounts.push(newAccount);
+                    saveLocalData();
+                }
                 currentUserId = newId;
                 isUserLoggedIn = true;
                 localStorage.setItem('pg_logged_in_id', newId);
@@ -605,7 +648,7 @@
                                 </div>
                             </div>
                             <span class="text-[10px] bg-green-500/10 text-green-500 border border-green-500/30 px-2.5 py-1 rounded-full font-bold flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Kolaboratif (Cloud)
+                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> ${useCloud ? 'Kolaboratif (Cloud)' : 'Penyimpanan Lokal'}
                             </span>
                         </div>
 
@@ -836,18 +879,22 @@
             };
 
             try {
-                // Simpan kenangan langsung ke Cloud database
-                await setDoc(getPublicDataDocRef('memories', newMemoryId), newMemory);
+                if (useCloud) {
+                    await setDoc(getPublicDataDocRef('memories', newMemoryId), newMemory);
+                } else {
+                    memories.push(newMemory);
+                    saveLocalData();
+                }
 
                 const targetDate = new Date(date);
                 currentYear = targetDate.getFullYear();
                 currentMonth = targetDate.getMonth();
 
-                showCustomToast("Plengeran baru berhasil disimpan ke Cloud!");
+                showCustomToast("Plengeran baru berhasil disimpan!");
                 renderApp();
             } catch (err) {
                 console.error("Gagal menyimpan momen:", err);
-                showCustomToast("Gagal menyimpan ke basis data cloud.");
+                showCustomToast("Gagal menyimpan momen ke basis data.");
             }
         }
 
@@ -876,12 +923,13 @@
 
         window.executeDeleteMemory = async function(id) {
             try {
-                // Hapus data secara permanen dari Cloud database
-                const memoryDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'memories', id);
-                await deleteDoc(memoryDocRef);
+                if (useCloud) {
+                    const memoryDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'memories', id);
+                    await deleteDoc(memoryDocRef);
+                }
                 
-                // Sinkronisasi filter lokal responsif
-                memories = memories.filter(m => m.id !== id);
+                memories = memories.filter(m => m.id != id);
+                saveLocalData();
                 closeConfirmDelete();
                 showCustomToast("Plengeran berhasil dihapus.");
                 renderApp();
@@ -1132,15 +1180,19 @@
             }];
 
             try {
-                // Simpan ke database global cloud Firestore menggunakan ID room chat yang unik
-                await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: updatedHistory });
+                if (useCloud) {
+                    await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: updatedHistory });
+                } else {
+                    chats[activeRoomId] = updatedHistory;
+                    saveLocalData();
+                    renderApp();
+                }
                 scrollToBottom();
 
                 const activeFriend = accounts.find(a => a.id === currentChatWithId);
                 const typingIndicator = document.getElementById('typing-indicator');
                 if (typingIndicator) typingIndicator.classList.remove('hidden');
 
-                // Hanya BOT ASISTEN yang otomatis menjawab pesan. Manusia tidak akan menjawab otomatis.
                 if (activeFriend && activeFriend.isBot) {
                     setTimeout(async () => {
                         let replyText = `Momen di ${m.title} itu kelihatan luar biasa banget! Terima kasih banyak sudah berbagi keplengeran bersamaku!`;
@@ -1149,7 +1201,13 @@
                             text: replyText,
                             time: timeStr
                         }];
-                        await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: finalHistory });
+                        if (useCloud) {
+                            await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: finalHistory });
+                        } else {
+                            chats[activeRoomId] = finalHistory;
+                            saveLocalData();
+                            renderApp();
+                        }
                         if (typingIndicator) typingIndicator.classList.add('hidden');
                         scrollToBottom();
                     }, 1200);
@@ -1184,14 +1242,18 @@
             }];
 
             try {
-                // Simpan pesan ke Cloud secara realtime pada room chat yang unik
-                await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: updatedHistory });
+                if (useCloud) {
+                    await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: updatedHistory });
+                } else {
+                    chats[activeRoomId] = updatedHistory;
+                    saveLocalData();
+                    renderApp();
+                }
                 scrollToBottom();
 
                 const activeFriend = accounts.find(a => a.id === currentChatWithId);
                 const typingIndicator = document.getElementById('typing-indicator');
 
-                // FITUR PENCEGAH BOT OTOMATIS: Hanya jika akun lawan bicara adalah BOT AI asli (bukan manusia)
                 if (activeFriend && activeFriend.isBot) {
                     if (typingIndicator) typingIndicator.classList.remove('hidden');
                     setTimeout(async () => {
@@ -1201,7 +1263,13 @@
                             text: reply,
                             time: timeStr
                         }];
-                        await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: finalHistory });
+                        if (useCloud) {
+                            await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: finalHistory });
+                        } else {
+                            chats[activeRoomId] = finalHistory;
+                            saveLocalData();
+                            renderApp();
+                        }
                         if (typingIndicator) typingIndicator.classList.add('hidden');
                         scrollToBottom();
                     }, 1200);
@@ -1248,10 +1316,8 @@
 
             const isOwnProfile = userToShow.id === currentUser.id;
             
-            // Menghitung berapa banyak kenangan yang dibuat oleh user ini di Kalender Bersama
             const userMemoriesCount = memories.filter(m => m.userId === userToShow.id).length;
 
-            // Rekomendasi Teman Baru dengan Dukungan Filter Pencarian Tambahan
             const otherAccounts = accounts.filter(a => 
                 a.id !== currentUser.id && 
                 a.id !== userToShow.id &&
@@ -1435,12 +1501,20 @@
             if (!currentUser) return;
 
             try {
-                // Update profil langsung di basis data Cloud
-                const userDocRef = getPublicDataDocRef('accounts', currentUser.id);
-                await updateDoc(userDocRef, {
-                    fullName: fullName,
-                    bio: bio
-                });
+                if (useCloud) {
+                    const userDocRef = getPublicDataDocRef('accounts', currentUser.id);
+                    await updateDoc(userDocRef, {
+                        fullName: fullName,
+                        bio: bio
+                    });
+                } else {
+                    const idx = accounts.findIndex(a => a.id === currentUser.id);
+                    if (idx !== -1) {
+                        accounts[idx].fullName = fullName;
+                        accounts[idx].bio = bio;
+                        saveLocalData();
+                    }
+                }
                 closeCustomModal();
                 showCustomToast("Informasi profil berhasil diperbarui!");
                 renderApp();
@@ -1505,21 +1579,27 @@
             };
 
             try {
-                // Simpan data bot ke Cloud Firestore
-                await setDoc(getPublicDataDocRef('accounts', botId), newBot);
-                // Inisialisasi awal obrolan Bot di Cloud
-                await setDoc(getPublicDataDocRef('chats', botId), {
-                    messages: [
+                if (useCloud) {
+                    await setDoc(getPublicDataDocRef('accounts', botId), newBot);
+                    await setDoc(getPublicDataDocRef('chats', botId), {
+                        messages: [
+                            { sender: botId, text: `Halo! Saya siap mengobrol. ${autoReply}`, time: "Baru saja" }
+                        ]
+                    });
+                } else {
+                    accounts.push(newBot);
+                    chats[botId] = [
                         { sender: botId, text: `Halo! Saya siap mengobrol. ${autoReply}`, time: "Baru saja" }
-                    ]
-                });
+                    ];
+                    saveLocalData();
+                }
 
                 closeCustomModal();
-                showCustomToast(`Bot @${username} berhasil diaktifkan di Cloud.`);
+                showCustomToast(`Bot @${username} berhasil diaktifkan.`);
                 renderApp();
             } catch (err) {
                 console.error(err);
-                showCustomToast("Gagal mengaktifkan bot di cloud.");
+                showCustomToast("Gagal mengaktifkan bot.");
             }
         }
 
@@ -1573,7 +1653,7 @@
                         <div class="max-w-sm w-full bg-igGray border border-igBorder rounded-2xl p-8 shadow-2xl flex flex-col items-center text-center max-h-[90vh] overflow-y-auto no-scrollbar">
                             <i class="fa-solid fa-calendar-plus text-5xl text-igBlue mb-3"></i>
                             <h1 class="font-bold text-xl text-white mb-1">Daftar PlengerGram</h1>
-                            <p class="text-xs text-gray-500 mb-5">Simpan Plengeran Disini (Aman di Cloud)</p>
+                            <p class="text-xs text-gray-500 mb-5">Simpan Plengeran Disini (Aman & Stabil)</p>
 
                             <form onsubmit="handleSignUp(event)" class="w-full flex flex-col gap-3 text-left">
                                 <div>
@@ -1649,20 +1729,36 @@
 
         // --- INISIALISASI UTAMA & SINKRONISASI CLOUD ---
         (async function init() {
-            // Render loading / auth screen awal demi kelancaran UX
+            // Setup data lokal terlebih dahulu agar app langsung bisa dibuka tanpa loading macet
+            if (!useCloud) {
+                accounts = JSON.parse(localStorage.getItem('pg_accounts')) || [];
+                memories = JSON.parse(localStorage.getItem('pg_memories')) || [];
+                chats = JSON.parse(localStorage.getItem('pg_chats')) || {};
+                
+                ensureDefaultBots();
+                
+                const loggedInId = localStorage.getItem('pg_logged_in_id');
+                if (loggedInId && accounts.some(acc => acc.id === loggedInId)) {
+                    currentUserId = loggedInId;
+                    isUserLoggedIn = true;
+                }
+            }
+
+            // Render antarmuka aplikasi instan
             renderApp();
             
-            // Jalankan autentikasi Firebase terlebih dahulu sesuai regulasi Rule 3
-            await authenticateUser();
-            
-            // Monitor status autentikasi user & setup aliran data cloud Firestore real-time
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    setupDataSync(user);
-                } else {
-                    renderApp();
-                }
-            });
+            if (useCloud) {
+                // Jalankan autentikasi Firebase terlebih dahulu jika Cloud aktif
+                await authenticateUser();
+                
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        setupDataSync(user);
+                    } else {
+                        renderApp();
+                    }
+                });
+            }
         })();
     </script>
 </body>
