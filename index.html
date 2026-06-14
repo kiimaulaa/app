@@ -510,9 +510,9 @@
                                     <input id="mem-title" type="text" placeholder="cth: Kumpul di Kafe Bersama" required class="w-full bg-black border border-igBorder rounded px-3 py-2 text-xs text-white outline-none focus:border-gray-500">
                                 </div>
                                 <div>
-                                    <label class="block text-[11px] text-gray-400 mb-1 font-semibold">Foto / Ilustrasi Kenangan (URL) *</label>
+                                    <label class="block text-[11px] text-gray-400 mb-1 font-semibold">Foto / Ilustrasi Kenangan (ID Drive / URL) *</label>
                                     <div class="flex gap-2">
-                                        <input id="mem-image" type="url" placeholder="https://unsplash.com/..." required class="flex-1 bg-black border border-igBorder rounded px-3 py-2 text-xs text-white outline-none focus:border-gray-500">
+                                        <input id="mem-image" type="text" placeholder="Masukkan ID Google Drive atau URL foto..." required class="flex-1 bg-black border border-igBorder rounded px-3 py-2 text-xs text-white outline-none focus:border-gray-500">
                                         <button type="button" onclick="generateRandomIllustration()" class="bg-igHover hover:bg-igBorder border border-igBorder px-3 py-2 rounded text-xs font-semibold whitespace-nowrap">Acak Gambar</button>
                                     </div>
                                 </div>
@@ -663,11 +663,40 @@
             event.preventDefault();
             const date = document.getElementById('mem-date').value;
             const title = document.getElementById('mem-title').value.trim();
-            const image = document.getElementById('mem-image').value.trim();
+            let image = document.getElementById('mem-image').value.trim();
             const description = document.getElementById('mem-description').value.trim();
             const currentUser = getCurrentUser();
 
             if (!date || !title || !image || !description || !currentUser) return;
+
+            // Logika konversi Google Drive ke Direct Link (https://lh3.googleusercontent.com/d/)
+            const driveReg1 = /\/file\/d\/([a-zA-Z0-9_-]+)/;
+            const driveReg2 = /[\?&]id=([a-zA-Z0-9_-]+)/;
+            const driveReg3 = /lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/;
+            
+            let driveId = "";
+            if (image.includes("drive.google.com")) {
+                const match1 = image.match(driveReg1);
+                const match2 = image.match(driveReg2);
+                if (match1 && match1[1]) {
+                    driveId = match1[1];
+                } else if (match2 && match2[1]) {
+                    driveId = match2[1];
+                }
+            } else if (image.includes("lh3.googleusercontent.com")) {
+                const match3 = image.match(driveReg3);
+                if (match3 && match3[1]) {
+                    driveId = match3[1];
+                }
+            } else if (!image.startsWith("http") && image.length > 5) {
+                // Jika pengguna hanya menempelkan (paste) ID berkas Google Drive langsung
+                driveId = image;
+            }
+
+            // Ubah menjadi format yang diminta jika terdeteksi ID Google Drive
+            if (driveId) {
+                image = `https://lh3.googleusercontent.com/d/${driveId}`;
+            }
 
             const newMemory = {
                 id: Date.now(),
@@ -1436,11 +1465,11 @@
         }
 
         window.onload = function() {
-            // Membaca atau menginisialisasi status database penyimpanan lokal dengan versi segar (v3)
-            const hasInitializedBefore = localStorage.getItem('mem_initialized_v3_fresh');
+            // Membaca atau menginisialisasi status database penyimpanan lokal dengan versi segar mutlak (v4)
+            const hasInitializedBefore = localStorage.getItem('mem_initialized_v4_wipe_all');
             if (!hasInitializedBefore) {
                 localStorage.clear();
-                localStorage.setItem('mem_initialized_v3_fresh', 'true');
+                localStorage.setItem('mem_initialized_v4_wipe_all', 'true');
                 
                 // Ambil state kosong mutlak sebagai nilai awal pertama kali
                 accounts = INITIAL_ACCOUNTS;
