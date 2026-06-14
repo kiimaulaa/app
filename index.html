@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
@@ -1595,7 +1598,7 @@ export default function App() {
 
       {/* --- FOOTER NAVIGATION (MOBILE NAVIGATION BAR) --- */}
       {currentUser && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-150 py-2.5 px-6 flex justify-around items-center z-45 shadow-lg max-w-4xl mx-auto rounded-t-2xl">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-150 py-2.5 px-6 flex justify-around items-center z-40 shadow-lg max-w-4xl mx-auto rounded-t-2xl">
           <button 
             onClick={() => setCurrentTab('feed')}
             className={`flex flex-col items-center gap-1 transition-colors ${currentTab === 'feed' ? 'text-purple-600' : 'text-slate-400 hover:text-slate-600'}`}
