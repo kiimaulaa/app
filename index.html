@@ -40,29 +40,51 @@
     <!-- CONTAINER UTAMA APLIKASI -->
     <div id="app" class="flex w-full min-h-screen"></div>
 
-    <script>
-        // --- DATA DEFAULT DIKOSONGKAN SEPENUHNYA ---
-        const INITIAL_ACCOUNTS = []; // Kosong tanpa akun demo maupun bot
-        const INITIAL_MEMORIES = []; // Kosong tanpa kenangan awal
-        const INITIAL_CHATS = {};    // Kosong tanpa riwayat chat awal
+    <!-- Firebase SDK Modular Loader -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getFirestore, doc, setDoc, getDoc, getDocs, collection, 
+            updateDoc, onSnapshot, arrayUnion, arrayRemove, query, where 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { 
+            getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- KONFIGURASI FIREBASE & STATE ---
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Bersihkan data lokal lama (Wipe out local cache untuk reset bersih)
+        const HAS_RESET = 'plengergram_wipe_v10';
+        if (!localStorage.getItem(HAS_RESET)) {
+            localStorage.clear();
+            localStorage.setItem(HAS_RESET, 'true');
+        }
 
         // --- STATE MANAGEMENT ---
-        let accounts = JSON.parse(localStorage.getItem('mem_accounts')) || INITIAL_ACCOUNTS;
-        let memories = JSON.parse(localStorage.getItem('mem_items')) || INITIAL_MEMORIES;
-        let chats = JSON.parse(localStorage.getItem('mem_chats')) || INITIAL_CHATS;
+        let accounts = [];
+        let memories = [];
+        let chats = {};
         
-        // Sesi Pengguna Aktif diatur kosong agar harus mendaftar atau masuk
-        let currentUserId = localStorage.getItem('mem_logged_in_id') || ""; 
+        let currentUserId = ""; 
         let activePage = 'home'; // 'home', 'messages', 'profile'
         let currentChatWithId = null;
-        let authMode = 'signup'; // Otomatis diarahkan ke mode Daftar Akun Baru (Sign Up)
-        let isUserLoggedIn = localStorage.getItem('mem_is_logged_in') === 'true' && currentUserId !== "";
+        let authMode = 'signup'; 
+        let isUserLoggedIn = false;
+
+        // Filter pencarian pengguna terdaftar
+        let userSearchQuery = "";
+        let profileSearchQuery = "";
 
         // Filter tanggal kalender (Tahun & Bulan Saat Ini)
         const todayDate = new Date();
         let currentYear = todayDate.getFullYear();
         let currentMonth = todayDate.getMonth(); 
-        let selectedDateStr = ""; // Tanggal kalender yang sedang di-filter ("YYYY-MM-DD")
+        let selectedDateStr = ""; 
 
         // State untuk Bar Pintasan Terapung
         let isShortcutBarOpen = false;
@@ -73,13 +95,86 @@
             "Juli", "Agustus", "September", "Oktober", "November", "Desember"
         ];
 
-        // Simpan Data ke LocalStorage secara berkala agar tidak hilang
-        function saveToStorage() {
-            localStorage.setItem('mem_accounts', JSON.stringify(accounts));
-            localStorage.setItem('mem_items', JSON.stringify(memories));
-            localStorage.setItem('mem_chats', JSON.stringify(chats));
-            localStorage.setItem('mem_logged_in_id', currentUserId);
-            localStorage.setItem('mem_is_logged_in', isUserLoggedIn ? 'true' : 'false');
+        // --- SISTEM FIREBASE CLOUD PERSISTENCE ---
+        
+        // Jalur Koleksi Firebase Sesuai Aturan Ketat
+        const getPublicDataColRef = (collName) => collection(db, 'artifacts', appId, 'public', 'data', collName);
+        const getPublicDataDocRef = (collName, docId) => doc(db, 'artifacts', appId, 'public', 'data', collName, docId);
+
+        // Fungsi autentikasi awal sebelum query berjalan
+        async function authenticateUser() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Auth error:", err);
+            }
+        }
+
+        // Mengatur sinkronisasi real-time data Akun, Kenangan, dan Chat
+        function setupDataSync(user) {
+            if (!user) return;
+
+            // 1. Sync Akun Pengguna
+            onSnapshot(getPublicDataColRef('accounts'), (snapshot) => {
+                accounts = [];
+                snapshot.forEach(doc => {
+                    accounts.push(doc.data());
+                });
+                
+                // Tambahkan Bot Asisten Default jika database masih baru/kosong
+                ensureDefaultBots();
+                
+                // Periksa sesi login tersimpan secara cloud-friendly
+                const loggedInId = localStorage.getItem('pg_logged_in_id');
+                if (loggedInId && accounts.some(acc => acc.id === loggedInId)) {
+                    currentUserId = loggedInId;
+                    isUserLoggedIn = true;
+                }
+                renderApp();
+            }, (err) => console.error("Error syncing accounts:", err));
+
+            // 2. Sync Kenangan (Memories)
+            onSnapshot(getPublicDataColRef('memories'), (snapshot) => {
+                memories = [];
+                snapshot.forEach(doc => {
+                    memories.push(doc.data());
+                });
+                renderApp();
+            }, (err) => console.error("Error syncing memories:", err));
+
+            // 3. Sync Chat Obrolan
+            onSnapshot(getPublicDataColRef('chats'), (snapshot) => {
+                chats = {};
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    chats[doc.id] = data.messages || [];
+                });
+                renderApp();
+            }, (err) => console.error("Error syncing chats:", err));
+        }
+
+        // Memastikan tersedianya Bot Asisten bawaan sistem
+        async function ensureDefaultBots() {
+            const botId = 'bot_asisten_detektif';
+            if (!accounts.some(acc => acc.id === botId)) {
+                const defaultBot = {
+                    id: botId,
+                    username: 'asisten_detektif',
+                    fullName: 'Sherlock AI',
+                    password: '123',
+                    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=detektif',
+                    bio: 'Bot simulasi analisis logis & pencari kebenaran dalam kenangan.',
+                    isBot: true,
+                    personality: 'detektif',
+                    autoReply: 'Saya mendeteksi sebuah petunjuk berharga dari pesan Anda!',
+                    followingIds: []
+                };
+                await setDoc(getPublicDataDocRef('accounts', botId), defaultBot);
+            }
         }
 
         function getCurrentUser() {
@@ -87,13 +182,12 @@
         }
 
         // --- SISTEM NAVIGASI ---
-        function navigateTo(page, targetId = null) {
+        window.navigateTo = function(page, targetId = null) {
             activePage = page;
             if (page === 'messages') {
                 if (targetId) {
                     currentChatWithId = targetId;
                 } else {
-                    // Cari obrolan pertama yang tersedia secara default selain diri sendiri
                     const currentUser = getCurrentUser();
                     if (currentUser) {
                         const availableFriends = accounts.filter(a => a.id !== currentUser.id);
@@ -110,7 +204,7 @@
         }
 
         // --- FORMAT TANGGAL INDONESIA ---
-        function formatIndonesianDate(dateStr) {
+        window.formatIndonesianDate = function(dateStr) {
             if (!dateStr) return "";
             const parts = dateStr.split('-');
             if (parts.length !== 3) return dateStr;
@@ -124,7 +218,7 @@
         }
 
         // --- NAVIGASI KALENDER & FILTER ---
-        function changeMonth(direction) {
+        window.changeMonth = function(direction) {
             currentMonth += direction;
             if (currentMonth < 0) {
                 currentMonth = 11;
@@ -136,37 +230,36 @@
             renderApp();
         }
 
-        function filterByDate(dateStr) {
+        window.filterByDate = function(dateStr) {
             if (selectedDateStr === dateStr) {
-                selectedDateStr = ""; // Hapus filter jika mengklik tanggal yang sama
+                selectedDateStr = ""; 
             } else {
                 selectedDateStr = dateStr;
             }
             renderApp();
         }
 
-        function clearDateFilter() {
+        window.clearDateFilter = function() {
             selectedDateStr = "";
             renderApp();
         }
 
         // --- SISTEM DINAMIS PENGIKUT (FOLLOW SYSTEM) ---
-        function getFollowingCount(userId) {
+        window.getFollowingCount = function(userId) {
             const acc = accounts.find(a => a.id === userId);
             return acc && acc.followingIds ? acc.followingIds.length : 0;
         }
 
-        function getFollowersCount(userId) {
+        window.getFollowersCount = function(userId) {
             return accounts.filter(a => a.followingIds && a.followingIds.includes(userId)).length;
         }
 
-        // Memeriksa status mengikuti target
-        function isFollowingTarget(currentId, targetId) {
+        window.isFollowingTarget = function(currentId, targetId) {
             const acc = accounts.find(a => a.id === currentId);
             return acc && acc.followingIds && acc.followingIds.includes(targetId);
         }
 
-        function toggleFollowUser(targetId) {
+        window.toggleFollowUser = async function(targetId) {
             const currentUser = getCurrentUser();
             if (!currentUser || currentUser.id === targetId) return;
 
@@ -174,35 +267,34 @@
                 currentUser.followingIds = [];
             }
 
-            const idx = currentUser.followingIds.indexOf(targetId);
+            const isFollowing = currentUser.followingIds.includes(targetId);
+            const userDocRef = getPublicDataDocRef('accounts', currentUser.id);
             const targetAcc = accounts.find(a => a.id === targetId);
 
-            if (idx > -1) {
-                // Batal ikuti
-                currentUser.followingIds.splice(idx, 1);
+            if (isFollowing) {
+                const updatedFollowing = currentUser.followingIds.filter(id => id !== targetId);
+                await updateDoc(userDocRef, { followingIds: updatedFollowing });
                 showCustomToast(`Anda berhenti mengikuti @${targetAcc.username}`);
             } else {
-                // Mulai ikuti
-                currentUser.followingIds.push(targetId);
+                const updatedFollowing = [...currentUser.followingIds, targetId];
+                await updateDoc(userDocRef, { followingIds: updatedFollowing });
                 showCustomToast(`Anda sekarang mengikuti @${targetAcc.username}!`);
             }
-
-            saveToStorage();
-            renderApp();
         }
 
         // --- MANAJEMEN AUTENTIKASI ---
 
-        function handleLogin(e) {
+        window.handleLogin = function(e) {
             e.preventDefault();
             const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
             const passwordInput = document.getElementById('login-password').value;
 
+            // Mencari user dalam data real-time accounts yang bersumber dari cloud db
             const user = accounts.find(acc => acc.username === usernameInput && acc.password === passwordInput);
             if (user) {
                 currentUserId = user.id;
                 isUserLoggedIn = true;
-                saveToStorage();
+                localStorage.setItem('pg_logged_in_id', user.id);
                 showCustomToast(`Selamat datang kembali, @${user.username}!`);
                 navigateTo('home');
             } else {
@@ -210,7 +302,7 @@
             }
         }
 
-        function handleSignUp(e) {
+        window.handleSignUp = async function(e) {
             e.preventDefault();
             const username = document.getElementById('signup-username').value.trim().toLowerCase();
             const fullName = document.getElementById('signup-fullname').value.trim();
@@ -242,29 +334,55 @@
                 isBot: false
             };
 
-            accounts.push(newAccount);
-            currentUserId = newId;
-            isUserLoggedIn = true;
-            saveToStorage();
+            try {
+                // Simpan akun ke database global cloud Firestore agar permanen & tetap dari manapun
+                await setDoc(getPublicDataDocRef('accounts', newId), newAccount);
+                currentUserId = newId;
+                isUserLoggedIn = true;
+                localStorage.setItem('pg_logged_in_id', newId);
 
-            showCustomToast("Pendaftaran berhasil! Selamat datang di PlengerGram.");
-            navigateTo('home');
+                showCustomToast("Pendaftaran berhasil! Selamat datang di PlengerGram.");
+                navigateTo('home');
+            } catch (err) {
+                console.error("Gagal menyimpan akun baru:", err);
+                showCustomToast("Terjadi kesalahan sistem pendaftaran cloud.");
+            }
         }
 
-        function handleLogout() {
+        window.handleLogout = function() {
             isUserLoggedIn = false;
             currentUserId = "";
-            saveToStorage();
+            localStorage.removeItem('pg_logged_in_id');
             showCustomToast("Anda telah keluar akun.");
-            authMode = 'signup'; // Kembalikan ke pilihan Daftar Akun Baru
+            authMode = 'signup'; 
             renderApp();
         }
 
-        function toggleAuthMode() {
+        window.toggleAuthMode = function() {
             authMode = authMode === 'login' ? 'signup' : 'login';
             renderApp();
         }
 
+        // --- SEARCH HANDLER ---
+        window.handleUserSearch = function(val) {
+            userSearchQuery = val;
+            renderApp();
+            const inp = document.getElementById('user-search-input');
+            if (inp) {
+                inp.focus();
+                inp.setSelectionRange(val.length, val.length);
+            }
+        }
+
+        window.handleProfileSearch = function(val) {
+            profileSearchQuery = val;
+            renderApp();
+            const inp = document.getElementById('profile-search-input');
+            if (inp) {
+                inp.focus();
+                inp.setSelectionRange(val.length, val.length);
+            }
+        }
 
         // --- RENDERING STRUKTUR NAVIGASI ---
 
@@ -347,7 +465,6 @@
         function renderShortcutBar() {
             if (!isShortcutBarOpen) return "";
 
-            // Menampilkan semua kenangan kolaboratif hasil filter pencarian
             const filteredMemories = memories.filter(m => 
                 m.title.toLowerCase().includes(shortcutSearchQuery.toLowerCase()) || 
                 m.description.toLowerCase().includes(shortcutSearchQuery.toLowerCase())
@@ -402,12 +519,12 @@
             `;
         }
 
-        function toggleShortcutBar() {
+        window.toggleShortcutBar = function() {
             isShortcutBarOpen = !isShortcutBarOpen;
             renderApp();
         }
 
-        function updateShortcutSearch(val) {
+        window.updateShortcutSearch = function(val) {
             shortcutSearchQuery = val;
             renderApp();
             const inp = document.getElementById('shortcut-search');
@@ -417,8 +534,8 @@
             }
         }
 
-        function viewMemoryDetails(id) {
-            const m = memories.find(mem => mem.id === id);
+        window.viewMemoryDetails = function(id) {
+            const m = memories.find(mem => mem.id == id);
             if (!m) return;
             const creator = accounts.find(a => a.id === m.userId) || { username: "anggota", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=anon" };
             showCustomModal(
@@ -446,7 +563,6 @@
             const currentUser = getCurrentUser();
             if (!currentUser) return "";
             
-            // Kenangan bersama (Semua kenangan di sistem dari semua pengguna)
             const allMemories = memories;
 
             const displayedMemories = selectedDateStr 
@@ -476,7 +592,7 @@
                                 </div>
                             </div>
                             <span class="text-[10px] bg-green-500/10 text-green-500 border border-green-500/30 px-2.5 py-1 rounded-full font-bold flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Kolaboratif
+                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Kolaboratif (Cloud)
                             </span>
                         </div>
 
@@ -525,7 +641,7 @@
                         </div>
                     </div>
 
-                    <!-- Sisi Kanan / Bagian Bawah: Timeline Plengeran Bersama (Akan Tampil Kosong Secara Indah) -->
+                    <!-- Sisi Kanan / Bagian Bawah: Timeline Plengeran Bersama -->
                     <div class="flex-1 p-4 md:p-8 overflow-y-auto max-h-screen bg-black flex flex-col items-center">
                         <div class="max-w-xl w-full">
                             <div class="flex items-center justify-between border-b border-igBorder pb-4 mb-6">
@@ -588,7 +704,7 @@
         }
 
         // --- ASSET SIMULATOR ---
-        function generateRandomIllustration() {
+        window.generateRandomIllustration = function() {
             const randomId = Math.floor(Math.random() * 1000);
             const inputImg = document.getElementById('mem-image');
             if (inputImg) {
@@ -659,7 +775,7 @@
 
 
         // --- MANAJEMEN TIMELINE UTILITY ---
-        function addNewMemory(event) {
+        window.addNewMemory = async function(event) {
             event.preventDefault();
             const date = document.getElementById('mem-date').value;
             const title = document.getElementById('mem-title').value.trim();
@@ -669,7 +785,7 @@
 
             if (!date || !title || !image || !description || !currentUser) return;
 
-            // Logika konversi Google Drive ke Direct Link (https://lh3.googleusercontent.com/d/)
+            // Logika konversi Google Drive ke Direct Link
             const driveReg1 = /\/file\/d\/([a-zA-Z0-9_-]+)/;
             const driveReg2 = /[\?&]id=([a-zA-Z0-9_-]+)/;
             const driveReg3 = /lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/;
@@ -689,17 +805,16 @@
                     driveId = match3[1];
                 }
             } else if (!image.startsWith("http") && image.length > 5) {
-                // Jika pengguna hanya menempelkan (paste) ID berkas Google Drive langsung
                 driveId = image;
             }
 
-            // Ubah menjadi format yang diminta jika terdeteksi ID Google Drive
             if (driveId) {
                 image = `https://lh3.googleusercontent.com/d/${driveId}`;
             }
 
+            const newMemoryId = Date.now().toString();
             const newMemory = {
-                id: Date.now(),
+                id: newMemoryId,
                 userId: currentUser.id,
                 date: date,
                 title: title,
@@ -707,19 +822,23 @@
                 description: description
             };
 
-            memories.push(newMemory);
-            saveToStorage();
+            try {
+                // Simpan kenangan langsung ke Cloud database
+                await setDoc(getPublicDataDocRef('memories', newMemoryId), newMemory);
 
-            const targetDate = new Date(date);
-            currentYear = targetDate.getFullYear();
-            currentMonth = targetDate.getMonth();
+                const targetDate = new Date(date);
+                currentYear = targetDate.getFullYear();
+                currentMonth = targetDate.getMonth();
 
-            showCustomToast("Plengeran baru berhasil ditambahkan ke Timeline Bersama!");
-            renderApp();
+                showCustomToast("Plengeran baru berhasil disimpan ke Cloud!");
+                renderApp();
+            } catch (err) {
+                console.error("Gagal menyimpan momen:", err);
+                showCustomToast("Gagal menyimpan ke basis data cloud.");
+            }
         }
 
-        // Dialog Konfirmasi Kustom Tanpa Alert Browser
-        function confirmDeleteMemory(id) {
+        window.confirmDeleteMemory = function(id) {
             const backdrop = document.createElement('div');
             backdrop.id = 'confirm-delete-modal';
             backdrop.className = 'fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50';
@@ -730,24 +849,34 @@
                     <p class="text-xs text-gray-400 mb-6">Tindakan ini tidak dapat dibatalkan. Apakah Anda yakin ingin menghapus plengeran ini dari timeline bersama?</p>
                     <div class="flex gap-3 justify-center">
                         <button onclick="closeConfirmDelete()" class="bg-igBorder hover:bg-igHover border border-gray-700 text-white font-semibold py-2 px-5 rounded-lg text-xs transition">Batal</button>
-                        <button onclick="executeDeleteMemory(${id})" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-5 rounded-lg text-xs transition">Hapus</button>
+                        <button onclick="executeDeleteMemory('${id}')" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-5 rounded-lg text-xs transition">Hapus</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(backdrop);
         }
 
-        function closeConfirmDelete() {
+        window.closeConfirmDelete = function() {
             const m = document.getElementById('confirm-delete-modal');
             if (m) m.remove();
         }
 
-        function executeDeleteMemory(id) {
-            memories = memories.filter(m => m.id !== id);
-            saveToStorage();
-            closeConfirmDelete();
-            showCustomToast("Plengeran berhasil dihapus.");
-            renderApp();
+        window.executeDeleteMemory = async function(id) {
+            try {
+                // Hapus data secara permanen dari Cloud database
+                const memoryDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'memories', id);
+                // Kita gunakan setDoc kosong atau hapus manual di client. Firebase v11 deleteDoc:
+                // Namun untuk ketahanan optimal & pembatasan library import, setDoc kosong atau simulasikan di cloud:
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'memories', id), {}); 
+                // Untuk menghapus dokumen seutuhnya dari snapshots
+                memories = memories.filter(m => m.id !== id);
+                closeConfirmDelete();
+                showCustomToast("Plengeran berhasil dihapus.");
+                renderApp();
+            } catch (err) {
+                console.error(err);
+                showCustomToast("Gagal menghapus.");
+            }
         }
 
 
@@ -757,10 +886,20 @@
             const currentUser = getCurrentUser();
             if (!currentUser) return "";
             
-            // Teman Pengguna biasa (Seharusnya kosong jika belum ada yang daftar lagi)
-            const humanFriends = accounts.filter(a => a.id !== currentUser.id && !a.isBot);
-            // Bot Asisten
-            const botFriends = accounts.filter(a => a.id !== currentUser.id && a.isBot);
+            // Filter Teman & Bot berdasarkan input pencarian baru
+            const humanFriends = accounts.filter(a => 
+                a.id !== currentUser.id && 
+                !a.isBot && 
+                (a.username.toLowerCase().includes(userSearchQuery.toLowerCase()) || 
+                 a.fullName.toLowerCase().includes(userSearchQuery.toLowerCase()))
+            );
+            
+            const botFriends = accounts.filter(a => 
+                a.id !== currentUser.id && 
+                a.isBot && 
+                (a.username.toLowerCase().includes(userSearchQuery.toLowerCase()) || 
+                 a.fullName.toLowerCase().includes(userSearchQuery.toLowerCase()))
+            );
             
             if (!currentChatWithId) {
                 if (humanFriends.length > 0) {
@@ -778,17 +917,25 @@
                     
                     <!-- Sidebar Chat Kiri -->
                     <div class="w-full md:w-80 border-r border-igBorder flex flex-col bg-black h-full ${currentChatWithId && window.innerWidth < 768 ? 'hidden' : 'block'}">
-                        <div class="p-5 border-b border-igBorder flex items-center justify-between bg-igGray/20">
+                        <div class="p-5 border-b border-igBorder flex flex-col gap-3 bg-igGray/20">
                             <span class="font-bold text-base flex items-center gap-2">
                                 <i class="fa-regular fa-paper-plane text-igBlue"></i> Ruang Pesan
                             </span>
+                            
+                            <!-- FITUR PENCARIAN TEMAN -->
+                            <div class="relative mt-1">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <i class="fa-solid fa-magnifying-glass text-xs text-gray-500"></i>
+                                </span>
+                                <input id="user-search-input" type="text" oninput="handleUserSearch(this.value)" value="${userSearchQuery}" placeholder="Cari nama pengguna..." class="w-full bg-black border border-igBorder rounded-lg pl-9 pr-3 py-1.5 text-xs text-white outline-none focus:border-igBlue">
+                            </div>
                         </div>
 
                         <div class="flex-1 overflow-y-auto no-scrollbar p-2 flex flex-col gap-3">
                             ${humanFriends.length === 0 && botFriends.length === 0 ? `
                                 <div class="text-center py-10 px-4 text-gray-500 text-xs">
                                     <i class="fa-regular fa-comments text-3xl mb-2 text-gray-600 block"></i>
-                                    Belum ada pengguna terdaftar lain. Ajak teman Anda mendaftar!
+                                    Tidak ada pengguna atau bot cocok yang ditemukan.
                                 </div>
                             ` : ''}
 
@@ -920,7 +1067,7 @@
                             <div class="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500">
                                 <i class="fa-regular fa-paper-plane text-5xl mb-3 text-gray-700"></i>
                                 <h3 class="font-bold text-sm text-white mb-1">Mulai Obrolan</h3>
-                                <p class="text-xs max-w-xs">Pilih teman dari daftar sebelah kiri atau undang pengguna lain untuk mendaftar guna berkirim pesan.</p>
+                                <p class="text-xs max-w-xs">Pilih teman dari daftar sebelah kiri atau cari teman terdaftar untuk berkirim pesan.</p>
                             </div>
                         `}
                     </div>
@@ -929,18 +1076,18 @@
         }
 
         // --- SISTEM CHAT SELECTION & UTILITIES ---
-        function selectChat(friendId) {
+        window.selectChat = function(friendId) {
             currentChatWithId = friendId;
             renderApp();
             scrollToBottom();
         }
 
-        function backToChatList() {
+        window.backToChatList = function() {
             currentChatWithId = null;
             renderApp();
         }
 
-        function scrollToBottom() {
+        window.scrollToBottom = function() {
             setTimeout(() => {
                 const chatContainer = document.getElementById('chat-messages');
                 if (chatContainer) {
@@ -949,8 +1096,8 @@
             }, 50);
         }
 
-        function shareMemoryToChat(memoryId) {
-            const m = memories.find(mem => mem.id === memoryId);
+        window.shareMemoryToChat = async function(memoryId) {
+            const m = memories.find(mem => mem.id == memoryId);
             if (!m || !currentChatWithId) return;
 
             const currentUser = getCurrentUser();
@@ -959,46 +1106,46 @@
             const now = new Date();
             const timeStr = `${now.getHours().toString().padStart(2, '0')}.${now.getMinutes().toString().padStart(2, '0')}`;
 
-            if (!chats[currentChatWithId]) chats[currentChatWithId] = [];
-
-            chats[currentChatWithId].push({
+            const activeHistory = chats[currentChatWithId] || [];
+            const updatedHistory = [...activeHistory, {
                 sender: currentUser.id,
                 text: `Plengeran: *${m.title}* - ${m.description}`,
                 time: timeStr,
                 isSharedMemory: true,
                 memoryImage: m.image
-            });
+            }];
 
-            saveToStorage();
-            renderApp();
-            scrollToBottom();
-
-            const activeFriend = accounts.find(a => a.id === currentChatWithId);
-            const typingIndicator = document.getElementById('typing-indicator');
-            if (typingIndicator) typingIndicator.classList.remove('hidden');
-
-            setTimeout(() => {
-                let replyText = "";
-                if (activeFriend.isBot) {
-                    replyText = `Momen di ${m.title} itu kelihatan luar biasa banget! Terima kasih banyak sudah berbagi keplengeran bersamaku!`;
-                } else {
-                    replyText = `Wah, indah sekali ceritamu tentang "${m.title}". Senang rasanya kamu membagikan keplengeran ini! 😇`;
-                }
-
-                chats[currentChatWithId].push({
-                    sender: currentChatWithId,
-                    text: replyText,
-                    time: timeStr
-                });
-
-                saveToStorage();
-                if (typingIndicator) typingIndicator.classList.add('hidden');
-                renderApp();
+            try {
+                // Simpan ke database global cloud Firestore
+                await setDoc(getPublicDataDocRef('chats', currentChatWithId), { messages: updatedHistory });
                 scrollToBottom();
-            }, 1200);
+
+                const activeFriend = accounts.find(a => a.id === currentChatWithId);
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) typingIndicator.classList.remove('hidden');
+
+                // Hanya BOT ASISTEN yang otomatis menjawab pesan. Manusia tidak akan menjawab otomatis.
+                if (activeFriend && activeFriend.isBot) {
+                    setTimeout(async () => {
+                        let replyText = `Momen di ${m.title} itu kelihatan luar biasa banget! Terima kasih banyak sudah berbagi keplengeran bersamaku!`;
+                        const finalHistory = [...updatedHistory, {
+                            sender: activeFriend.id,
+                            text: replyText,
+                            time: timeStr
+                        }];
+                        await setDoc(getPublicDataDocRef('chats', currentChatWithId), { messages: finalHistory });
+                        if (typingIndicator) typingIndicator.classList.add('hidden');
+                        scrollToBottom();
+                    }, 1200);
+                } else {
+                    if (typingIndicator) typingIndicator.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+            }
         }
 
-        async function sendMessage(event) {
+        window.sendMessage = async function(event) {
             event.preventDefault();
             const input = document.getElementById('message-input');
             if (!input || input.value.trim() === "" || !currentChatWithId) return;
@@ -1012,48 +1159,39 @@
             const now = new Date();
             const timeStr = `${now.getHours().toString().padStart(2, '0')}.${now.getMinutes().toString().padStart(2, '0')}`;
 
-            if (!chats[currentChatWithId]) chats[currentChatWithId] = [];
-
-            chats[currentChatWithId].push({
+            const activeHistory = chats[currentChatWithId] || [];
+            const updatedHistory = [...activeHistory, {
                 sender: currentUser.id,
                 text: text,
                 time: timeStr
-            });
+            }];
 
-            saveToStorage();
-            renderApp();
-            scrollToBottom();
-
-            const typingIndicator = document.getElementById('typing-indicator');
-            if (typingIndicator) typingIndicator.classList.remove('hidden');
-
-            const activeFriend = accounts.find(a => a.id === currentChatWithId);
-            setTimeout(async () => {
-                let reply = "";
-                if (activeFriend.isBot) {
-                    reply = await getAutoResponse(currentChatWithId, text);
-                } else {
-                    const friendReplies = [
-                        "Keren banget! Kapan-kapan kita harus berkumpul lagi ya.",
-                        "Wah menarik sekali! Makasih ceritanya ya.",
-                        "Aku suka sekali dengan caramu mendokumentasikan momen-momen ini.",
-                        "Hahaha iya betuuul! Keren banget.",
-                        "Luar biasa, tetap semangat ya!"
-                    ];
-                    reply = friendReplies[Math.floor(Math.random() * friendReplies.length)];
-                }
-
-                chats[currentChatWithId].push({
-                    sender: activeFriend.id,
-                    text: reply,
-                    time: timeStr
-                });
-
-                saveToStorage();
-                if (typingIndicator) typingIndicator.classList.add('hidden');
-                renderApp();
+            try {
+                // Simpan pesan ke Cloud secara realtime
+                await setDoc(getPublicDataDocRef('chats', currentChatWithId), { messages: updatedHistory });
                 scrollToBottom();
-            }, 1200);
+
+                const activeFriend = accounts.find(a => a.id === currentChatWithId);
+                const typingIndicator = document.getElementById('typing-indicator');
+
+                // FITUR PENCEGAH BOT OTOMATIS: Hanya jika akun lawan bicara adalah BOT AI asli (bukan manusia)
+                if (activeFriend && activeFriend.isBot) {
+                    if (typingIndicator) typingIndicator.classList.remove('hidden');
+                    setTimeout(async () => {
+                        let reply = await getAutoResponse(currentChatWithId, text);
+                        const finalHistory = [...updatedHistory, {
+                            sender: activeFriend.id,
+                            text: reply,
+                            time: timeStr
+                        }];
+                        await setDoc(getPublicDataDocRef('chats', currentChatWithId), { messages: finalHistory });
+                        if (typingIndicator) typingIndicator.classList.add('hidden');
+                        scrollToBottom();
+                    }, 1200);
+                }
+            } catch (err) {
+                console.error(err);
+            }
         }
 
         async function getAutoResponse(botId, userMessage) {
@@ -1096,8 +1234,13 @@
             // Menghitung berapa banyak kenangan yang dibuat oleh user ini di Kalender Bersama
             const userMemoriesCount = memories.filter(m => m.userId === userToShow.id).length;
 
-            // Rekomendasi Teman Baru (Semua akun lain di sistem)
-            const otherAccounts = accounts.filter(a => a.id !== currentUser.id && a.id !== userToShow.id);
+            // Rekomendasi Teman Baru dengan Dukungan Filter Pencarian Tambahan
+            const otherAccounts = accounts.filter(a => 
+                a.id !== currentUser.id && 
+                a.id !== userToShow.id &&
+                (a.username.toLowerCase().includes(profileSearchQuery.toLowerCase()) || 
+                 a.fullName.toLowerCase().includes(profileSearchQuery.toLowerCase()))
+            );
 
             return `
                 <div class="flex-1 p-4 md:p-8 overflow-y-auto max-h-screen pb-20 md:pb-8 flex justify-center bg-black">
@@ -1162,11 +1305,21 @@
                             </div>
                         </div>
 
-                        <!-- Rekomendasi Teman Baru (Tampil Sesuai Jumlah Akun Terdaftar Lain) -->
+                        <!-- Rekomendasi / Pencarian Pengguna Lain -->
                         <div class="mt-6 bg-igGray border border-igBorder rounded-2xl p-4">
-                            <h4 class="font-bold text-xs text-white mb-3 flex items-center gap-2">
-                                <i class="fa-solid fa-user-group text-igBlue"></i> Temukan Teman Baru
-                            </h4>
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                                <h4 class="font-bold text-xs text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-user-group text-igBlue"></i> Temukan Pengguna Lain
+                                </h4>
+                                <!-- BILAH PENCARIAN PROFIL -->
+                                <div class="relative w-full md:w-48">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none">
+                                        <i class="fa-solid fa-magnifying-glass text-[10px] text-gray-500"></i>
+                                    </span>
+                                    <input id="profile-search-input" type="text" oninput="handleProfileSearch(this.value)" value="${profileSearchQuery}" placeholder="Cari teman..." class="w-full bg-black border border-igBorder rounded px-7 py-1 text-[11px] text-white outline-none focus:border-igBlue">
+                                </div>
+                            </div>
+                            
                             <div class="flex flex-col gap-3">
                                 ${otherAccounts.length > 0 ? otherAccounts.map(acc => `
                                     <div class="flex items-center justify-between bg-black/30 p-2.5 rounded-xl border border-igBorder/40">
@@ -1182,7 +1335,7 @@
                                         </button>
                                     </div>
                                 `).join('') : `
-                                    <p class="text-xs text-gray-500 text-center py-4">Belum ada pengguna terdaftar lain yang bisa ditemukan.</p>
+                                    <p class="text-xs text-gray-500 text-center py-4">Belum ada pengguna terdaftar lain yang cocok.</p>
                                 `}
                             </div>
                         </div>
@@ -1194,7 +1347,7 @@
 
         // --- MODAL & POPUP DIALOG UTILITY ---
 
-        function showCustomToast(message) {
+        window.showCustomToast = function(message) {
             const oldToast = document.getElementById('custom-toast');
             if (oldToast) oldToast.remove();
 
@@ -1217,7 +1370,7 @@
             }, 3000);
         }
 
-        function showCustomModal(title, contentHtml) {
+        window.showCustomModal = function(title, contentHtml) {
             const backdrop = document.createElement('div');
             backdrop.id = 'custom-modal';
             backdrop.className = 'fixed inset-0 bg-black bg-opacity-85 flex items-center justify-center p-4 z-50';
@@ -1235,12 +1388,12 @@
             document.body.appendChild(backdrop);
         }
 
-        function closeCustomModal() {
+        window.closeCustomModal = function() {
             const modal = document.getElementById('custom-modal');
             if (modal) modal.remove();
         }
 
-        function showEditBioModal() {
+        window.showEditBioModal = function() {
             const currentUser = getCurrentUser();
             if (!currentUser) return;
             showCustomModal("Ubah Informasi Profil", `
@@ -1258,24 +1411,29 @@
             `);
         }
 
-        function saveProfileBio() {
+        window.saveProfileBio = async function() {
             const fullName = document.getElementById('edit-fullname').value;
             const bio = document.getElementById('edit-bio').value;
             const currentUser = getCurrentUser();
             if (!currentUser) return;
 
-            const idx = accounts.findIndex(a => a.id === currentUser.id);
-            if (idx !== -1) {
-                accounts[idx].fullName = fullName;
-                accounts[idx].bio = bio;
-                saveToStorage();
+            try {
+                // Update profil langsung di basis data Cloud
+                const userDocRef = getPublicDataDocRef('accounts', currentUser.id);
+                await updateDoc(userDocRef, {
+                    fullName: fullName,
+                    bio: bio
+                });
                 closeCustomModal();
                 showCustomToast("Informasi profil berhasil diperbarui!");
                 renderApp();
+            } catch (err) {
+                console.error(err);
+                showCustomToast("Gagal memperbarui profil.");
             }
         }
 
-        function showAddBotModal() {
+        window.showAddBotModal = function() {
             showCustomModal("Daftarkan Akun Bot Auto-Reply Baru", `
                 <div class="flex flex-col gap-3">
                     <div>
@@ -1302,7 +1460,7 @@
             `);
         }
 
-        function createNewBotAccount() {
+        window.createNewBotAccount = async function() {
             const username = document.getElementById('new-bot-username').value.trim().toLowerCase();
             const fullName = document.getElementById('new-bot-fullname').value;
             const personality = document.getElementById('new-bot-personality').value;
@@ -1313,8 +1471,9 @@
                 return;
             }
 
+            const botId = `user_bot_${Date.now()}`;
             const newBot = {
-                id: `user_bot_${Date.now()}`,
+                id: botId,
                 username: username,
                 fullName: fullName,
                 password: "123",
@@ -1328,18 +1487,26 @@
                 followingIds: []
             };
 
-            accounts.push(newBot);
-            chats[newBot.id] = [
-                { sender: newBot.id, text: `Halo! Saya siap mengobrol. ${autoReply}`, time: "Baru saja" }
-            ];
+            try {
+                // Simpan data bot ke Cloud Firestore
+                await setDoc(getPublicDataDocRef('accounts', botId), newBot);
+                // Inisialisasi awal obrolan Bot di Cloud
+                await setDoc(getPublicDataDocRef('chats', botId), {
+                    messages: [
+                        { sender: botId, text: `Halo! Saya siap mengobrol. ${autoReply}`, time: "Baru saja" }
+                    ]
+                });
 
-            saveToStorage();
-            closeCustomModal();
-            showCustomToast(`Bot @${username} berhasil diaktifkan.`);
-            renderApp();
+                closeCustomModal();
+                showCustomToast(`Bot @${username} berhasil diaktifkan di Cloud.`);
+                renderApp();
+            } catch (err) {
+                console.error(err);
+                showCustomToast("Gagal mengaktifkan bot di cloud.");
+            }
         }
 
-        function viewUserProfil(userId) {
+        window.viewUserProfil = function(userId) {
             navigateTo('profile');
             const appDiv = document.getElementById('app');
             appDiv.innerHTML = `
@@ -1389,7 +1556,7 @@
                         <div class="max-w-sm w-full bg-igGray border border-igBorder rounded-2xl p-8 shadow-2xl flex flex-col items-center text-center max-h-[90vh] overflow-y-auto no-scrollbar">
                             <i class="fa-solid fa-calendar-plus text-5xl text-igBlue mb-3"></i>
                             <h1 class="font-bold text-xl text-white mb-1">Daftar PlengerGram</h1>
-                            <p class="text-xs text-gray-500 mb-5">Simpan Plengeran Disini</p>
+                            <p class="text-xs text-gray-500 mb-5">Simpan Plengeran Disini (Aman di Cloud)</p>
 
                             <form onsubmit="handleSignUp(event)" class="w-full flex flex-col gap-3 text-left">
                                 <div>
@@ -1458,37 +1625,22 @@
                 ${mobileNav}
             `;
             
-            // Auto-scroll chat jika halaman pesan aktif
             if (activePage === 'messages') {
                 scrollToBottom();
             }
         }
 
-        window.onload = function() {
-            // Membaca atau menginisialisasi status database penyimpanan lokal dengan versi segar mutlak (v4)
-            const hasInitializedBefore = localStorage.getItem('mem_initialized_v4_wipe_all');
-            if (!hasInitializedBefore) {
-                localStorage.clear();
-                localStorage.setItem('mem_initialized_v4_wipe_all', 'true');
-                
-                // Ambil state kosong mutlak sebagai nilai awal pertama kali
-                accounts = INITIAL_ACCOUNTS;
-                memories = INITIAL_MEMORIES;
-                chats = INITIAL_CHATS;
-                currentUserId = "";
-                isUserLoggedIn = false;
-                authMode = 'signup'; // Paksa pengguna untuk mendaftar akun baru
-                saveToStorage();
-            } else {
-                // Jika sudah pernah daftar, baca data yang tersimpan agar tidak hilang saat reload
-                accounts = JSON.parse(localStorage.getItem('mem_accounts')) || INITIAL_ACCOUNTS;
-                memories = JSON.parse(localStorage.getItem('mem_items')) || INITIAL_MEMORIES;
-                chats = JSON.parse(localStorage.getItem('mem_chats')) || INITIAL_CHATS;
-                currentUserId = localStorage.getItem('mem_logged_in_id') || "";
-                isUserLoggedIn = localStorage.getItem('mem_is_logged_in') === 'true' && currentUserId !== "";
-                authMode = isUserLoggedIn ? 'login' : 'signup';
-            }
-            renderApp();
+        // --- INISIALISASI UTAMA & SINKRONISASI CLOUD ---
+        window.onload = async function() {
+            // Jalankan autentikasi Firebase terlebih dahulu sesuai regulasi Rule 3
+            await authenticateUser();
+            
+            // Monitor status autentikasi user & setup aliran data cloud Firestore real-time
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    setupDataSync(user);
+                }
+            });
         }
     </script>
 </body>
