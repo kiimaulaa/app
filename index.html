@@ -56,7 +56,7 @@
         let useCloud = false;
         let app, auth, db;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
+        
         try {
             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                 firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
