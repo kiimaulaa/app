@@ -160,6 +160,7 @@
             return accounts.filter(a => a.followingIds && a.followingIds.includes(userId)).length;
         }
 
+        // Memeriksa status mengikuti
         function isFollowingTarget(currentId, targetId) {
             const acc = accounts.find(a => a.id === currentId);
             return acc && acc.followingIds && acc.followingIds.includes(targetId);
@@ -227,7 +228,6 @@
 
             const newId = 'user_' + Date.now();
             const randomSeed = Math.floor(Math.random() * 1000);
-            // Menggunakan avatar gambar petualang acak
             const avatarUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${randomSeed}`;
 
             const newAccount = {
@@ -888,7 +888,6 @@
 
             // Juga masukkan ke log chat dari sisi teman jika dia membuka chat dengan kita
             if (!chats[currentUser.id]) chats[currentUser.id] = [];
-            // (Tetap simpan riwayat chat satu pintu per pasangan user id agar konsisten)
             
             saveToStorage();
             renderApp();
@@ -1152,7 +1151,7 @@
                             </div>
 
                             <p class="text-xs text-gray-400">Belum memiliki akun?</p>
-                            <button onclick="toggleAuthMode()" class="text-xs text-igBlue font-bold hover:underline mt-1">Daftar Akun Baru</button>
+                            <button onclick="toggleAuthMode()" class="text-xs text-igBlue font-bold hover:underline mt-1 mb-4">Daftar Akun Baru</button>
                         </div>
                     </div>
                 `;
@@ -1189,7 +1188,7 @@
                             </div>
 
                             <p class="text-xs text-gray-400">Sudah memiliki akun?</p>
-                            <button onclick="toggleAuthMode()" class="text-xs text-igBlue font-bold hover:underline mt-1">Silakan Masuk</button>
+                            <button onclick="toggleAuthMode()" class="text-xs text-igBlue font-bold hover:underline mt-1 mb-4">Silakan Masuk</button>
                         </div>
                     </div>
                 `;
