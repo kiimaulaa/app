@@ -44,20 +44,52 @@
         // --- DATA DEFAULT (SIMULASI DATABASE IN-MEMORY) ---
         const INITIAL_ACCOUNTS = [
             {
-                id: "ayya",
-                username: "ayyaa_",
-                fullName: "nayyaraa",
-                password: "ikii19",
+                id: "user_main",
+                username: "budi_developer",
+                fullName: "Budi Gunawan",
+                password: "123",
                 avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=budi",
                 bio: "Siswa & Kreator Konten | Suka menulis kenangan seru bersama teman-teman 📝🚀",
                 followingIds: ["user_friend_siti", "user_bot_sherlock"], 
                 isBot: false
             },
             {
-                id: "ikii",
-                username: "kii_",
-                fullName: "sammaula",
-                password: "ayyaa12",
+                id: "user_friend_siti",
+                username: "siti_explorer",
+                fullName: "Siti Rahma",
+                password: "123",
+                avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=siti",
+                bio: "Suka berpetualang dan mendaki gunung indah 🏔️🎒",
+                followingIds: ["user_main"], 
+                isBot: false
+            },
+            {
+                id: "user_friend_dimas",
+                username: "dimas_art",
+                fullName: "Dimas Pratama",
+                password: "123",
+                avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=dimas",
+                bio: "Menggambar adalah caraku menceritakan keindahan dunia 🎨✨",
+                followingIds: ["user_main"],
+                isBot: false
+            },
+            {
+                id: "user_bot_sherlock",
+                username: "sherlock_bot",
+                fullName: "Sherlock Detective",
+                password: "123",
+                avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=sherlock",
+                bio: "Asisten Detektif Otomatis. Saya menjawab dengan deduksi logis! 🔍",
+                personality: "detektif",
+                autoReply: "Ah, menarik sekali! Dari struktur pertanyaanmu, saya mendeteksi rasa penasaran yang tinggi. Elemen dasar, sahabatku!",
+                followingIds: [],
+                isBot: true
+            },
+            {
+                id: "user_bot_motivator",
+                username: "motivator_bijak",
+                fullName: "Kak Mario Bot",
+                password: "123",
                 avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=mario",
                 bio: "Menyebarkan energi positif otomatis setiap detik! ✨",
                 personality: "motivator",
@@ -148,6 +180,66 @@
 
         function getCurrentUser() {
             return accounts.find(acc => acc.id === currentUserId) || accounts[0];
+        }
+
+        // --- SISTEM NAVIGASI YANG DIPERBAIKI ---
+        function navigateTo(page, targetId = null) {
+            activePage = page;
+            if (page === 'messages') {
+                if (targetId) {
+                    currentChatWithId = targetId;
+                } else if (!currentChatWithId) {
+                    // Cari obrolan pertama yang tersedia secara default
+                    const currentUser = getCurrentUser();
+                    const availableFriends = accounts.filter(a => a.id !== currentUser.id);
+                    if (availableFriends.length > 0) {
+                        currentChatWithId = availableFriends[0].id;
+                    }
+                }
+                scrollToBottom();
+            }
+            renderApp();
+        }
+
+        // --- FORMAT TANGGAL INDONESIA YANG DIPERBAIKI ---
+        function formatIndonesianDate(dateStr) {
+            if (!dateStr) return "";
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            
+            const year = parts[0];
+            const monthIndex = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+            
+            const monthName = MONTH_NAMES[monthIndex] || parts[1];
+            return `${day} ${monthName} ${year}`;
+        }
+
+        // --- NAVIGASI KALENDER & FILTER ---
+        function changeMonth(direction) {
+            currentMonth += direction;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderApp();
+        }
+
+        function filterByDate(dateStr) {
+            if (selectedDateStr === dateStr) {
+                selectedDateStr = ""; // Hapus filter jika mengklik tanggal yang sama
+            } else {
+                selectedDateStr = dateStr;
+            }
+            renderApp();
+        }
+
+        function clearDateFilter() {
+            selectedDateStr = "";
+            renderApp();
         }
 
         // --- SISTEM DINAMIS PENGIKUT (FOLLOW SYSTEM) ---
@@ -728,10 +820,12 @@
             // Bot Asisten
             const botFriends = accounts.filter(a => a.id !== currentUser.id && a.isBot);
             
-            if (!currentChatWithId && humanFriends.length > 0) {
-                currentChatWithId = humanFriends[0].id;
-            } else if (!currentChatWithId && botFriends.length > 0) {
-                currentChatWithId = botFriends[0].id;
+            if (!currentChatWithId) {
+                if (humanFriends.length > 0) {
+                    currentChatWithId = humanFriends[0].id;
+                } else if (botFriends.length > 0) {
+                    currentChatWithId = botFriends[0].id;
+                }
             }
 
             const activeFriend = accounts.find(a => a.id === currentChatWithId);
@@ -871,6 +965,27 @@
             `;
         }
 
+        // --- SISTEM CHAT SELECTION & UTILITIES ---
+        function selectChat(friendId) {
+            currentChatWithId = friendId;
+            renderApp();
+            scrollToBottom();
+        }
+
+        function backToChatList() {
+            currentChatWithId = null;
+            renderApp();
+        }
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                const chatContainer = document.getElementById('chat-messages');
+                if (chatContainer) {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            }, 50);
+        }
+
         function shareMemoryToChat(memoryId) {
             const m = memories.find(mem => mem.id === memoryId);
             if (!m || !currentChatWithId) return;
@@ -997,7 +1112,7 @@
         }
 
 
-        // --- HALAMAN PROFIL AKUN (TAMPILAN BERSIH MINIMALIS DENGAN ATRIBUSI JUMLAH KONTRIBUSI) ---
+        // --- HALAMAN PROFIL AKUN ---
 
         function renderProfile(targetUserId = null) {
             const currentUser = getCurrentUser();
@@ -1019,7 +1134,7 @@
                             <h2 class="font-bold text-lg text-white flex items-center gap-2">
                                 <i class="fa-regular fa-user text-igBlue"></i> ${isOwnProfile ? 'Profil Akun Anda' : `Profil @${userToShow.username}`}
                             </h2>
-                            ${!isOwnProfile ? `<button onclick="navigateTo('messages')" class="text-xs text-gray-400 hover:text-white"><i class="fa-solid fa-arrow-left"></i> Kembali</button>` : ''}
+                            ${!isOwnProfile ? `<button onclick="navigateTo('home')" class="text-xs text-gray-400 hover:text-white"><i class="fa-solid fa-arrow-left"></i> Kembali</button>` : ''}
                         </div>
 
                         <!-- Kartu Profil -->
@@ -1372,6 +1487,11 @@
                 ${renderShortcutBar()}
                 ${mobileNav}
             `;
+            
+            // Auto-scroll chat jika halaman pesan aktif
+            if (activePage === 'messages') {
+                scrollToBottom();
+            }
         }
 
         window.onload = function() {
