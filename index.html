@@ -256,7 +256,7 @@
             currentUserId = "";
             saveToStorage();
             showCustomToast("Anda telah keluar akun.");
-            authMode = 'login'; // Kembalikan ke pilihan Masuk Akun
+            authMode = 'signup'; // Kembalikan ke pilihan Daftar Akun Baru
             renderApp();
         }
 
@@ -499,7 +499,7 @@
                         <!-- Form Tambah Kenangan Baru -->
                         <div class="bg-igGray border border-igBorder rounded-xl p-4 flex flex-col gap-3">
                             <h3 class="font-bold text-sm text-white flex items-center gap-2"><i class="fa-solid fa-circle-plus text-igBlue"></i> Tambah Kenangan Baru</h3>
-                            <p class="text-[10px] text-gray-400 leading-relaxed">Plengeran yang Anda tambahkan di bawah ini akan masuk ke timeline bersama dan dapat dilihat oleh semua teman Anda.</p>
+                            <p class="text-[10px] text-gray-400 leading-relaxed">Plengeran yang Anda tambahkan di bawah ini akan masuk ke timeline bersama and dapat dilihat oleh semua teman Anda.</p>
                             <form onsubmit="addNewMemory(event)" class="flex flex-col gap-3 mt-1">
                                 <div>
                                     <label class="block text-[11px] text-gray-400 mb-1 font-semibold">Tanggal Kenangan *</label>
@@ -1436,11 +1436,11 @@
         }
 
         window.onload = function() {
-            // Membaca atau menginisialisasi status database penyimpanan lokal
-            const hasInitializedBefore = localStorage.getItem('mem_initialized_v2');
+            // Membaca atau menginisialisasi status database penyimpanan lokal dengan versi segar (v3)
+            const hasInitializedBefore = localStorage.getItem('mem_initialized_v3_fresh');
             if (!hasInitializedBefore) {
                 localStorage.clear();
-                localStorage.setItem('mem_initialized_v2', 'true');
+                localStorage.setItem('mem_initialized_v3_fresh', 'true');
                 
                 // Ambil state kosong mutlak sebagai nilai awal pertama kali
                 accounts = INITIAL_ACCOUNTS;
@@ -1448,10 +1448,10 @@
                 chats = INITIAL_CHATS;
                 currentUserId = "";
                 isUserLoggedIn = false;
-                authMode = 'signup';
+                authMode = 'signup'; // Paksa pengguna untuk mendaftar akun baru
                 saveToStorage();
             } else {
-                // Jika sudah pernah dibuka/diinisialisasi, baca data yang tersimpan agar tidak hilang saat reload
+                // Jika sudah pernah daftar, baca data yang tersimpan agar tidak hilang saat reload
                 accounts = JSON.parse(localStorage.getItem('mem_accounts')) || INITIAL_ACCOUNTS;
                 memories = JSON.parse(localStorage.getItem('mem_items')) || INITIAL_MEMORIES;
                 chats = JSON.parse(localStorage.getItem('mem_chats')) || INITIAL_CHATS;
