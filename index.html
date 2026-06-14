@@ -79,8 +79,9 @@
             }
         }
 
-        // Bersihkan data lokal lama (Wipe out local cache untuk reset bersih versi stabil)
-        const HAS_RESET = 'plengergram_wipe_v12';
+        // --- PENGHAPUSAN DAN PENYEGARAN DATA TOTAL (CLEAN WIPE ON RE-LOAD) ---
+        // Dengan mengubah penanda key reset, cache lama di local storage otomatis terhapus bersih.
+        const HAS_RESET = 'plengergram_force_wipe_all_data_v100_final';
         if (!localStorage.getItem(HAS_RESET)) {
             localStorage.clear();
             localStorage.setItem(HAS_RESET, 'true');
