@@ -51,7 +51,7 @@
         let memories = JSON.parse(localStorage.getItem('mem_items')) || INITIAL_MEMORIES;
         let chats = JSON.parse(localStorage.getItem('mem_chats')) || INITIAL_CHATS;
         
-        // Sesi Pengguna Aktif diatur kosong agar harus mendaftar
+        // Sesi Pengguna Aktif diatur kosong agar harus mendaftar atau masuk
         let currentUserId = localStorage.getItem('mem_logged_in_id') || ""; 
         let activePage = 'home'; // 'home', 'messages', 'profile'
         let currentChatWithId = null;
@@ -73,7 +73,7 @@
             "Juli", "Agustus", "September", "Oktober", "November", "Desember"
         ];
 
-        // Simpan Data ke LocalStorage
+        // Simpan Data ke LocalStorage secara berkala agar tidak hilang
         function saveToStorage() {
             localStorage.setItem('mem_accounts', JSON.stringify(accounts));
             localStorage.setItem('mem_items', JSON.stringify(memories));
@@ -160,6 +160,7 @@
             return accounts.filter(a => a.followingIds && a.followingIds.includes(userId)).length;
         }
 
+        // Memeriksa status mengikuti target
         function isFollowingTarget(currentId, targetId) {
             const acc = accounts.find(a => a.id === currentId);
             return acc && acc.followingIds && acc.followingIds.includes(targetId);
@@ -214,7 +215,7 @@
             const username = document.getElementById('signup-username').value.trim().toLowerCase();
             const fullName = document.getElementById('signup-fullname').value.trim();
             const password = document.getElementById('signup-password').value;
-            const bio = document.getElementById('signup-bio').value.trim() || "Halo! Saya pengguna baru di MemoryGram.";
+            const bio = document.getElementById('signup-bio').value.trim() || "Halo! Saya pengguna baru di PlengerGram.";
 
             if (!username || !fullName || !password) {
                 showCustomToast("Semua kolom bertanda bintang (*) wajib diisi!");
@@ -246,7 +247,7 @@
             isUserLoggedIn = true;
             saveToStorage();
 
-            showCustomToast("Pendaftaran berhasil! Selamat datang di MemoryGram.");
+            showCustomToast("Pendaftaran berhasil! Selamat datang di PlengerGram.");
             navigateTo('home');
         }
 
@@ -255,7 +256,7 @@
             currentUserId = "";
             saveToStorage();
             showCustomToast("Anda telah keluar akun.");
-            authMode = 'signup'; // Kembalikan ke pendaftaran
+            authMode = 'login'; // Kembalikan ke pilihan Masuk Akun
             renderApp();
         }
 
@@ -278,7 +279,7 @@
                         <!-- Logo Header -->
                         <div class="py-4 px-2 flex items-center gap-2 cursor-pointer" onclick="navigateTo('home')">
                             <i class="fa-solid fa-calendar-heart text-3xl text-igBlue"></i>
-                            <span class="font-bold text-xl tracking-wide font-sans text-white">MemoryGram</span>
+                            <span class="font-bold text-xl tracking-wide font-sans text-white">PlengerGram</span>
                         </div>
                         <!-- Menu List -->
                         <nav class="flex flex-col gap-2">
@@ -341,7 +342,7 @@
         }
 
 
-        // --- BAR PINTASAN BARU (SHORTCUT DOCK BAR) UNTUK TIMELINE BERSAMA ---
+        // --- BAR PINTASAN TIMELINE (SHORTCUT DOCK BAR) UNTUK TIMELINE BERSAMA ---
 
         function renderShortcutBar() {
             if (!isShortcutBarOpen) return "";
@@ -460,7 +461,7 @@
                     <div class="w-full md:w-[420px] border-r border-igBorder flex flex-col bg-black h-full overflow-y-auto no-scrollbar p-4 md:p-6 gap-6">
                         <div class="md:hidden flex items-center justify-between border-b border-igBorder pb-3">
                             <span class="font-bold text-lg text-igBlue flex items-center gap-2">
-                                <i class="fa-solid fa-calendar-heart"></i> MemoryGram
+                                <i class="fa-solid fa-calendar-heart"></i> PlengerGram
                             </span>
                             <button onclick="handleLogout()" class="text-red-500 text-xs font-bold"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
                         </div>
@@ -536,7 +537,7 @@
 
                             <div class="flex flex-col gap-6">
                                 ${displayedMemories.length > 0 ? displayedMemories.map(m => {
-                                    const creator = accounts.find(a => a.id === m.userId) || { username: "anggota", fullName: "Anggota MemoryGram", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=anon" };
+                                    const creator = accounts.find(a => a.id === m.userId) || { username: "anggota", fullName: "Anggota PlengerGram", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=anon" };
                                     const isMyMemory = m.userId === currentUser.id;
 
                                     return `
@@ -1329,7 +1330,7 @@
                     <div class="flex-1 flex flex-col items-center justify-center p-6 h-screen w-full bg-black">
                         <div class="max-w-sm w-full bg-igGray border border-igBorder rounded-2xl p-8 shadow-2xl flex flex-col items-center text-center">
                             <i class="fa-solid fa-calendar-heart text-5xl text-igBlue mb-4"></i>
-                            <h1 class="font-bold text-2xl text-white mb-1">MemoryGram</h1>
+                            <h1 class="font-bold text-2xl text-white mb-1">PlengerGram</h1>
                             <p class="text-xs text-gray-500 mb-6">Kalender Plenger & Timeline Hidup Anda</p>
 
                             <form onsubmit="handleLogin(event)" class="w-full flex flex-col gap-4 text-left">
@@ -1435,12 +1436,13 @@
         }
 
         window.onload = function() {
-            // Bersihkan sisa-sisa localStorage lama agar langsung fresh dari state kosong default
+            // Membaca atau menginisialisasi status database penyimpanan lokal
             const hasInitializedBefore = localStorage.getItem('mem_initialized_v2');
             if (!hasInitializedBefore) {
                 localStorage.clear();
                 localStorage.setItem('mem_initialized_v2', 'true');
-                // Reload variabel lokal ke nilai kosong default
+                
+                // Ambil state kosong mutlak sebagai nilai awal pertama kali
                 accounts = INITIAL_ACCOUNTS;
                 memories = INITIAL_MEMORIES;
                 chats = INITIAL_CHATS;
@@ -1448,6 +1450,14 @@
                 isUserLoggedIn = false;
                 authMode = 'signup';
                 saveToStorage();
+            } else {
+                // Jika sudah pernah dibuka/diinisialisasi, baca data yang tersimpan agar tidak hilang saat reload
+                accounts = JSON.parse(localStorage.getItem('mem_accounts')) || INITIAL_ACCOUNTS;
+                memories = JSON.parse(localStorage.getItem('mem_items')) || INITIAL_MEMORIES;
+                chats = JSON.parse(localStorage.getItem('mem_chats')) || INITIAL_CHATS;
+                currentUserId = localStorage.getItem('mem_logged_in_id') || "";
+                isUserLoggedIn = localStorage.getItem('mem_is_logged_in') === 'true' && currentUserId !== "";
+                authMode = isUserLoggedIn ? 'login' : 'signup';
             }
             renderApp();
         }
