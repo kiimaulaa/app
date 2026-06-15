@@ -7,7 +7,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome untuk Icon -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link class="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -1190,6 +1190,11 @@
                 ? `<span onclick="showFirebaseConfigModal()" class="text-[9px] bg-green-500/20 text-green-500 font-bold px-2 py-0.5 rounded cursor-pointer">Bisa Chat Bersama (Cloud)</span>`
                 : `<span onclick="showFirebaseConfigModal()" class="text-[9px] bg-igBlue/20 text-igBlue font-bold px-2 py-0.5 rounded cursor-pointer">Realtime Instan Aktif (Simulasi Lokal)</span>`;
 
+            // MEMBUAT VARIABEL PEMBANTU UNTUK MENGHINDARI TEMPLATE LITERAL BERSARANG MENDALAM (BUG SYNTAX ERROR)
+            const emptyChatText = activeFriend.id === 'group_public' 
+                ? 'grup bersama!' 
+                : "dengan @" + activeFriend.username + ".";
+
             return `
                 <div class="flex-1 flex h-screen overflow-hidden pb-16 md:pb-0">
                     
@@ -1350,7 +1355,7 @@
                                     `;
                                 }).join('') : `
                                     <div class="text-center py-20 text-gray-500 text-xs font-sans">
-                                        Kirim pesan pertama untuk memulai obrolan ${activeFriend.id === 'group_public' ? 'grup bersama!' : `dengan @${activeFriend.username}.`}
+                                        Kirim pesan pertama untuk memulai obrolan ${emptyChatText}
                                     </div>
                                 `}
                             </div>
