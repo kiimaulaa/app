@@ -80,7 +80,7 @@
         }
 
         // --- PENGHAPUSAN DAN PENYEGARAN DATA TOTAL (CLEAN WIPE) ---
-        const HAS_RESET = 'plengergram_force_wipe_all_data_v120_instagram_social';
+        const HAS_RESET = 'plengergram_force_wipe_all_data_v130_realtime_optimized';
         if (!localStorage.getItem(HAS_RESET)) {
             localStorage.clear();
             localStorage.setItem(HAS_RESET, 'true');
@@ -119,6 +119,75 @@
             "Juli", "Agustus", "September", "Oktober", "November", "Desember"
         ];
 
+        // --- DATA SIMULASI UNTUK MODE OFFLINE/LOKAL ---
+        // Jika tidak terkoneksi ke Cloud Firebase, kami secara otomatis menyuntikkan beberapa akun
+        // simulasi agar aplikasi langsung terlihat hidup, ramai, dan interaktif!
+        function insertDemoDataIfNeeded() {
+            if (accounts.length === 0) {
+                accounts = [
+                    {
+                        id: 'demo_user_1',
+                        username: 'budi_petualang',
+                        fullName: 'Budi Santoso',
+                        password: '123',
+                        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=budi',
+                        bio: 'Pecinta kopi dan penikmat senja di pegunungan ☕🏔️',
+                        followingIds: [],
+                        isBot: false,
+                        lastActive: Date.now() - 10000 // Simulasi sedang online
+                    },
+                    {
+                        id: 'demo_user_2',
+                        username: 'siti_kuliner',
+                        fullName: 'Siti Rahma',
+                        password: '123',
+                        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=siti',
+                        bio: 'Menjelajahi dunia lewat rasa makanan manis 🍰✨',
+                        followingIds: [],
+                        isBot: false,
+                        lastActive: Date.now() - 300000 // Simulasi offline (5 menit lalu)
+                    },
+                    {
+                        id: 'demo_user_3',
+                        username: 'doni_skater',
+                        fullName: 'Doni Pratama',
+                        password: '123',
+                        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=doni',
+                        bio: 'Skate or die! Mari berteman baik 🛹🛹',
+                        followingIds: [],
+                        isBot: false,
+                        lastActive: Date.now() - 20000 // Simulasi sedang online
+                    }
+                ];
+                saveLocalData();
+            }
+
+            if (memories.length === 0) {
+                memories = [
+                    {
+                        id: 'demo_mem_1',
+                        userId: 'demo_user_1',
+                        date: '2026-06-15',
+                        title: 'Muncak Gunung Merbabu',
+                        image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
+                        description: 'Akhirnya setelah 6 jam perjalanan, bisa melihat pemandangan seindah ini bersama teman-teman seperjuangan!',
+                        likes: ['demo_user_2', 'demo_user_3'],
+                        comments: [
+                            {
+                                id: 'c1',
+                                userId: 'demo_user_2',
+                                username: 'siti_kuliner',
+                                avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=siti',
+                                text: 'Keren banget pemandangannya, Kak! Jadi pengen ke sana 😍',
+                                timestamp: Date.now()
+                            }
+                        ]
+                    }
+                ];
+                saveLocalData();
+            }
+        }
+
         // --- SYSTEM LOCAL FALLBACK UTILITIES ---
         function saveLocalData() {
             if (!useCloud) {
@@ -154,7 +223,7 @@
         function setupDataSync(user) {
             if (!user || !useCloud) return;
 
-            // 1. Sync Akun Pengguna (Tanpa Bot)
+            // 1. Sync Akun Pengguna (Saling terhubung antar-perangkat)
             onSnapshot(getPublicDataColRef('accounts'), (snapshot) => {
                 accounts = [];
                 snapshot.forEach(doc => {
@@ -185,7 +254,7 @@
                 renderApp();
             }, (err) => console.error("Error syncing memories:", err));
 
-            // 3. Sync Chat Obrolan Bersama
+            // 3. Sync Chat Obrolan Bersama (Private & Group)
             onSnapshot(getPublicDataColRef('chats'), (snapshot) => {
                 chats = {};
                 snapshot.forEach(doc => {
@@ -225,7 +294,7 @@
         function startTrackingActivity() {
             if (activityIntervalId) clearInterval(activityIntervalId);
             updateMyActivityTimestamp();
-            activityIntervalId = setInterval(updateMyActivityTimestamp, 30000); // Perbarui setiap 30 detik agar super responsif
+            activityIntervalId = setInterval(updateMyActivityTimestamp, 15000); // Perbarui setiap 15 detik agar sangat akurat
         }
 
         function stopTrackingActivity() {
@@ -562,7 +631,7 @@
                     <div class="border-t border-igBorder pt-4 flex flex-col gap-3">
                         <button onclick="toggleShortcutBar()" class="flex items-center justify-between w-full p-2.5 bg-igDarkBlue/25 hover:bg-igDarkBlue/50 text-igBlue text-xs font-bold rounded-lg transition border border-igBlue/30">
                             <span><i class="fa-solid fa-clock-rotate-left mr-1.5"></i> Pintasan Timeline</span>
-                            <i class="fa-solid ${isShortcutBarOpen ? 'fa-chevron-down' : 'fa-chevron-up'} text-[10px]"></i>
+                            <i class="fa-solid ${isShortcutBarOpen ? 'fa-chevron-down' : 'fa-chevron-up'} text-[10px]}"></i>
                         </button>
                         
                         <div class="flex items-center gap-3 px-2">
@@ -733,8 +802,11 @@
                             <!-- INSTAGRAM STORIES BAR: Semua Teman Terdaftar (Terutama yang Online) -->
                             <div class="bg-igGray border border-igBorder p-4 rounded-xl flex flex-col gap-2 shadow-lg">
                                 <h4 class="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center justify-between">
-                                    <span>Teman Online & Aktif</span>
-                                    <span class="text-green-500 flex items-center gap-1 text-[9px]"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span> ${onlineFriends.length} Aktif</span>
+                                    <span>Teman Aktif & Terdaftar</span>
+                                    <span class="text-green-500 flex items-center gap-1 text-[9px]">
+                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> 
+                                        ${onlineFriends.length} Sedang Online
+                                    </span>
                                 </h4>
                                 <div class="flex items-center gap-4 overflow-x-auto py-2 no-scrollbar">
                                     <!-- Stories diri sendiri -->
@@ -759,7 +831,9 @@
                                             </div>
                                         `;
                                     }).join('') : `
-                                        <p class="text-[10px] text-gray-500 italic py-2 px-1">Belum ada teman terdaftar</p>
+                                        <div class="text-[10px] text-gray-500 italic py-2 px-1 whitespace-nowrap">
+                                            Menunggu teman terdaftar...
+                                        </div>
                                     `}
                                 </div>
                             </div>
@@ -909,6 +983,13 @@
                                 </h4>
                                 <span class="text-[9px] bg-igBorder text-gray-400 px-2 py-0.5 rounded-full font-bold">${registeredUsers.length} Terdaftar</span>
                             </div>
+
+                            <!-- Indikasi Status Firebase / Offline Mode -->
+                            ${!useCloud ? `
+                                <div class="p-2 bg-yellow-500/10 border border-yellow-500/20 text-[10px] text-yellow-500 rounded-lg">
+                                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Mode Offline: Membuka data simulasi. Pengguna lain akan otomatis sinkron jika Firebase diaktifkan.
+                                </div>
+                            ` : ''}
                             
                             <div class="flex flex-col gap-3 max-h-[220px] overflow-y-auto no-scrollbar mt-1">
                                 ${registeredUsers.length > 0 ? registeredUsers.map(acc => {
@@ -928,7 +1009,7 @@
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-1.5">
-                                                <button onclick="toggleFollowUser('${acc.id}')" class="text-[9px] font-bold px-2 py-1 rounded bg-igBlue text-white hover:bg-blue-600">
+                                                <button onclick="toggleFollowUser('${acc.id}')" class="text-[9px] font-bold px-2.5 py-1 rounded bg-igBlue text-white hover:bg-blue-600 transition">
                                                     ${isFollowingTarget(currentUser.id, acc.id) ? 'Batal' : 'Ikuti'}
                                                 </button>
                                             </div>
@@ -1818,6 +1899,9 @@
                 accounts = JSON.parse(localStorage.getItem('pg_accounts')) || [];
                 memories = JSON.parse(localStorage.getItem('pg_memories')) || [];
                 chats = JSON.parse(localStorage.getItem('pg_chats')) || {};
+                
+                // Suntikkan beberapa akun dan postingan demo secara dinamis jika offline
+                insertDemoDataIfNeeded();
                 
                 const loggedInId = localStorage.getItem('pg_logged_in_id');
                 if (loggedInId && accounts.some(acc => acc.id === loggedInId)) {
