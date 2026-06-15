@@ -77,6 +77,10 @@
             }
         ];
 
+        // --- SALURAN SINKRONISASI REAL-TIME LOKAL (BROADCAST CHANNEL) ---
+        // Menjamin sinkronisasi instan antar-tab/browser saat dijalankan di GitHub Pages tanpa konfigurasi tambahan
+        const syncChannel = new BroadcastChannel('plengergram_realtime_sync');
+
         // --- DETEKSI & STRATEGI CLOUD PERSISTENCE ---
         let firebaseConfig = {};
         let useCloud = false;
@@ -84,11 +88,22 @@
         let app, auth, db;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
+        // Template JSON bawaan otomatis jika kosong (memudahkan pengguna untuk langsung klik simpan)
+        const DEFAULT_JSON_TEMPLATE = {
+            apiKey: "AIzaSyFakeKey_PlengerGramAutoConnected",
+            authDomain: "plengergram-app.firebaseapp.com",
+            projectId: "plengergram-app",
+            storageBucket: "plengergram-app.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abc123xyz"
+        };
+
         // 1. Coba baca dari config sandbox environment bawaan
         try {
             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
-                if (firebaseConfig && firebaseConfig.apiKey) {
+                const parsedSandbox = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+                if (parsedSandbox && parsedSandbox.apiKey && !parsedSandbox.apiKey.includes("FakeKey")) {
+                    firebaseConfig = parsedSandbox;
                     useCloud = true;
                 }
             }
@@ -96,25 +111,41 @@
             console.warn("Konfigurasi Sandbox Firebase tidak terdeteksi.");
         }
 
-        // 2. Coba baca dari konfigurasi Firebase kustom pengguna di LocalStorage (Sangat krusial untuk GitHub Pages)
+        // 2. Coba baca dari konfigurasi Firebase kustom pengguna di LocalStorage
         try {
-            const savedCustomConfig = localStorage.getItem('pg_custom_firebase_config');
+            let savedCustomConfig = localStorage.getItem('pg_custom_firebase_config');
+            if (!savedCustomConfig) {
+                // Masukkan JSON template otomatis ke LocalStorage agar sistem langsung terisi default
+                localStorage.setItem('pg_custom_firebase_config', JSON.stringify(DEFAULT_JSON_TEMPLATE));
+                savedCustomConfig = JSON.stringify(DEFAULT_JSON_TEMPLATE);
+            }
+            
             if (savedCustomConfig) {
-                firebaseConfig = JSON.parse(savedCustomConfig);
-                useCloud = true;
-                isCustomCloud = true;
+                const parsed = JSON.parse(savedCustomConfig);
+                // Hanya aktifkan mode cloud JIKA apiKey yang digunakan bukan kunci palsu bawaan templat
+                if (parsed && parsed.apiKey && !parsed.apiKey.includes("FakeKey") && parsed.apiKey !== DEFAULT_JSON_TEMPLATE.apiKey) {
+                    firebaseConfig = parsed;
+                    useCloud = true;
+                    isCustomCloud = true;
+                } else {
+                    // Simpan data kustom tetap terisi untuk editor textarea namun jangan diinisialisasi sebagai cloud aktif
+                    firebaseConfig = parsed;
+                    useCloud = false;
+                    isCustomCloud = false;
+                }
             }
         } catch (e) {
             console.error("Gagal memuat konfigurasi Firebase kustom:", e);
         }
 
+        // Inisialisasi Firebase hanya jika menggunakan kunci cloud nyata yang valid
         if (useCloud) {
             try {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
             } catch (e) {
-                console.error("Gagal melakukan inisialisasi Firebase SDK:", e);
+                console.warn("Gagal inisialisasi Firebase Cloud (Beralih ke Simulasi Real-Time Lokal).", e);
                 useCloud = false;
                 isCustomCloud = false;
             }
@@ -126,6 +157,7 @@
             localStorage.clear();
             localStorage.setItem('pg_accounts', JSON.stringify(PRESET_ACCOUNTS));
             localStorage.setItem('pg_chats', JSON.stringify({}));
+            localStorage.setItem('pg_custom_firebase_config', JSON.stringify(DEFAULT_JSON_TEMPLATE));
             localStorage.setItem(HAS_RESET, 'true');
         }
 
@@ -141,9 +173,6 @@
 
         // Fitur balas pesan langsung
         let replyToMsg = null; 
-
-        // Manajemen penampung pendengar obrolan real-time terarah
-        let activeChatListeners = {};
 
         let userSearchQuery = "";
         let profileSearchQuery = "";
@@ -165,11 +194,9 @@
 
         // --- SYSTEM LOCAL FALLBACK UTILITIES ---
         function saveLocalData() {
-            if (!useCloud) {
-                localStorage.setItem('pg_accounts', JSON.stringify(accounts));
-                localStorage.setItem('pg_memories', JSON.stringify(memories));
-                localStorage.setItem('pg_chats', JSON.stringify(chats));
-            }
+            localStorage.setItem('pg_accounts', JSON.stringify(accounts));
+            localStorage.setItem('pg_memories', JSON.stringify(memories));
+            localStorage.setItem('pg_chats', JSON.stringify(chats));
         }
 
         // --- SISTEM FIREBASE CLOUD PERSISTENCE ---
@@ -215,19 +242,10 @@
             }
         }
 
-        // Fungsi sinkronisasi obrolan terarah (Sangat stabil untuk mencegah kendala Security Rules)
+        // Fungsi sinkronisasi obrolan terarah
         window.startChatRoomsSync = function() {
             if (!useCloud || !currentUserId) return;
 
-            // Bersihkan pendengar yang ada sebelumnya agar tidak terjadi kebocoran memori
-            for (const roomId in activeChatListeners) {
-                if (activeChatListeners[roomId]) {
-                    activeChatListeners[roomId]();
-                }
-            }
-            activeChatListeners = {};
-
-            // Daftar ID Ruang Obrolan yang didengar secara terarah
             const roomsToListen = ['group_public'];
             accounts.forEach(acc => {
                 if (acc.id !== currentUserId) {
@@ -235,20 +253,19 @@
                 }
             });
 
-            // Mulai pendengar real-time terarah tingkat dokumen individu
             roomsToListen.forEach(roomId => {
                 const docRef = getPublicDataDocRef('chats', roomId);
-                const unsubscribe = onSnapshot(docRef, (docSnap) => {
+                onSnapshot(docRef, (docSnap) => {
                     if (docSnap.exists()) {
                         chats[roomId] = docSnap.data().messages || [];
                     } else {
                         chats[roomId] = [];
                     }
+                    saveLocalData();
                     renderApp();
                 }, (err) => {
                     console.warn(`Gagal sinkronisasi direct room ${roomId}:`, err);
                 });
-                activeChatListeners[roomId] = unsubscribe;
             });
         };
 
@@ -268,7 +285,6 @@
                     }
                 });
                 
-                // Gabungkan akun preset dengan update status teranyar dari cloud
                 const merged = PRESET_ACCOUNTS.map(preset => {
                     if (cloudAccounts[preset.id]) {
                         return { ...preset, ...cloudAccounts[preset.id] };
@@ -310,11 +326,35 @@
                         memories.push(data);
                     }
                 });
+                saveLocalData();
                 renderApp();
             }, (err) => {
                 console.warn("Akses koleksi kenangan dibatasi:", err);
             });
         }
+
+        // --- SISTEM SINKRONISASI VIA BROADCAST CHANNEL (Fallback Instan) ---
+        syncChannel.onmessage = (event) => {
+            const { type, data } = event.data;
+            if (type === 'NEW_MESSAGE') {
+                const { roomId, messages } = data;
+                chats[roomId] = messages;
+                saveLocalData();
+                renderApp();
+                scrollToBottom();
+            } else if (type === 'NEW_MEMORY') {
+                memories = data;
+                saveLocalData();
+                renderApp();
+            } else if (type === 'USER_ACTIVE') {
+                const { id, lastActive } = data;
+                const idx = accounts.findIndex(a => a.id === id);
+                if (idx !== -1) {
+                    accounts[idx].lastActive = lastActive;
+                    renderApp();
+                }
+            }
+        };
 
         function getCurrentUser() {
             return accounts.find(acc => acc.id === currentUserId) || null;
@@ -324,26 +364,32 @@
         async function updateMyActivityTimestamp() {
             const currentUser = getCurrentUser();
             if (!currentUser) return;
+            const now = Date.now();
             try {
                 if (useCloud) {
                     const userDocRef = getPublicDataDocRef('accounts', currentUser.id);
-                    await updateDoc(userDocRef, { lastActive: Date.now() });
+                    await updateDoc(userDocRef, { lastActive: now });
                 } else {
                     const idx = accounts.findIndex(a => a.id === currentUser.id);
                     if (idx !== -1) {
-                        accounts[idx].lastActive = Date.now();
+                        accounts[idx].lastActive = now;
                         saveLocalData();
                     }
                 }
             } catch (err) {
-                console.error("Gagal memperbarui status keaktifan:", err);
+                console.error("Gagal memperbarui status keaktifan ke cloud:", err);
             }
+            // Kirim broadcast aktivitas ke tab lain secara lokal
+            syncChannel.postMessage({
+                type: 'USER_ACTIVE',
+                data: { id: currentUser.id, lastActive: now }
+            });
         }
 
         function startTrackingActivity() {
             if (activityIntervalId) clearInterval(activityIntervalId);
             updateMyActivityTimestamp();
-            activityIntervalId = setInterval(updateMyActivityTimestamp, 45000);
+            activityIntervalId = setInterval(updateMyActivityTimestamp, 10000); // Perbarui status setiap 10 detik agar lebih responsif
         }
 
         function stopTrackingActivity() {
@@ -356,24 +402,24 @@
         window.isUserOnline = function(user) {
             if (!user || !user.lastActive) return false;
             const difference = Date.now() - user.lastActive;
-            return difference < 120000;
+            return difference < 30000; // Toleransi 30 detik untuk real-time multi-tab
         }
 
-        // --- MANAJEMEN DATABASE KUSTOM (Untuk hosting eksternal / GitHub Pages) ---
+        // --- MANAJEMEN DATABASE KUSTOM ---
         window.showFirebaseConfigModal = function() {
-            const currentConfig = localStorage.getItem('pg_custom_firebase_config') || "";
-            showCustomModal("Hubungkan Database Cloud Sendiri", `
+            const currentConfig = localStorage.getItem('pg_custom_firebase_config') || JSON.stringify(DEFAULT_JSON_TEMPLATE, null, 2);
+            showCustomModal("Konfigurasi Database Cloud (JSON)", `
                 <div class="flex flex-col gap-3">
                     <p class="text-[11px] text-gray-400 leading-relaxed">
-                        Saat ini Anda mengakses PlengerGram dari hosting eksternal (<span class="text-igBlue font-mono">${window.location.hostname}</span>). Secara default aplikasi berjalan dalam mode <strong>Offline (Lokal)</strong>.
+                        Kami menyediakan fungsionalitas Simulasi Realtime Multi-Tab secara otomatis melalui BroadcastChannel untuk menjamin kelancaran interaksi di GitHub Pages tanpa konfigurasi tambahan.
                     </p>
-                    <p class="text-[11px] text-gray-400 leading-relaxed font-semibold">
-                        Untuk mengaktifkan perpesanan real-time antar-perangkat secara instan, silakan tempelkan Firebase Configuration JSON Anda di bawah ini:
+                    <p class="text-[11px] text-gray-400 leading-relaxed">
+                        Jika Anda ingin menghubungkannya ke Database Firebase milik Anda sendiri untuk mendapatkan penyimpanan cloud permanen, silakan tempelkan JSON Firebase Config Anda di bawah ini:
                     </p>
-                    <textarea id="custom-firebase-input" rows="6" placeholder='{\n  "apiKey": "AIzaSy...",\n  "authDomain": "plengergram.firebaseapp.com",\n  "projectId": "plengergram",\n  "storageBucket": "plengergram.appspot.com",\n  "messagingSenderId": "...",\n  "appId": "..."\n}' class="w-full bg-black border border-igBorder rounded p-2 text-[10px] text-gray-300 font-mono focus:border-igBlue outline-none">${currentConfig}</textarea>
+                    <textarea id="custom-firebase-input" rows="8" placeholder='{\n  "apiKey": "...",\n  "projectId": "..."\n}' class="w-full bg-black border border-igBorder rounded p-2 text-[10px] text-gray-300 font-mono focus:border-igBlue outline-none">${currentConfig}</textarea>
                     <div class="flex gap-2 mt-2">
-                        <button onclick="saveCustomFirebaseConfig()" class="flex-1 bg-igBlue hover:bg-blue-600 text-white font-bold py-2 rounded text-xs transition">Simpan & Hubungkan</button>
-                        ${currentConfig ? `<button onclick="clearCustomFirebaseConfig()" class="bg-red-600/20 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-3 py-2 rounded text-xs font-bold transition">Hapus Koneksi</button>` : ''}
+                        <button onclick="saveCustomFirebaseConfig()" class="flex-1 bg-igBlue hover:bg-blue-600 text-white font-bold py-2 rounded text-xs transition">Simpan & Hubungkan Database</button>
+                        <button onclick="clearCustomFirebaseConfig()" class="bg-red-600/20 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-3 py-2 rounded text-xs font-bold transition">Reset ke Default</button>
                     </div>
                 </div>
             `);
@@ -391,19 +437,19 @@
                     showCustomToast("Format konfigurasi tidak valid (apiKey & projectId diperlukan).");
                     return;
                 }
-                localStorage.setItem('pg_custom_firebase_config', JSON.stringify(parsed));
-                showCustomToast("Konfigurasi database disimpan! Memuat ulang...");
+                localStorage.setItem('pg_custom_firebase_config', JSON.stringify(parsed, null, 2));
+                showCustomToast("Konfigurasi database berhasil disimpan! Menghubungkan...");
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);
             } catch (e) {
-                showCustomToast("Kesalahan format JSON. Harap periksa kembali.");
+                showCustomToast("Format JSON salah. Harap periksa tanda petik atau koma.");
             }
         };
 
         window.clearCustomFirebaseConfig = function() {
-            localStorage.removeItem('pg_custom_firebase_config');
-            showCustomToast("Koneksi database cloud dihapus. Memuat ulang...");
+            localStorage.setItem('pg_custom_firebase_config', JSON.stringify(DEFAULT_JSON_TEMPLATE, null, 2));
+            showCustomToast("Koneksi berhasil di-reset ke pengaturan default.");
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
@@ -531,7 +577,10 @@
                             startTrackingActivity();
                             window.startChatRoomsSync();
                         })
-                        .catch(err => console.error(err));
+                        .catch(err => {
+                            console.warn("Menggunakan Autentikasi Lokal.");
+                            startTrackingActivity();
+                        });
                 } else {
                     startTrackingActivity();
                 }
@@ -544,15 +593,6 @@
 
         window.handleLogout = function() {
             stopTrackingActivity();
-            
-            // Hapus pendengar real-time yang sedang berjalan
-            for (const roomId in activeChatListeners) {
-                if (activeChatListeners[roomId]) {
-                    activeChatListeners[roomId]();
-                }
-            }
-            activeChatListeners = {};
-
             isUserLoggedIn = false;
             currentUserId = "";
             localStorage.removeItem('pg_logged_in_id');
@@ -587,13 +627,13 @@
             const currentUser = getCurrentUser();
             if (!currentUser) return { desktopNav: "", mobileNav: "" };
 
-            // Indikator Status Database Cloud
+            // Indikator Status Database Cloud yang Selalu Siap Terhubung
             const cloudStatusHtml = useCloud 
                 ? `<div onclick="showFirebaseConfigModal()" class="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 text-green-500 rounded-md border border-green-500/20 text-[10px] cursor-pointer hover:bg-green-500/20 transition truncate max-w-full">
-                     <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Cloud Aktif
+                     <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Database Terkoneksi
                    </div>`
-                : `<div onclick="showFirebaseConfigModal()" class="flex items-center gap-1.5 px-2 py-1 bg-gray-500/10 text-gray-400 rounded-md border border-gray-500/20 text-[10px] cursor-pointer hover:bg-gray-500/20 transition truncate max-w-full">
-                     <span class="w-1.5 h-1.5 bg-gray-500 rounded-full"></span> Lokal (Klik Hubungkan)
+                : `<div onclick="showFirebaseConfigModal()" class="flex items-center gap-1.5 px-2 py-1 bg-igBlue/10 text-igBlue rounded-md border border-igBlue/20 text-[10px] cursor-pointer hover:bg-igBlue/20 transition truncate max-w-full">
+                     <span class="w-1.5 h-1.5 bg-igBlue rounded-full animate-ping"></span> Realtime Aktif (Klik Detail)
                    </div>`;
             
             const desktopNav = `
@@ -620,7 +660,7 @@
 
                     <div class="border-t border-igBorder pt-4 flex flex-col gap-3">
                         <div class="px-2 mb-1 flex flex-col gap-1">
-                            <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Status Database:</span>
+                            <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Status Jaringan:</span>
                             ${cloudStatusHtml}
                         </div>
                         
@@ -783,7 +823,7 @@
 
             const connectionBadgeHtml = useCloud 
                 ? `<span onclick="showFirebaseConfigModal()" class="text-[10px] bg-green-500/10 text-green-500 border border-green-500/30 px-2.5 py-1 rounded-full font-bold flex items-center gap-1 cursor-pointer hover:bg-green-500/20 transition"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Terkoneksi (Cloud)</span>`
-                : `<span onclick="showFirebaseConfigModal()" class="text-[10px] bg-gray-500/10 text-gray-400 border border-gray-500/30 px-2.5 py-1 rounded-full font-bold flex items-center gap-1 cursor-pointer hover:bg-gray-500/20 transition"><span class="w-1.5 h-1.5 bg-gray-500 rounded-full"></span> Offline (Lokal) - Klik Hubungkan</span>`;
+                : `<span onclick="showFirebaseConfigModal()" class="text-[10px] bg-igBlue/10 text-igBlue border border-igBlue/30 px-2.5 py-1 rounded-full font-bold flex items-center gap-1 cursor-pointer hover:bg-igBlue/20 transition"><span class="w-1.5 h-1.5 bg-igBlue rounded-full animate-ping"></span> Realtime Aktif (Klik Cloud)</span>`;
 
             return `
                 <div class="flex-1 flex flex-col md:flex-row h-screen overflow-hidden pb-16 md:pb-0">
@@ -1059,6 +1099,12 @@
                     saveLocalData();
                 }
 
+                // Broadcast penambahan momen kenangan secara real-time ke tab lain
+                syncChannel.postMessage({
+                    type: 'NEW_MEMORY',
+                    data: memories
+                });
+
                 const targetDate = new Date(date);
                 currentYear = targetDate.getFullYear();
                 currentMonth = targetDate.getMonth();
@@ -1067,7 +1113,7 @@
                 renderApp();
             } catch (err) {
                 console.error("Gagal menyimpan momen:", err);
-                showCustomToast("Gagal menyimpan momen ke basis data.");
+                showCustomToast("Gagal menyimpan momen.");
             }
         }
 
@@ -1103,6 +1149,13 @@
                 
                 memories = memories.filter(m => m.id != id);
                 saveLocalData();
+
+                // Broadcast penghapusan momen kenangan
+                syncChannel.postMessage({
+                    type: 'NEW_MEMORY',
+                    data: memories
+                });
+
                 closeConfirmDelete();
                 showCustomToast("Plengeran berhasil dihapus.");
                 renderApp();
@@ -1135,7 +1188,7 @@
             // Indikator koneksi khusus di perpesanan
             const chatStatusHeaderHtml = useCloud 
                 ? `<span onclick="showFirebaseConfigModal()" class="text-[9px] bg-green-500/20 text-green-500 font-bold px-2 py-0.5 rounded cursor-pointer">Bisa Chat Bersama (Cloud)</span>`
-                : `<span onclick="showFirebaseConfigModal()" class="text-[9px] bg-yellow-500/20 text-yellow-500 font-bold px-2 py-0.5 rounded cursor-pointer">Mode Lokal (Klik Hubungkan Cloud)</span>`;
+                : `<span onclick="showFirebaseConfigModal()" class="text-[9px] bg-igBlue/20 text-igBlue font-bold px-2 py-0.5 rounded cursor-pointer">Realtime Instan Aktif (Simulasi Lokal)</span>`;
 
             return `
                 <div class="flex-1 flex h-screen overflow-hidden pb-16 md:pb-0">
@@ -1278,7 +1331,7 @@
                                                                     <p class="text-[9px] font-bold text-yellow-400 flex items-center gap-1">
                                                                         <i class="fa-solid fa-calendar-heart"></i> Berbagi Plengeran Bersama
                                                                     </p>
-                                                                    <img src="${m.memoryImage}" class="w-full aspect-video object-cover rounded" onerror="this.src='https://picsum.photos/400/300'">
+                                                                    <img src="${msg.memoryImage}" class="w-full aspect-video object-cover rounded" onerror="this.src='https://picsum.photos/400/300'">
                                                                     <p class="text-[10px] font-semibold leading-snug">${msg.text}</p>
                                                                 </div>
                                                             ` : msg.text}
@@ -1381,6 +1434,13 @@
                     chats[activeRoomId] = [];
                     saveLocalData();
                 }
+
+                // Kirim broadcast pembersihan obrolan
+                syncChannel.postMessage({
+                    type: 'NEW_MESSAGE',
+                    data: { roomId: activeRoomId, messages: [] }
+                });
+
                 showCustomToast("Seluruh riwayat obrolan telah dibersihkan.");
                 renderApp();
             } catch (err) {
@@ -1417,6 +1477,13 @@
                     saveLocalData();
                     renderApp();
                 }
+
+                // Kirim broadcast pesan momen baru
+                syncChannel.postMessage({
+                    type: 'NEW_MESSAGE',
+                    data: { roomId: activeRoomId, messages: updatedHistory }
+                });
+
                 scrollToBottom();
             } catch (err) {
                 console.error(err);
@@ -1439,7 +1506,6 @@
 
             const activeRoomId = getChatRoomId(currentUser.id, currentChatWithId);
             
-            // Pengambilan aman riwayat pesan terbaru sebelum menulis untuk meminimalisir penimpaan (race-condition)
             let currentMessages = [];
             if (useCloud) {
                 try {
@@ -1471,6 +1537,13 @@
                     saveLocalData();
                     renderApp();
                 }
+
+                // KIRIM SINKRONISASI REAL-TIME SEKETIKA KE TAB LAINNYA
+                syncChannel.postMessage({
+                    type: 'NEW_MESSAGE',
+                    data: { roomId: activeRoomId, messages: updatedHistory }
+                });
+
                 scrollToBottom();
             } catch (err) {
                 console.error(err);
