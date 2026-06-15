@@ -80,9 +80,11 @@
         // --- DETEKSI & STRATEGI CLOUD PERSISTENCE ---
         let firebaseConfig = {};
         let useCloud = false;
+        let isCustomCloud = false;
         let app, auth, db;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
+        // 1. Coba baca dari config sandbox environment bawaan
         try {
             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                 firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
@@ -91,7 +93,19 @@
                 }
             }
         } catch (e) {
-            console.warn("Konfigurasi Firebase belum terpasang atau tidak valid. Menggunakan penyimpanan Lokal.", e);
+            console.warn("Konfigurasi Sandbox Firebase tidak terdeteksi.");
+        }
+
+        // 2. Coba baca dari konfigurasi Firebase kustom pengguna di LocalStorage (Sangat krusial untuk GitHub Pages)
+        try {
+            const savedCustomConfig = localStorage.getItem('pg_custom_firebase_config');
+            if (savedCustomConfig) {
+                firebaseConfig = JSON.parse(savedCustomConfig);
+                useCloud = true;
+                isCustomCloud = true;
+            }
+        } catch (e) {
+            console.error("Gagal memuat konfigurasi Firebase kustom:", e);
         }
 
         if (useCloud) {
@@ -102,11 +116,12 @@
             } catch (e) {
                 console.error("Gagal melakukan inisialisasi Firebase SDK:", e);
                 useCloud = false;
+                isCustomCloud = false;
             }
         }
 
         // --- PENYEGARAN DATA TOTAL ---
-        const HAS_RESET = 'plengergram_wipe_v150_realtime_dm_clean';
+        const HAS_RESET = 'plengergram_wipe_v160_realtime_dm_clean';
         if (!localStorage.getItem(HAS_RESET)) {
             localStorage.clear();
             localStorage.setItem('pg_accounts', JSON.stringify(PRESET_ACCOUNTS));
@@ -126,6 +141,9 @@
 
         // Fitur balas pesan langsung
         let replyToMsg = null; 
+
+        // Manajemen penampung pendengar obrolan real-time terarah
+        let activeChatListeners = {};
 
         let userSearchQuery = "";
         let profileSearchQuery = "";
@@ -166,14 +184,19 @@
         async function authenticateUser() {
             if (!useCloud) return;
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token && !isCustomCloud) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
             } catch (err) {
                 console.error("Auth error:", err);
-                useCloud = false;
+                try {
+                    await signInAnonymously(auth);
+                } catch (e) {
+                    console.error("Fallback anonymous auth error:", e);
+                    useCloud = false;
+                }
             }
         }
 
@@ -192,10 +215,48 @@
             }
         }
 
+        // Fungsi sinkronisasi obrolan terarah (Sangat stabil untuk mencegah kendala Security Rules)
+        window.startChatRoomsSync = function() {
+            if (!useCloud || !currentUserId) return;
+
+            // Bersihkan pendengar yang ada sebelumnya agar tidak terjadi kebocoran memori
+            for (const roomId in activeChatListeners) {
+                if (activeChatListeners[roomId]) {
+                    activeChatListeners[roomId]();
+                }
+            }
+            activeChatListeners = {};
+
+            // Daftar ID Ruang Obrolan yang didengar secara terarah
+            const roomsToListen = ['group_public'];
+            accounts.forEach(acc => {
+                if (acc.id !== currentUserId) {
+                    roomsToListen.push(getChatRoomId(currentUserId, acc.id));
+                }
+            });
+
+            // Mulai pendengar real-time terarah tingkat dokumen individu
+            roomsToListen.forEach(roomId => {
+                const docRef = getPublicDataDocRef('chats', roomId);
+                const unsubscribe = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        chats[roomId] = docSnap.data().messages || [];
+                    } else {
+                        chats[roomId] = [];
+                    }
+                    renderApp();
+                }, (err) => {
+                    console.warn(`Gagal sinkronisasi direct room ${roomId}:`, err);
+                });
+                activeChatListeners[roomId] = unsubscribe;
+            });
+        };
+
         function setupDataSync(user) {
             if (!user || !useCloud) return;
 
             syncPresetAccountsToCloud();
+            window.startChatRoomsSync();
 
             // 1. Sync Akun Pengguna
             onSnapshot(getPublicDataColRef('accounts'), (snapshot) => {
@@ -215,7 +276,6 @@
                     return preset;
                 });
 
-                // Tambahkan jika ada akun baru di cloud yang bukan preset
                 const presetIds = PRESET_ACCOUNTS.map(p => p.id);
                 Object.values(cloudAccounts).forEach(cloudAcc => {
                     if (!presetIds.includes(cloudAcc.id)) {
@@ -232,10 +292,12 @@
                     startTrackingActivity();
                 }
 
+                window.startChatRoomsSync();
                 renderApp();
             }, (err) => {
-                console.warn("Gagal menyelaraskan koleksi akun (menggunakan preset lokal):", err);
+                console.warn("Membaca koleksi akun cloud dibatasi (Menggunakan fallback preset):", err);
                 accounts = [...PRESET_ACCOUNTS];
+                window.startChatRoomsSync();
                 renderApp();
             });
 
@@ -249,19 +311,8 @@
                     }
                 });
                 renderApp();
-            }, (err) => console.error("Error syncing memories:", err));
-
-            // 3. Sync Seluruh Chat (Grup & DM) Secara Global dan Real-time
-            onSnapshot(getPublicDataColRef('chats'), (snapshot) => {
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data) {
-                        chats[doc.id] = data.messages || [];
-                    }
-                });
-                renderApp();
             }, (err) => {
-                console.error("Gagal menyelaraskan koleksi obrolan:", err);
+                console.warn("Akses koleksi kenangan dibatasi:", err);
             });
         }
 
@@ -307,6 +358,56 @@
             const difference = Date.now() - user.lastActive;
             return difference < 120000;
         }
+
+        // --- MANAJEMEN DATABASE KUSTOM (Untuk hosting eksternal / GitHub Pages) ---
+        window.showFirebaseConfigModal = function() {
+            const currentConfig = localStorage.getItem('pg_custom_firebase_config') || "";
+            showCustomModal("Hubungkan Database Cloud Sendiri", `
+                <div class="flex flex-col gap-3">
+                    <p class="text-[11px] text-gray-400 leading-relaxed">
+                        Saat ini Anda mengakses PlengerGram dari hosting eksternal (<span class="text-igBlue font-mono">${window.location.hostname}</span>). Secara default aplikasi berjalan dalam mode <strong>Offline (Lokal)</strong>.
+                    </p>
+                    <p class="text-[11px] text-gray-400 leading-relaxed font-semibold">
+                        Untuk mengaktifkan perpesanan real-time antar-perangkat secara instan, silakan tempelkan Firebase Configuration JSON Anda di bawah ini:
+                    </p>
+                    <textarea id="custom-firebase-input" rows="6" placeholder='{\n  "apiKey": "AIzaSy...",\n  "authDomain": "plengergram.firebaseapp.com",\n  "projectId": "plengergram",\n  "storageBucket": "plengergram.appspot.com",\n  "messagingSenderId": "...",\n  "appId": "..."\n}' class="w-full bg-black border border-igBorder rounded p-2 text-[10px] text-gray-300 font-mono focus:border-igBlue outline-none">${currentConfig}</textarea>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="saveCustomFirebaseConfig()" class="flex-1 bg-igBlue hover:bg-blue-600 text-white font-bold py-2 rounded text-xs transition">Simpan & Hubungkan</button>
+                        ${currentConfig ? `<button onclick="clearCustomFirebaseConfig()" class="bg-red-600/20 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-3 py-2 rounded text-xs font-bold transition">Hapus Koneksi</button>` : ''}
+                    </div>
+                </div>
+            `);
+        };
+
+        window.saveCustomFirebaseConfig = function() {
+            const inputVal = document.getElementById('custom-firebase-input').value.trim();
+            if (!inputVal) {
+                showCustomToast("Silakan masukkan konfigurasi JSON terlebih dahulu.");
+                return;
+            }
+            try {
+                const parsed = JSON.parse(inputVal);
+                if (!parsed.apiKey || !parsed.projectId) {
+                    showCustomToast("Format konfigurasi tidak valid (apiKey & projectId diperlukan).");
+                    return;
+                }
+                localStorage.setItem('pg_custom_firebase_config', JSON.stringify(parsed));
+                showCustomToast("Konfigurasi database disimpan! Memuat ulang...");
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } catch (e) {
+                showCustomToast("Kesalahan format JSON. Harap periksa kembali.");
+            }
+        };
+
+        window.clearCustomFirebaseConfig = function() {
+            localStorage.removeItem('pg_custom_firebase_config');
+            showCustomToast("Koneksi database cloud dihapus. Memuat ulang...");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        };
 
         // --- SISTEM NAVIGASI ---
         window.navigateTo = function(page, targetId = null) {
@@ -428,6 +529,7 @@
                     setDoc(getPublicDataDocRef('accounts', user.id), user)
                         .then(() => {
                             startTrackingActivity();
+                            window.startChatRoomsSync();
                         })
                         .catch(err => console.error(err));
                 } else {
@@ -443,6 +545,14 @@
         window.handleLogout = function() {
             stopTrackingActivity();
             
+            // Hapus pendengar real-time yang sedang berjalan
+            for (const roomId in activeChatListeners) {
+                if (activeChatListeners[roomId]) {
+                    activeChatListeners[roomId]();
+                }
+            }
+            activeChatListeners = {};
+
             isUserLoggedIn = false;
             currentUserId = "";
             localStorage.removeItem('pg_logged_in_id');
@@ -476,13 +586,24 @@
         function renderNavigation() {
             const currentUser = getCurrentUser();
             if (!currentUser) return { desktopNav: "", mobileNav: "" };
+
+            // Indikator Status Database Cloud
+            const cloudStatusHtml = useCloud 
+                ? `<div onclick="showFirebaseConfigModal()" class="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 text-green-500 rounded-md border border-green-500/20 text-[10px] cursor-pointer hover:bg-green-500/20 transition truncate max-w-full">
+                     <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Cloud Aktif
+                   </div>`
+                : `<div onclick="showFirebaseConfigModal()" class="flex items-center gap-1.5 px-2 py-1 bg-gray-500/10 text-gray-400 rounded-md border border-gray-500/20 text-[10px] cursor-pointer hover:bg-gray-500/20 transition truncate max-w-full">
+                     <span class="w-1.5 h-1.5 bg-gray-500 rounded-full"></span> Lokal (Klik Hubungkan)
+                   </div>`;
             
             const desktopNav = `
                 <div class="hidden md:flex flex-col justify-between w-64 h-screen border-r border-igBorder p-5 bg-black sticky top-0 z-20">
                     <div class="flex flex-col gap-6">
-                        <div class="py-4 px-2 flex items-center gap-2 cursor-pointer" onclick="navigateTo('home')">
-                            <i class="fa-solid fa-calendar-heart text-3xl text-igBlue"></i>
-                            <span class="font-bold text-xl tracking-wide font-sans text-white">PlengerGram</span>
+                        <div class="py-4 px-2 flex items-center justify-between gap-2 cursor-pointer" onclick="navigateTo('home')">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-heart text-3xl text-igBlue"></i>
+                                <span class="font-bold text-xl tracking-wide font-sans text-white">PlengerGram</span>
+                            </div>
                         </div>
                         <nav class="flex flex-col gap-2">
                             <button onclick="navigateTo('home')" class="flex items-center gap-4 p-3 hover:bg-igHover rounded-lg transition text-left ${activePage === 'home' ? 'font-bold bg-igHover text-igBlue' : ''}">
@@ -498,6 +619,11 @@
                     </div>
 
                     <div class="border-t border-igBorder pt-4 flex flex-col gap-3">
+                        <div class="px-2 mb-1 flex flex-col gap-1">
+                            <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Status Database:</span>
+                            ${cloudStatusHtml}
+                        </div>
+                        
                         <button onclick="toggleShortcutBar()" class="flex items-center justify-between w-full p-2.5 bg-igDarkBlue/25 hover:bg-igDarkBlue/50 text-igBlue text-xs font-bold rounded-lg transition border border-igBlue/30">
                             <span><i class="fa-solid fa-clock-rotate-left mr-1.5"></i> Pintasan Timeline</span>
                             <i class="fa-solid ${isShortcutBarOpen ? 'fa-chevron-down' : 'fa-chevron-up'} text-[10px]"></i>
@@ -655,6 +781,10 @@
 
             const onlineFriends = accounts.filter(a => a.id !== currentUser.id && isUserOnline(a));
 
+            const connectionBadgeHtml = useCloud 
+                ? `<span onclick="showFirebaseConfigModal()" class="text-[10px] bg-green-500/10 text-green-500 border border-green-500/30 px-2.5 py-1 rounded-full font-bold flex items-center gap-1 cursor-pointer hover:bg-green-500/20 transition"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Terkoneksi (Cloud)</span>`
+                : `<span onclick="showFirebaseConfigModal()" class="text-[10px] bg-gray-500/10 text-gray-400 border border-gray-500/30 px-2.5 py-1 rounded-full font-bold flex items-center gap-1 cursor-pointer hover:bg-gray-500/20 transition"><span class="w-1.5 h-1.5 bg-gray-500 rounded-full"></span> Offline (Lokal) - Klik Hubungkan</span>`;
+
             return `
                 <div class="flex-1 flex flex-col md:flex-row h-screen overflow-hidden pb-16 md:pb-0">
                     <div class="w-full md:w-[420px] border-r border-igBorder flex flex-col bg-black h-full overflow-y-auto no-scrollbar p-4 md:p-6 gap-6">
@@ -676,9 +806,7 @@
                                     <p class="font-bold text-sm text-white">@${currentUser.username}</p>
                                 </div>
                             </div>
-                            <span class="text-[10px] bg-green-500/10 text-green-500 border border-green-500/30 px-2.5 py-1 rounded-full font-bold flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Terkoneksi
-                            </span>
+                            ${connectionBadgeHtml}
                         </div>
 
                         <div class="bg-igGray border border-igBorder rounded-xl p-4 flex flex-col gap-3">
@@ -1004,6 +1132,11 @@
             const activeRoomId = activeFriend ? getChatRoomId(currentUser.id, activeFriend.id) : null;
             const chatHistory = activeRoomId ? (chats[activeRoomId] || []) : [];
 
+            // Indikator koneksi khusus di perpesanan
+            const chatStatusHeaderHtml = useCloud 
+                ? `<span onclick="showFirebaseConfigModal()" class="text-[9px] bg-green-500/20 text-green-500 font-bold px-2 py-0.5 rounded cursor-pointer">Bisa Chat Bersama (Cloud)</span>`
+                : `<span onclick="showFirebaseConfigModal()" class="text-[9px] bg-yellow-500/20 text-yellow-500 font-bold px-2 py-0.5 rounded cursor-pointer">Mode Lokal (Klik Hubungkan Cloud)</span>`;
+
             return `
                 <div class="flex-1 flex h-screen overflow-hidden pb-16 md:pb-0">
                     
@@ -1108,9 +1241,7 @@
                                                 <button onclick="toggleFollowUser('${activeFriend.id}')" class="text-[9px] font-bold px-2 py-0.5 rounded-md ${isFollowingTarget(currentUser.id, activeFriend.id) ? 'bg-igBorder text-gray-300' : 'bg-igBlue text-white'}">
                                                     ${isFollowingTarget(currentUser.id, activeFriend.id) ? 'Diikuti' : 'Ikuti'}
                                                 </button>
-                                            ` : `
-                                                <span class="text-[9px] bg-igBlue/20 text-igBlue font-bold px-2 py-0.5 rounded">Bisa Chat Bersama</span>
-                                            `}
+                                            ` : chatStatusHeaderHtml}
                                         </div>
                                         <p class="text-[10px] text-gray-500">@${activeFriend.username}</p>
                                     </div>
@@ -1147,7 +1278,7 @@
                                                                     <p class="text-[9px] font-bold text-yellow-400 flex items-center gap-1">
                                                                         <i class="fa-solid fa-calendar-heart"></i> Berbagi Plengeran Bersama
                                                                     </p>
-                                                                    <img src="${msg.memoryImage}" class="w-full aspect-video object-cover rounded" onerror="this.src='https://picsum.photos/400/300'">
+                                                                    <img src="${m.memoryImage}" class="w-full aspect-video object-cover rounded" onerror="this.src='https://picsum.photos/400/300'">
                                                                     <p class="text-[10px] font-semibold leading-snug">${msg.text}</p>
                                                                 </div>
                                                             ` : msg.text}
@@ -1165,7 +1296,7 @@
                                         </div>
                                     `;
                                 }).join('') : `
-                                    <div class="text-center py-20 text-gray-500 text-xs">
+                                    <div class="text-center py-20 text-gray-500 text-xs font-sans">
                                         Kirim pesan pertama untuk memulai obrolan ${activeFriend.id === 'group_public' ? 'grup bersama!' : `dengan @${activeFriend.username}.`}
                                     </div>
                                 `}
@@ -1307,9 +1438,23 @@
             const timeStr = `${now.getHours().toString().padStart(2, '0')}.${now.getMinutes().toString().padStart(2, '0')}`;
 
             const activeRoomId = getChatRoomId(currentUser.id, currentChatWithId);
-            const activeHistory = chats[activeRoomId] || [];
             
-            const updatedHistory = [...activeHistory, {
+            // Pengambilan aman riwayat pesan terbaru sebelum menulis untuk meminimalisir penimpaan (race-condition)
+            let currentMessages = [];
+            if (useCloud) {
+                try {
+                    const docSnap = await getDoc(getPublicDataDocRef('chats', activeRoomId));
+                    if (docSnap.exists()) {
+                        currentMessages = docSnap.data().messages || [];
+                    }
+                } catch (e) {
+                    currentMessages = chats[activeRoomId] || [];
+                }
+            } else {
+                currentMessages = chats[activeRoomId] || [];
+            }
+            
+            const updatedHistory = [...currentMessages, {
                 sender: currentUser.id,
                 text: text,
                 time: timeStr,
