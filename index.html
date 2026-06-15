@@ -80,7 +80,7 @@
         }
 
         // --- PENGHAPUSAN DAN PENYEGARAN DATA TOTAL (CLEAN WIPE) ---
-        const HAS_RESET = 'plengergram_force_wipe_all_data_v130_realtime_optimized';
+        const HAS_RESET = 'plengergram_force_wipe_all_data_v140_clean_slate';
         if (!localStorage.getItem(HAS_RESET)) {
             localStorage.clear();
             localStorage.setItem(HAS_RESET, 'true');
@@ -118,75 +118,6 @@
             "Januari", "Februari", "Maret", "April", "Mei", "Juni",
             "Juli", "Agustus", "September", "Oktober", "November", "Desember"
         ];
-
-        // --- DATA SIMULASI UNTUK MODE OFFLINE/LOKAL ---
-        // Jika tidak terkoneksi ke Cloud Firebase, kami secara otomatis menyuntikkan beberapa akun
-        // simulasi agar aplikasi langsung terlihat hidup, ramai, dan interaktif!
-        function insertDemoDataIfNeeded() {
-            if (accounts.length === 0) {
-                accounts = [
-                    {
-                        id: 'demo_user_1',
-                        username: 'budi_petualang',
-                        fullName: 'Budi Santoso',
-                        password: '123',
-                        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=budi',
-                        bio: 'Pecinta kopi dan penikmat senja di pegunungan ☕🏔️',
-                        followingIds: [],
-                        isBot: false,
-                        lastActive: Date.now() - 10000 // Simulasi sedang online
-                    },
-                    {
-                        id: 'demo_user_2',
-                        username: 'siti_kuliner',
-                        fullName: 'Siti Rahma',
-                        password: '123',
-                        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=siti',
-                        bio: 'Menjelajahi dunia lewat rasa makanan manis 🍰✨',
-                        followingIds: [],
-                        isBot: false,
-                        lastActive: Date.now() - 300000 // Simulasi offline (5 menit lalu)
-                    },
-                    {
-                        id: 'demo_user_3',
-                        username: 'doni_skater',
-                        fullName: 'Doni Pratama',
-                        password: '123',
-                        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=doni',
-                        bio: 'Skate or die! Mari berteman baik 🛹🛹',
-                        followingIds: [],
-                        isBot: false,
-                        lastActive: Date.now() - 20000 // Simulasi sedang online
-                    }
-                ];
-                saveLocalData();
-            }
-
-            if (memories.length === 0) {
-                memories = [
-                    {
-                        id: 'demo_mem_1',
-                        userId: 'demo_user_1',
-                        date: '2026-06-15',
-                        title: 'Muncak Gunung Merbabu',
-                        image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
-                        description: 'Akhirnya setelah 6 jam perjalanan, bisa melihat pemandangan seindah ini bersama teman-teman seperjuangan!',
-                        likes: ['demo_user_2', 'demo_user_3'],
-                        comments: [
-                            {
-                                id: 'c1',
-                                userId: 'demo_user_2',
-                                username: 'siti_kuliner',
-                                avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=siti',
-                                text: 'Keren banget pemandangannya, Kak! Jadi pengen ke sana 😍',
-                                timestamp: Date.now()
-                            }
-                        ]
-                    }
-                ];
-                saveLocalData();
-            }
-        }
 
         // --- SYSTEM LOCAL FALLBACK UTILITIES ---
         function saveLocalData() {
@@ -309,6 +240,23 @@
             if (!user || !user.lastActive) return false;
             const difference = Date.now() - user.lastActive;
             return difference < 120000; // 120,000 ms = 2 menit
+        }
+
+        // --- SALIN TAUTAN BAGIKAN ---
+        window.copyShareLink = function() {
+            // Membuat input sementara untuk menyalin teks karena keterbatasan iframe
+            const tempInput = document.createElement("input");
+            tempInput.value = window.location.href;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand("copy");
+                showCustomToast("Tautan web berhasil disalin! Kirimkan ke temanmu 🚀");
+            } catch (err) {
+                console.error("Gagal menyalin tautan:", err);
+                showCustomToast("Silakan salin alamat URL di browser Anda secara manual.");
+            }
+            document.body.removeChild(tempInput);
         }
 
         // --- SISTEM INTERAKSI INSTAGRAM (LIKES & COMMENTS) ---
@@ -469,10 +417,10 @@
             let updatedFollowing = [];
             if (isFollowing) {
                 updatedFollowing = currentUser.followingIds.filter(id => id !== targetId);
-                showCustomToast(`Anda berhenti mengikuti @${targetAcc.username}`);
+                showCustomToast("Batal mengikuti @" + targetAcc.username);
             } else {
                 updatedFollowing = [...currentUser.followingIds, targetId];
-                showCustomToast(`Anda sekarang mengikuti @${targetAcc.username}!`);
+                showCustomToast("Kamu mengikuti @" + targetAcc.username + "! ✨");
             }
 
             try {
@@ -517,7 +465,7 @@
             const bio = document.getElementById('signup-bio').value.trim() || "Halo! Saya pengguna baru di PlengerGram.";
 
             if (!username || !fullName || !password) {
-                showCustomToast("Semua kolom bertanda bintang (*) wajib diisi!");
+                showCustomToast("Semua kolom wajib diisi!");
                 return;
             }
 
@@ -799,12 +747,25 @@
                     <div class="flex-1 overflow-y-auto no-scrollbar p-4 md:p-6 bg-black flex flex-col items-center">
                         <div class="max-w-xl w-full flex flex-col gap-6">
                             
+                            <!-- UNDANG TEMAN BANNER (Sangat membantu jika teman belum ada!) -->
+                            <div class="bg-gradient-to-r from-igDarkBlue/40 to-igBlue/20 border border-igBlue/30 p-4 rounded-xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div class="text-center sm:text-left">
+                                    <h4 class="text-xs font-bold text-white flex items-center gap-1.5 justify-center sm:justify-start">
+                                        <i class="fa-solid fa-user-plus text-igBlue"></i> Belum ada teman terdaftar?
+                                    </h4>
+                                    <p class="text-[10px] text-gray-400 mt-1">Kirimkan tautan website ini kepada teman-temanmu agar mereka bisa langsung mendaftar dan saling berinteraksi!</p>
+                                </div>
+                                <button onclick="copyShareLink()" class="bg-igBlue hover:bg-blue-600 active:scale-95 transition text-[10px] font-bold px-4 py-2 rounded-lg text-white whitespace-nowrap">
+                                    <i class="fa-regular fa-clone mr-1"></i> Salin Link Web
+                                </button>
+                            </div>
+
                             <!-- INSTAGRAM STORIES BAR: Semua Teman Terdaftar (Terutama yang Online) -->
                             <div class="bg-igGray border border-igBorder p-4 rounded-xl flex flex-col gap-2 shadow-lg">
                                 <h4 class="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center justify-between">
                                     <span>Teman Aktif & Terdaftar</span>
                                     <span class="text-green-500 flex items-center gap-1 text-[9px]">
-                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> 
+                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full ${onlineFriends.length > 0 ? 'animate-pulse' : ''}"></span> 
                                         ${onlineFriends.length} Sedang Online
                                     </span>
                                 </h4>
@@ -832,7 +793,7 @@
                                         `;
                                     }).join('') : `
                                         <div class="text-[10px] text-gray-500 italic py-2 px-1 whitespace-nowrap">
-                                            Menunggu teman terdaftar...
+                                            Belum ada teman terdaftar...
                                         </div>
                                     `}
                                 </div>
@@ -946,7 +907,7 @@
                                     <div class="text-center py-20 bg-igGray rounded-xl border border-igBorder p-8">
                                         <i class="fa-regular fa-folder-open text-5xl mb-3 text-gray-600"></i>
                                         <p class="text-sm text-gray-400 font-semibold">Belum ada kenangan bersama</p>
-                                        <p class="text-xs text-gray-500 mt-1">Ayo jadilah yang pertama membagikan kenangan indah Anda di kalender bersama ini!</p>
+                                        <p class="text-xs text-gray-500 mt-1">Ayo, mulailah dengan membagikan kenangan foto indahmu di sini!</p>
                                     </div>
                                 `}
                             </div>
@@ -983,13 +944,6 @@
                                 </h4>
                                 <span class="text-[9px] bg-igBorder text-gray-400 px-2 py-0.5 rounded-full font-bold">${registeredUsers.length} Terdaftar</span>
                             </div>
-
-                            <!-- Indikasi Status Firebase / Offline Mode -->
-                            ${!useCloud ? `
-                                <div class="p-2 bg-yellow-500/10 border border-yellow-500/20 text-[10px] text-yellow-500 rounded-lg">
-                                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Mode Offline: Membuka data simulasi. Pengguna lain akan otomatis sinkron jika Firebase diaktifkan.
-                                </div>
-                            ` : ''}
                             
                             <div class="flex flex-col gap-3 max-h-[220px] overflow-y-auto no-scrollbar mt-1">
                                 ${registeredUsers.length > 0 ? registeredUsers.map(acc => {
@@ -1287,8 +1241,9 @@
 
                             ${humanFriends.length === 0 ? `
                                 <div class="text-center py-10 px-4 text-gray-500 text-xs">
-                                    <i class="fa-regular fa-comments text-3xl mb-2 text-gray-600 block"></i>
-                                    Belum ada pengguna lain terdaftar.
+                                    <i class="fa-regular fa-comments text-3xl mb-2 text-gray-600 block text-gray-700"></i>
+                                    Belum ada pengguna lain terdaftar.<br>
+                                    <button onclick="copyShareLink()" class="mt-2 text-igBlue underline font-bold hover:text-white">Salin Tautan Web</button> dan bagikan kepada temanmu!
                                 </div>
                             ` : ''}
 
@@ -1899,9 +1854,6 @@
                 accounts = JSON.parse(localStorage.getItem('pg_accounts')) || [];
                 memories = JSON.parse(localStorage.getItem('pg_memories')) || [];
                 chats = JSON.parse(localStorage.getItem('pg_chats')) || {};
-                
-                // Suntikkan beberapa akun dan postingan demo secara dinamis jika offline
-                insertDemoDataIfNeeded();
                 
                 const loggedInId = localStorage.getItem('pg_logged_in_id');
                 if (loggedInId && accounts.some(acc => acc.id === loggedInId)) {
