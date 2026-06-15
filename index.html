@@ -78,7 +78,6 @@
         ];
 
         // --- SALURAN SINKRONISASI REAL-TIME LOKAL (BROADCAST CHANNEL) ---
-        // Menjamin sinkronisasi instan antar-tab/browser saat dijalankan di GitHub Pages tanpa konfigurasi tambahan
         const syncChannel = new BroadcastChannel('plengergram_realtime_sync');
 
         // --- DETEKSI & STRATEGI CLOUD PERSISTENCE ---
@@ -88,7 +87,6 @@
         let app, auth, db;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // Template JSON bawaan otomatis jika kosong (memudahkan pengguna untuk langsung klik simpan)
         const DEFAULT_JSON_TEMPLATE = {
             apiKey: "AIzaSyFakeKey_PlengerGramAutoConnected",
             authDomain: "plengergram-app.firebaseapp.com",
@@ -115,20 +113,17 @@
         try {
             let savedCustomConfig = localStorage.getItem('pg_custom_firebase_config');
             if (!savedCustomConfig) {
-                // Masukkan JSON template otomatis ke LocalStorage agar sistem langsung terisi default
                 localStorage.setItem('pg_custom_firebase_config', JSON.stringify(DEFAULT_JSON_TEMPLATE));
                 savedCustomConfig = JSON.stringify(DEFAULT_JSON_TEMPLATE);
             }
             
             if (savedCustomConfig) {
                 const parsed = JSON.parse(savedCustomConfig);
-                // Hanya aktifkan mode cloud JIKA apiKey yang digunakan bukan kunci palsu bawaan templat
                 if (parsed && parsed.apiKey && !parsed.apiKey.includes("FakeKey") && parsed.apiKey !== DEFAULT_JSON_TEMPLATE.apiKey) {
                     firebaseConfig = parsed;
                     useCloud = true;
                     isCustomCloud = true;
                 } else {
-                    // Simpan data kustom tetap terisi untuk editor textarea namun jangan diinisialisasi sebagai cloud aktif
                     firebaseConfig = parsed;
                     useCloud = false;
                     isCustomCloud = false;
@@ -138,7 +133,6 @@
             console.error("Gagal memuat konfigurasi Firebase kustom:", e);
         }
 
-        // Inisialisasi Firebase hanya jika menggunakan kunci cloud nyata yang valid
         if (useCloud) {
             try {
                 app = initializeApp(firebaseConfig);
@@ -355,6 +349,21 @@
                 }
             }
         };
+
+        // Pendengar storage cross-tab standar untuk redundansi tinggi
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'pg_chats') {
+                chats = JSON.parse(e.newValue) || {};
+                renderApp();
+                scrollToBottom();
+            } else if (e.key === 'pg_memories') {
+                memories = JSON.parse(e.newValue) || [];
+                renderApp();
+            } else if (e.key === 'pg_accounts') {
+                accounts = JSON.parse(e.newValue) || [];
+                renderApp();
+            }
+        });
 
         function getCurrentUser() {
             return accounts.find(acc => acc.id === currentUserId) || null;
@@ -825,6 +834,54 @@
                 ? `<span onclick="showFirebaseConfigModal()" class="text-[10px] bg-green-500/10 text-green-500 border border-green-500/30 px-2.5 py-1 rounded-full font-bold flex items-center gap-1 cursor-pointer hover:bg-green-500/20 transition"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Terkoneksi (Cloud)</span>`
                 : `<span onclick="showFirebaseConfigModal()" class="text-[10px] bg-igBlue/10 text-igBlue border border-igBlue/30 px-2.5 py-1 rounded-full font-bold flex items-center gap-1 cursor-pointer hover:bg-igBlue/20 transition"><span class="w-1.5 h-1.5 bg-igBlue rounded-full animate-ping"></span> Realtime Aktif (Klik Cloud)</span>`;
 
+            // MEMINIMALISIR TEMPLATE LITERAL BERSARANG UNTUK MENGHINDARI EROR SINTAKSIS PARSER
+            const memoriesListHtml = displayedMemories.length > 0 ? displayedMemories.map(m => {
+                const creator = accounts.find(a => a.id === m.userId) || { username: "anggota", fullName: "Anggota PlengerGram", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=anon" };
+                const isMyMemory = m.userId === currentUser.id;
+                const onlineStatus = isUserOnline(creator);
+
+                return `
+                    <div class="bg-igGray border border-igBorder rounded-xl overflow-hidden shadow-lg transition hover:border-gray-700">
+                        <div class="p-4 border-b border-igBorder flex justify-between items-center bg-gradient-to-r from-igHover to-black">
+                            <div class="flex items-center gap-2.5">
+                                <div class="relative">
+                                    <img src="${creator.avatar}" class="w-8 h-8 rounded-full bg-black border border-igBorder p-0.5">
+                                    <span class="absolute bottom-0 right-0 w-2 h-2 ${onlineStatus ? 'bg-green-500' : 'bg-gray-600'} rounded-full border border-black"></span>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-white hover:underline cursor-pointer" onclick="viewUserProfil('${creator.id}')">@${creator.username}</p>
+                                    <p class="text-[9px] text-gray-400">Berbagi pada ${formatIndonesianDate(m.date)}</p>
+                                </div>
+                            </div>
+                            
+                            ${isMyMemory ? `
+                                <button onclick="confirmDeleteMemory('${m.id}')" class="text-xs text-gray-500 hover:text-red-500 transition px-2.5 py-1.5 rounded-lg hover:bg-red-950/20" title="Hapus Kenangan Anda"><i class="fa-regular fa-trash-can"></i></button>
+                            ` : `
+                                <span class="text-[9px] bg-igBorder text-gray-400 px-2 py-1 rounded-md">Teman</span>
+                            `}
+                        </div>
+
+                        <div class="p-4 bg-igHover/20">
+                            <h3 class="font-bold text-sm text-white">${m.title}</h3>
+                        </div>
+
+                        <div class="w-full aspect-video bg-black flex items-center justify-center overflow-hidden relative group">
+                            <img src="${m.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=800&q=80'">
+                        </div>
+
+                        <div class="p-4 bg-igGray">
+                            <p class="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">${m.description}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('') : `
+                <div class="text-center py-20 bg-igGray rounded-xl border border-igBorder p-8">
+                    <i class="fa-regular fa-folder-open text-5xl mb-3 text-gray-600"></i>
+                    <p class="text-sm text-gray-400 font-semibold">Belum ada kenangan bersama</p>
+                    <p class="text-xs text-gray-500 mt-1">Ayo jadilah yang pertama membagikan kenangan indah Anda di kalender bersama ini!</p>
+                </div>
+            `;
+
             return `
                 <div class="flex-1 flex flex-col md:flex-row h-screen overflow-hidden pb-16 md:pb-0">
                     <div class="w-full md:w-[420px] border-r border-igBorder flex flex-col bg-black h-full overflow-y-auto no-scrollbar p-4 md:p-6 gap-6">
@@ -921,52 +978,7 @@
                             </div>
 
                             <div class="flex flex-col gap-6">
-                                ${displayedMemories.length > 0 ? displayedMemories.map(m => {
-                                    const creator = accounts.find(a => a.id === m.userId) || { username: "anggota", fullName: "Anggota PlengerGram", avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=anon" };
-                                    const isMyMemory = m.userId === currentUser.id;
-                                    const onlineStatus = isUserOnline(creator);
-
-                                    return `
-                                        <div class="bg-igGray border border-igBorder rounded-xl overflow-hidden shadow-lg transition hover:border-gray-700">
-                                            <div class="p-4 border-b border-igBorder flex justify-between items-center bg-gradient-to-r from-igHover to-black">
-                                                <div class="flex items-center gap-2.5">
-                                                    <div class="relative">
-                                                        <img src="${creator.avatar}" class="w-8 h-8 rounded-full bg-black border border-igBorder p-0.5">
-                                                        <span class="absolute bottom-0 right-0 w-2 h-2 ${onlineStatus ? 'bg-green-500' : 'bg-gray-600'} rounded-full border border-black"></span>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-xs font-bold text-white hover:underline cursor-pointer" onclick="viewUserProfil('${creator.id}')">@${creator.username}</p>
-                                                        <p class="text-[9px] text-gray-400">Berbagi pada ${formatIndonesianDate(m.date)}</p>
-                                                    </div>
-                                                </div>
-                                                
-                                                ${isMyMemory ? `
-                                                    <button onclick="confirmDeleteMemory('${m.id}')" class="text-xs text-gray-500 hover:text-red-500 transition px-2.5 py-1.5 rounded-lg hover:bg-red-950/20" title="Hapus Kenangan Anda"><i class="fa-regular fa-trash-can"></i></button>
-                                                ` : `
-                                                    <span class="text-[9px] bg-igBorder text-gray-400 px-2 py-1 rounded-md">Teman</span>
-                                                `}
-                                            </div>
-
-                                            <div class="p-4 bg-igHover/20">
-                                                <h3 class="font-bold text-sm text-white">${m.title}</h3>
-                                            </div>
-
-                                            <div class="w-full aspect-video bg-black flex items-center justify-center overflow-hidden relative group">
-                                                <img src="${m.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&w=800&q=80'">
-                                            </div>
-
-                                            <div class="p-4 bg-igGray">
-                                                <p class="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">${m.description}</p>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('') : `
-                                    <div class="text-center py-20 bg-igGray rounded-xl border border-igBorder p-8">
-                                        <i class="fa-regular fa-folder-open text-5xl mb-3 text-gray-600"></i>
-                                        <p class="text-sm text-gray-400 font-semibold">Belum ada kenangan bersama</p>
-                                        <p class="text-xs text-gray-500 mt-1">Ayo jadilah yang pertama membagikan kenangan indah Anda di kalender bersama ini!</p>
-                                    </div>
-                                `}
+                                ${memoriesListHtml}
                             </div>
                         </div>
                     </div>
@@ -1190,10 +1202,94 @@
                 ? `<span onclick="showFirebaseConfigModal()" class="text-[9px] bg-green-500/20 text-green-500 font-bold px-2 py-0.5 rounded cursor-pointer">Bisa Chat Bersama (Cloud)</span>`
                 : `<span onclick="showFirebaseConfigModal()" class="text-[9px] bg-igBlue/20 text-igBlue font-bold px-2 py-0.5 rounded cursor-pointer">Realtime Instan Aktif (Simulasi Lokal)</span>`;
 
-            // MEMBUAT VARIABEL PEMBANTU UNTUK MENGHINDARI TEMPLATE LITERAL BERSARANG MENDALAM (BUG SYNTAX ERROR)
             const emptyChatText = activeFriend.id === 'group_public' 
                 ? 'grup bersama!' 
                 : "dengan @" + activeFriend.username + ".";
+
+            // SINKRONISASI LOGIKA MANDIRI UNTUK MERENDER SEMUA ELEMEN CHAT SECARA AMAN (MENCEGAH SYNTAX ERROR DAN REFERENCE ERROR)
+            const chatMessagesHtml = chatHistory.length > 0 ? chatHistory.map(msg => {
+                const isMe = msg.sender === currentUser.id;
+                const msgSender = accounts.find(a => a.id === msg.sender) || { username: 'anggota', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=anon' };
+                
+                const replyBubbleHtml = msg.replyTo ? `
+                    <div class="mb-1.5 p-2 rounded bg-black/45 border-l-2 border-igBlue text-[10px] text-gray-300">
+                        <p class="font-bold text-igBlue text-[9px]">@${msg.replyTo.sender}</p>
+                        <p class="truncate opacity-80 text-[10px]">${msg.replyTo.text}</p>
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+                        <div class="max-w-[75%] flex flex-col">
+                            ${activeFriend.id === 'group_public' && !isMe ? `
+                                <span class="text-[9px] text-igBlue font-bold ml-2 mb-0.5 hover:underline cursor-pointer" onclick="viewUserProfil('${msgSender.id}')">@${msgSender.username}</span>
+                            ` : ''}
+                            <div class="p-3 rounded-2xl text-xs flex gap-2 items-start ${isMe ? 'bg-igBlue text-white rounded-br-none' : 'bg-igBorder text-gray-100 rounded-bl-none'}">
+                                ${activeFriend.id === 'group_public' && !isMe ? `
+                                    <img src="${msgSender.avatar}" class="w-4 h-4 rounded-full bg-black/30">
+                                ` : ''}
+                                <div class="w-full">
+                                    ${replyBubbleHtml}
+                                    <div>
+                                        ${msg.isSharedMemory ? `
+                                            <div class="flex flex-col gap-2 rounded-lg overflow-hidden bg-black/30 p-2 border border-white/10 max-w-[220px]">
+                                                <p class="text-[9px] font-bold text-yellow-400 flex items-center gap-1">
+                                                    <i class="fa-solid fa-calendar-heart"></i> Berbagi Plengeran Bersama
+                                                </p>
+                                                <img src="${msg.memoryImage}" class="w-full aspect-video object-cover rounded" onerror="this.src='https://picsum.photos/400/300'">
+                                                <p class="text-[10px] font-semibold leading-snug">${msg.text}</p>
+                                            </div>
+                                        ` : msg.text}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-2 mt-1 ${isMe ? 'justify-end' : 'justify-start'}">
+                                <span class="text-[8px] text-gray-500">${msg.time}</span>
+                                <button onclick="setReplyTarget('${msgSender.username}', '${msg.text.replace(/'/g, "\\'")}')" class="text-[9px] text-gray-500 hover:text-igBlue transition font-semibold flex items-center gap-1">
+                                    <i class="fa-solid fa-reply text-[8px]"></i> Balas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('') : `
+                <div class="text-center py-20 text-gray-500 text-xs font-sans">
+                    Kirim pesan pertama untuk memulai obrolan ${emptyChatText}
+                </div>
+            `;
+
+            const friendsListHtml = humanFriends.map(friend => {
+                const roomKey = getChatRoomId(currentUser.id, friend.id);
+                const friendChats = chats[roomKey] || [];
+                const lastChat = friendChats[friendChats.length - 1] || { text: "Mulai percakapan...", time: "" };
+                const isCurrent = friend.id === currentChatWithId;
+                const isWeFollowing = isFollowingTarget(currentUser.id, friend.id);
+                const isOnline = isUserOnline(friend);
+
+                return `
+                    <div onclick="selectChat('${friend.id}')" class="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition ${isCurrent ? 'bg-igHover border border-gray-800' : 'hover:bg-igHover'}">
+                        <div class="relative flex-shrink-0">
+                            <img src="${friend.avatar}" class="w-10 h-10 rounded-full bg-igGray p-0.5 border border-igBorder">
+                            <span class="absolute bottom-0 right-0 ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-600'} w-2.5 h-2.5 rounded-full border-2 border-black"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline">
+                                <div class="flex items-center gap-1">
+                                    <h4 class="font-bold text-xs text-white truncate">@${friend.username}</h4>
+                                    ${isOnline ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>' : ''}
+                                </div>
+                                <span class="text-[9px] text-gray-500">${lastChat.time}</span>
+                            </div>
+                            <p class="text-[10px] text-gray-400 truncate">${lastChat.text}</p>
+                            <div class="flex gap-1 mt-0.5">
+                                ${isWeFollowing ? '<span class="text-[8px] text-igBlue font-semibold bg-igBlue/10 px-1 py-0.2 rounded inline-block">Diikuti</span>' : ''}
+                                ${isOnline ? '<span class="text-[8px] text-green-500 font-semibold bg-green-500/10 px-1 py-0.2 rounded inline-block">Online</span>' : '<span class="text-[8px] text-gray-500 font-semibold bg-gray-500/10 px-1 py-0.2 rounded inline-block">Offline</span>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
 
             return `
                 <div class="flex-1 flex h-screen overflow-hidden pb-16 md:pb-0">
@@ -1243,37 +1339,7 @@
                                 </div>
                             ` : ''}
 
-                            ${humanFriends.map(friend => {
-                                const roomKey = getChatRoomId(currentUser.id, friend.id);
-                                const friendChats = chats[roomKey] || [];
-                                const lastChat = friendChats[friendChats.length - 1] || { text: "Mulai percakapan...", time: "" };
-                                const isCurrent = friend.id === currentChatWithId;
-                                const isWeFollowing = isFollowingTarget(currentUser.id, friend.id);
-                                const isOnline = isUserOnline(friend);
-
-                                return `
-                                    <div onclick="selectChat('${friend.id}')" class="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition ${isCurrent ? 'bg-igHover border border-gray-800' : 'hover:bg-igHover'}">
-                                        <div class="relative flex-shrink-0">
-                                            <img src="${friend.avatar}" class="w-10 h-10 rounded-full bg-igGray p-0.5 border border-igBorder">
-                                            <span class="absolute bottom-0 right-0 ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-600'} w-2.5 h-2.5 rounded-full border-2 border-black"></span>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex justify-between items-baseline">
-                                                <div class="flex items-center gap-1">
-                                                    <h4 class="font-bold text-xs text-white truncate">@${friend.username}</h4>
-                                                    ${isOnline ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>' : ''}
-                                                </div>
-                                                <span class="text-[9px] text-gray-500">${lastChat.time}</span>
-                                            </div>
-                                            <p class="text-[10px] text-gray-400 truncate">${lastChat.text}</p>
-                                            <div class="flex gap-1 mt-0.5">
-                                                ${isWeFollowing ? '<span class="text-[8px] text-igBlue font-semibold bg-igBlue/10 px-1 py-0.2 rounded inline-block">Diikuti</span>' : ''}
-                                                ${isOnline ? '<span class="text-[8px] text-green-500 font-semibold bg-green-500/10 px-1 py-0.2 rounded inline-block">Online</span>' : '<span class="text-[8px] text-gray-500 font-semibold bg-gray-500/10 px-1 py-0.2 rounded inline-block">Offline</span>'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
+                            ${friendsListHtml}
                         </div>
                     </div>
 
@@ -1307,57 +1373,7 @@
                             </div>
 
                             <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-gradient-to-b from-[#0a0a0a] to-black no-scrollbar">
-                                ${chatHistory.length > 0 ? chatHistory.map(msg => {
-                                    const isMe = msg.sender === currentUser.id;
-                                    const msgSender = accounts.find(a => a.id === msg.sender) || { username: 'anggota', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=anon' };
-                                    
-                                    const replyBubbleHtml = msg.replyTo ? `
-                                        <div class="mb-1.5 p-2 rounded bg-black/45 border-l-2 border-igBlue text-[10px] text-gray-300">
-                                            <p class="font-bold text-igBlue text-[9px]">@${msg.replyTo.sender}</p>
-                                            <p class="truncate opacity-80 text-[10px]">${msg.replyTo.text}</p>
-                                        </div>
-                                    ` : '';
-
-                                    return `
-                                        <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
-                                            <div class="max-w-[75%] flex flex-col">
-                                                ${activeFriend.id === 'group_public' && !isMe ? `
-                                                    <span class="text-[9px] text-igBlue font-bold ml-2 mb-0.5 hover:underline cursor-pointer" onclick="viewUserProfil('${msgSender.id}')">@${msgSender.username}</span>
-                                                ` : ''}
-                                                <div class="p-3 rounded-2xl text-xs flex gap-2 items-start ${isMe ? 'bg-igBlue text-white rounded-br-none' : 'bg-igBorder text-gray-100 rounded-bl-none'}">
-                                                    ${activeFriend.id === 'group_public' && !isMe ? `
-                                                        <img src="${msgSender.avatar}" class="w-4 h-4 rounded-full bg-black/30">
-                                                    ` : ''}
-                                                    <div class="w-full">
-                                                        ${replyBubbleHtml}
-                                                        <div>
-                                                            ${msg.isSharedMemory ? `
-                                                                <div class="flex flex-col gap-2 rounded-lg overflow-hidden bg-black/30 p-2 border border-white/10 max-w-[220px]">
-                                                                    <p class="text-[9px] font-bold text-yellow-400 flex items-center gap-1">
-                                                                        <i class="fa-solid fa-calendar-heart"></i> Berbagi Plengeran Bersama
-                                                                    </p>
-                                                                    <img src="${msg.memoryImage}" class="w-full aspect-video object-cover rounded" onerror="this.src='https://picsum.photos/400/300'">
-                                                                    <p class="text-[10px] font-semibold leading-snug">${msg.text}</p>
-                                                                </div>
-                                                            ` : msg.text}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div class="flex items-center gap-2 mt-1 ${isMe ? 'justify-end' : 'justify-start'}">
-                                                    <span class="text-[8px] text-gray-500">${msg.time}</span>
-                                                    <button onclick="setReplyTarget('${msgSender.username}', '${msg.text.replace(/'/g, "\\'")}')" class="text-[9px] text-gray-500 hover:text-igBlue transition font-semibold flex items-center gap-1">
-                                                        <i class="fa-solid fa-reply text-[8px]"></i> Balas
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('') : `
-                                    <div class="text-center py-20 text-gray-500 text-xs font-sans">
-                                        Kirim pesan pertama untuk memulai obrolan ${emptyChatText}
-                                    </div>
-                                `}
+                                ${chatMessagesHtml}
                             </div>
 
                             <div class="p-4 border-t border-igBorder bg-black">
@@ -1580,6 +1596,33 @@
 
             const isOnline = isUserOnline(userToShow);
 
+            // SINKRONISASI LOGIKA MANDIRI UNTUK MERENDER REKOMENDASI PENGGUNA TANPA SINTAKSIS BERSARANG
+            const recommendationsHtml = otherAccounts.length > 0 ? otherAccounts.map(acc => {
+                const friendOnline = isUserOnline(acc);
+                return `
+                    <div class="flex items-center justify-between bg-black/30 p-2.5 rounded-xl border border-igBorder/40">
+                        <div class="flex items-center gap-2 cursor-pointer" onclick="viewUserProfil('${acc.id}')">
+                            <div class="relative">
+                                <img src="${acc.avatar}" class="w-8 h-8 rounded-full bg-igGray">
+                                <span class="absolute bottom-0 right-0 w-2 h-2 ${friendOnline ? 'bg-green-500' : 'bg-gray-600'} rounded-full border border-black"></span>
+                            </div>
+                            <div class="text-left min-w-0">
+                                <div class="flex items-center gap-1">
+                                    <p class="font-bold text-xs text-white truncate hover:underline">@${acc.username}</p>
+                                    ${friendOnline ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>' : ''}
+                                </div>
+                                <p class="text-[9px] text-gray-500 truncate">${acc.fullName}</p>
+                            </div>
+                        </div>
+                        <button onclick="toggleFollowUser('${acc.id}')" class="text-[10px] font-bold px-3 py-1 rounded-md ${isFollowingTarget(currentUser.id, acc.id) ? 'bg-igBorder text-gray-400' : 'bg-igBlue text-white'}">
+                            ${isFollowingTarget(currentUser.id, acc.id) ? 'Batal Ikut' : 'Ikuti'}
+                        </button>
+                    </div>
+                `;
+            }).join('') : `
+                <p class="text-xs text-gray-500 text-center py-4">Belum ada pengguna terdaftar lain yang cocok.</p>
+            `;
+
             return `
                 <div class="flex-1 p-4 md:p-8 overflow-y-auto max-h-screen pb-20 md:pb-8 flex justify-center bg-black">
                     <div class="max-w-xl w-full">
@@ -1654,31 +1697,7 @@
                             </div>
                             
                             <div class="flex flex-col gap-3">
-                                ${otherAccounts.length > 0 ? otherAccounts.map(acc => {
-                                    const friendOnline = isUserOnline(acc);
-                                    return `
-                                        <div class="flex items-center justify-between bg-black/30 p-2.5 rounded-xl border border-igBorder/40">
-                                            <div class="flex items-center gap-2 cursor-pointer" onclick="viewUserProfil('${acc.id}')">
-                                                <div class="relative">
-                                                    <img src="${acc.avatar}" class="w-8 h-8 rounded-full bg-igGray">
-                                                    <span class="absolute bottom-0 right-0 w-2 h-2 ${friendOnline ? 'bg-green-500' : 'bg-gray-600'} rounded-full border border-black"></span>
-                                                </div>
-                                                <div class="text-left min-w-0">
-                                                    <div class="flex items-center gap-1">
-                                                        <p class="font-bold text-xs text-white truncate hover:underline">@${acc.username}</p>
-                                                        ${friendOnline ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>' : ''}
-                                                    </div>
-                                                    <p class="text-[9px] text-gray-500 truncate">${acc.fullName}</p>
-                                                </div>
-                                            </div>
-                                            <button onclick="toggleFollowUser('${acc.id}')" class="text-[10px] font-bold px-3 py-1 rounded-md ${isFollowingTarget(currentUser.id, acc.id) ? 'bg-igBorder text-gray-400' : 'bg-igBlue text-white'}">
-                                                ${isFollowingTarget(currentUser.id, acc.id) ? 'Batal Ikut' : 'Ikuti'}
-                                            </button>
-                                        </div>
-                                    `;
-                                }).join('') : `
-                                    <p class="text-xs text-gray-500 text-center py-4">Belum ada pengguna terdaftar lain yang cocok.</p>
-                                `}
+                                ${recommendationsHtml}
                             </div>
                         </div>
                     </div>
