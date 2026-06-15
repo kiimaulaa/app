@@ -105,12 +105,16 @@
             }
         }
 
-        // --- PENYEGARAN DATA TOTAL ---
-        const HAS_RESET = 'plengergram_force_wipe_hardcoded_accounts_v120';
+        // --- PENYEGARAN DATA TOTAL (FORCE WIPE ALL PREVIOUS MESSAGES) ---
+        const HAS_RESET = 'plengergram_wipe_v150_realtime_dm_clean';
         if (!localStorage.getItem(HAS_RESET)) {
             localStorage.clear();
             localStorage.setItem('pg_accounts', JSON.stringify(PRESET_ACCOUNTS));
+            localStorage.setItem('pg_chats', JSON.stringify({}));
             localStorage.setItem(HAS_RESET, 'true');
+            
+            // Tandai agar cloud chat di-wipe saat terkoneksi pertama kali
+            window.shouldWipeCloudChatsOnConnect = true;
         }
 
         // --- STATE MANAGEMENT ---
@@ -195,7 +199,7 @@
         }
 
         // Fungsi sinkronisasi obrolan terarah (Mencegah Permission Denied akibat listen seluruh koleksi)
-        function startChatRoomsSync() {
+        window.startChatRoomsSync = function() {
             if (!useCloud || !currentUserId) return;
 
             // Bersihkan pendengar yang ada sebelumnya agar tidak terjadi kebocoran memori
@@ -241,6 +245,22 @@
 
             syncPresetAccountsToCloud();
 
+            // Jalankan pembersihan paksa database cloud jika ada flag reset
+            if (window.shouldWipeCloudChatsOnConnect) {
+                window.shouldWipeCloudChatsOnConnect = false;
+                const roomsToWipe = ['group_public', 'user_developer_user_whana_'];
+                roomsToWipe.forEach(async (roomId) => {
+                    try {
+                        await setDoc(getPublicDataDocRef('chats', roomId), { messages: [] });
+                    } catch (e) {
+                        console.warn("Gagal mereset cloud room:", roomId, e);
+                    }
+                });
+            }
+
+            // Jalankan sinkronisasi obrolan terarah sesegera mungkin
+            window.startChatRoomsSync();
+
             // 1. Sync Akun Pengguna
             onSnapshot(getPublicDataColRef('accounts'), (snapshot) => {
                 const cloudAccounts = {};
@@ -276,10 +296,15 @@
                     startTrackingActivity();
                 }
 
-                // Jalankan sinkronisasi obrolan terarah setelah akun terisi
-                startChatRoomsSync();
+                // Jalankan kembali sinkronisasi obrolan jika terjadi perubahan daftar akun
+                window.startChatRoomsSync();
                 renderApp();
-            }, (err) => console.error("Error syncing accounts:", err));
+            }, (err) => {
+                console.warn("Gagal menyelaraskan koleksi akun (menggunakan preset lokal):", err);
+                accounts = [...PRESET_ACCOUNTS];
+                window.startChatRoomsSync();
+                renderApp();
+            });
 
             // 2. Sync Kenangan (Memories)
             onSnapshot(getPublicDataColRef('memories'), (snapshot) => {
@@ -419,10 +444,10 @@
             let updatedFollowing = [];
             if (isFollowing) {
                 updatedFollowing = currentUser.followingIds.filter(id => id !== targetId);
-                showCustomToast(`Anda berhenti mengikuti @${targetAcc.username}`);
+                showCustomToast("Anda berhenti mengikuti @" + targetAcc.username);
             } else {
                 updatedFollowing = [...currentUser.followingIds, targetId];
-                showCustomToast(`Anda sekarang mengikuti @${targetAcc.username}!`);
+                showCustomToast("Anda sekarang mengikuti @" + targetAcc.username + "!");
             }
 
             try {
@@ -451,13 +476,13 @@
                 currentUserId = user.id;
                 isUserLoggedIn = true;
                 localStorage.setItem('pg_logged_in_id', user.id);
-                showCustomToast(`Selamat datang kembali, @${user.username}!`);
+                showCustomToast("Selamat datang kembali, @" + user.username + "!");
                 
                 if (useCloud) {
                     setDoc(getPublicDataDocRef('accounts', user.id), user)
                         .then(() => {
                             startTrackingActivity();
-                            startChatRoomsSync();
+                            window.startChatRoomsSync();
                         })
                         .catch(err => console.error(err));
                 } else {
@@ -1047,9 +1072,14 @@
                     
                     <div class="w-full md:w-80 border-r border-igBorder flex flex-col bg-black h-full ${currentChatWithId && window.innerWidth < 768 ? 'hidden' : 'block'}">
                         <div class="p-5 border-b border-igBorder flex flex-col gap-3 bg-igGray/20">
-                            <span class="font-bold text-base flex items-center gap-2">
-                                <i class="fa-regular fa-paper-plane text-igBlue"></i> Ruang Obrolan
-                            </span>
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-base flex items-center gap-2">
+                                    <i class="fa-regular fa-paper-plane text-igBlue"></i> Ruang Obrolan
+                                </span>
+                                <button onclick="triggerClearChats()" class="text-[10px] bg-red-950/30 text-red-400 hover:bg-red-900/30 border border-red-500/20 px-2 py-1 rounded transition" title="Bersihkan seluruh isi obrolan">
+                                    <i class="fa-regular fa-trash-can mr-1"></i> Bersihkan DM
+                                </button>
+                            </div>
                             
                             <div class="relative mt-1">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -1155,7 +1185,6 @@
                                     const isMe = msg.sender === currentUser.id;
                                     const msgSender = accounts.find(a => a.id === msg.sender) || { username: 'anggota', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=anon' };
                                     
-                                    // Layout jika balon chat ini merupakan balasan/kutipan chat lain
                                     const replyBubbleHtml = msg.replyTo ? `
                                         <div class="mb-1.5 p-2 rounded bg-black/45 border-l-2 border-igBlue text-[10px] text-gray-300">
                                             <p class="font-bold text-igBlue text-[9px]">@${msg.replyTo.sender}</p>
@@ -1189,7 +1218,6 @@
                                                     </div>
                                                 </div>
                                                 
-                                                <!-- Metadata Balas Obrolan -->
                                                 <div class="flex items-center gap-2 mt-1 ${isMe ? 'justify-end' : 'justify-start'}">
                                                     <span class="text-[8px] text-gray-500">${msg.time}</span>
                                                     <button onclick="setReplyTarget('${msgSender.username}', '${msg.text.replace(/'/g, "\\'")}')" class="text-[9px] text-gray-500 hover:text-igBlue transition font-semibold flex items-center gap-1">
@@ -1206,7 +1234,6 @@
                                 `}
                             </div>
 
-                            <!-- Form Input dengan Dukungan Bar Balasan Langsung -->
                             <div class="p-4 border-t border-igBorder bg-black">
                                 <div id="reply-container">
                                     ${replyToMsg ? `
@@ -1239,7 +1266,7 @@
         // --- SISTEM CHAT SELECTION & UTILITIES ---
         window.selectChat = function(friendId) {
             currentChatWithId = friendId;
-            replyToMsg = null; // Reset target balas saat berpindah ruang chat
+            replyToMsg = null; 
             renderApp();
             scrollToBottom();
         }
@@ -1250,7 +1277,6 @@
             renderApp();
         }
 
-        // Fungsi pemicu balas pesan langsung
         window.setReplyTarget = function(sender, text) {
             replyToMsg = { sender, text };
             renderApp();
@@ -1270,6 +1296,29 @@
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
             }, 50);
+        }
+
+        // Fitur Pembersih Obrolan Manual
+        window.triggerClearChats = async function() {
+            if (!currentChatWithId) return;
+            const currentUser = getCurrentUser();
+            if (!currentUser) return;
+
+            const activeRoomId = getChatRoomId(currentUser.id, currentChatWithId);
+            
+            try {
+                if (useCloud) {
+                    await setDoc(getPublicDataDocRef('chats', activeRoomId), { messages: [] });
+                } else {
+                    chats[activeRoomId] = [];
+                    saveLocalData();
+                }
+                showCustomToast("Seluruh riwayat obrolan telah dibersihkan.");
+                renderApp();
+            } catch (err) {
+                console.error("Gagal membersihkan obrolan:", err);
+                showCustomToast("Gagal membersihkan obrolan.");
+            }
         }
 
         window.shareMemoryToChat = async function(memoryId) {
@@ -1323,7 +1372,6 @@
             const activeRoomId = getChatRoomId(currentUser.id, currentChatWithId);
             const activeHistory = chats[activeRoomId] || [];
             
-            // Masukkan metadata balas jika user sedang menggunakan Balas Pesan
             const updatedHistory = [...activeHistory, {
                 sender: currentUser.id,
                 text: text,
@@ -1331,7 +1379,7 @@
                 replyTo: replyToMsg ? { sender: replyToMsg.sender, text: replyToMsg.text } : null
             }];
 
-            replyToMsg = null; // Reset setelah pesan dikirim
+            replyToMsg = null; 
 
             try {
                 if (useCloud) {
@@ -1671,7 +1719,6 @@
                     startTrackingActivity();
                 }
             } else {
-                // Memulihkan sesi pengguna lokal di mode cloud agar transisi muat halaman terasa mulus
                 const loggedInId = localStorage.getItem('pg_logged_in_id');
                 if (loggedInId && accounts.some(acc => acc.id === loggedInId)) {
                     currentUserId = loggedInId;
