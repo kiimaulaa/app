@@ -126,6 +126,9 @@
         // Fitur balas pesan langsung
         let replyToMsg = null; 
 
+        // Manajemen penampung pendengar obrolan real-time terarah
+        let activeChatListeners = {};
+
         let userSearchQuery = "";
         let profileSearchQuery = "";
 
@@ -191,12 +194,54 @@
             }
         }
 
+        // Fungsi sinkronisasi obrolan terarah (Mencegah Permission Denied akibat listen seluruh koleksi)
+        function startChatRoomsSync() {
+            if (!useCloud || !currentUserId) return;
+
+            // Bersihkan pendengar yang ada sebelumnya agar tidak terjadi kebocoran memori
+            for (const roomId in activeChatListeners) {
+                if (activeChatListeners[roomId]) {
+                    activeChatListeners[roomId]();
+                }
+            }
+            activeChatListeners = {};
+
+            // Daftar ID Ruang Obrolan yang berhak diakses oleh pengguna aktif
+            const roomsToListen = ['group_public'];
+
+            // Tambahkan jalur obrolan pribadi (DM) untuk semua akun terdaftar lainnya
+            accounts.forEach(acc => {
+                if (acc.id !== currentUserId) {
+                    roomsToListen.push(getChatRoomId(currentUserId, acc.id));
+                }
+            });
+
+            // Mulai pendengar real-time terarah tingkat dokumen individu
+            roomsToListen.forEach(roomId => {
+                const docRef = getPublicDataDocRef('chats', roomId);
+                
+                const unsubscribe = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        chats[roomId] = data.messages || [];
+                    } else {
+                        chats[roomId] = [];
+                    }
+                    renderApp();
+                }, (err) => {
+                    console.warn(`Gagal sinkronisasi ruang obrolan ${roomId}:`, err);
+                });
+
+                activeChatListeners[roomId] = unsubscribe;
+            });
+        }
+
         function setupDataSync(user) {
             if (!user || !useCloud) return;
 
             syncPresetAccountsToCloud();
 
-            // Menggunakan penggabungan cerdas agar akun bawaan tidak hilang saat database cloud disinkronkan
+            // 1. Sync Akun Pengguna
             onSnapshot(getPublicDataColRef('accounts'), (snapshot) => {
                 const cloudAccounts = {};
                 snapshot.forEach(doc => {
@@ -230,9 +275,13 @@
                     isUserLoggedIn = true;
                     startTrackingActivity();
                 }
+
+                // Jalankan sinkronisasi obrolan terarah setelah akun terisi
+                startChatRoomsSync();
                 renderApp();
             }, (err) => console.error("Error syncing accounts:", err));
 
+            // 2. Sync Kenangan (Memories)
             onSnapshot(getPublicDataColRef('memories'), (snapshot) => {
                 memories = [];
                 snapshot.forEach(doc => {
@@ -243,17 +292,6 @@
                 });
                 renderApp();
             }, (err) => console.error("Error syncing memories:", err));
-
-            onSnapshot(getPublicDataColRef('chats'), (snapshot) => {
-                chats = {};
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data) {
-                        chats[doc.id] = data.messages || [];
-                    }
-                });
-                renderApp();
-            }, (err) => console.error("Error syncing chats:", err));
         }
 
         function getCurrentUser() {
@@ -417,7 +455,10 @@
                 
                 if (useCloud) {
                     setDoc(getPublicDataDocRef('accounts', user.id), user)
-                        .then(() => startTrackingActivity())
+                        .then(() => {
+                            startTrackingActivity();
+                            startChatRoomsSync();
+                        })
                         .catch(err => console.error(err));
                 } else {
                     startTrackingActivity();
@@ -431,6 +472,15 @@
 
         window.handleLogout = function() {
             stopTrackingActivity();
+            
+            // Hapus pendengar real-time yang sedang berjalan
+            for (const roomId in activeChatListeners) {
+                if (activeChatListeners[roomId]) {
+                    activeChatListeners[roomId]();
+                }
+            }
+            activeChatListeners = {};
+
             isUserLoggedIn = false;
             currentUserId = "";
             localStorage.removeItem('pg_logged_in_id');
@@ -1109,7 +1159,7 @@
                                     const replyBubbleHtml = msg.replyTo ? `
                                         <div class="mb-1.5 p-2 rounded bg-black/45 border-l-2 border-igBlue text-[10px] text-gray-300">
                                             <p class="font-bold text-igBlue text-[9px]">@${msg.replyTo.sender}</p>
-                                            <p class="truncate opacity-80">${msg.replyTo.text}</p>
+                                            <p class="truncate opacity-80 text-[10px]">${msg.replyTo.text}</p>
                                         </div>
                                     ` : '';
 
@@ -1614,6 +1664,14 @@
                 memories = JSON.parse(localStorage.getItem('pg_memories')) || [];
                 chats = JSON.parse(localStorage.getItem('pg_chats')) || {};
                 
+                const loggedInId = localStorage.getItem('pg_logged_in_id');
+                if (loggedInId && accounts.some(acc => acc.id === loggedInId)) {
+                    currentUserId = loggedInId;
+                    isUserLoggedIn = true;
+                    startTrackingActivity();
+                }
+            } else {
+                // Memulihkan sesi pengguna lokal di mode cloud agar transisi muat halaman terasa mulus
                 const loggedInId = localStorage.getItem('pg_logged_in_id');
                 if (loggedInId && accounts.some(acc => acc.id === loggedInId)) {
                     currentUserId = loggedInId;
