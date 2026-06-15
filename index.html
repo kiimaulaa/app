@@ -105,16 +105,13 @@
             }
         }
 
-        // --- PENYEGARAN DATA TOTAL (FORCE WIPE ALL PREVIOUS MESSAGES) ---
+        // --- PENYEGARAN DATA TOTAL ---
         const HAS_RESET = 'plengergram_wipe_v150_realtime_dm_clean';
         if (!localStorage.getItem(HAS_RESET)) {
             localStorage.clear();
             localStorage.setItem('pg_accounts', JSON.stringify(PRESET_ACCOUNTS));
             localStorage.setItem('pg_chats', JSON.stringify({}));
             localStorage.setItem(HAS_RESET, 'true');
-            
-            // Tandai agar cloud chat di-wipe saat terkoneksi pertama kali
-            window.shouldWipeCloudChatsOnConnect = true;
         }
 
         // --- STATE MANAGEMENT ---
@@ -129,9 +126,6 @@
 
         // Fitur balas pesan langsung
         let replyToMsg = null; 
-
-        // Manajemen penampung pendengar obrolan real-time terarah
-        let activeChatListeners = {};
 
         let userSearchQuery = "";
         let profileSearchQuery = "";
@@ -198,68 +192,10 @@
             }
         }
 
-        // Fungsi sinkronisasi obrolan terarah (Mencegah Permission Denied akibat listen seluruh koleksi)
-        window.startChatRoomsSync = function() {
-            if (!useCloud || !currentUserId) return;
-
-            // Bersihkan pendengar yang ada sebelumnya agar tidak terjadi kebocoran memori
-            for (const roomId in activeChatListeners) {
-                if (activeChatListeners[roomId]) {
-                    activeChatListeners[roomId]();
-                }
-            }
-            activeChatListeners = {};
-
-            // Daftar ID Ruang Obrolan yang berhak diakses oleh pengguna aktif
-            const roomsToListen = ['group_public'];
-
-            // Tambahkan jalur obrolan pribadi (DM) untuk semua akun terdaftar lainnya
-            accounts.forEach(acc => {
-                if (acc.id !== currentUserId) {
-                    roomsToListen.push(getChatRoomId(currentUserId, acc.id));
-                }
-            });
-
-            // Mulai pendengar real-time terarah tingkat dokumen individu
-            roomsToListen.forEach(roomId => {
-                const docRef = getPublicDataDocRef('chats', roomId);
-                
-                const unsubscribe = onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        chats[roomId] = data.messages || [];
-                    } else {
-                        chats[roomId] = [];
-                    }
-                    renderApp();
-                }, (err) => {
-                    console.warn(`Gagal sinkronisasi ruang obrolan ${roomId}:`, err);
-                });
-
-                activeChatListeners[roomId] = unsubscribe;
-            });
-        }
-
         function setupDataSync(user) {
             if (!user || !useCloud) return;
 
             syncPresetAccountsToCloud();
-
-            // Jalankan pembersihan paksa database cloud jika ada flag reset
-            if (window.shouldWipeCloudChatsOnConnect) {
-                window.shouldWipeCloudChatsOnConnect = false;
-                const roomsToWipe = ['group_public', 'user_developer_user_whana_'];
-                roomsToWipe.forEach(async (roomId) => {
-                    try {
-                        await setDoc(getPublicDataDocRef('chats', roomId), { messages: [] });
-                    } catch (e) {
-                        console.warn("Gagal mereset cloud room:", roomId, e);
-                    }
-                });
-            }
-
-            // Jalankan sinkronisasi obrolan terarah sesegera mungkin
-            window.startChatRoomsSync();
 
             // 1. Sync Akun Pengguna
             onSnapshot(getPublicDataColRef('accounts'), (snapshot) => {
@@ -296,13 +232,10 @@
                     startTrackingActivity();
                 }
 
-                // Jalankan kembali sinkronisasi obrolan jika terjadi perubahan daftar akun
-                window.startChatRoomsSync();
                 renderApp();
             }, (err) => {
                 console.warn("Gagal menyelaraskan koleksi akun (menggunakan preset lokal):", err);
                 accounts = [...PRESET_ACCOUNTS];
-                window.startChatRoomsSync();
                 renderApp();
             });
 
@@ -317,6 +250,19 @@
                 });
                 renderApp();
             }, (err) => console.error("Error syncing memories:", err));
+
+            // 3. Sync Seluruh Chat (Grup & DM) Secara Global dan Real-time
+            onSnapshot(getPublicDataColRef('chats'), (snapshot) => {
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data) {
+                        chats[doc.id] = data.messages || [];
+                    }
+                });
+                renderApp();
+            }, (err) => {
+                console.error("Gagal menyelaraskan koleksi obrolan:", err);
+            });
         }
 
         function getCurrentUser() {
@@ -482,7 +428,6 @@
                     setDoc(getPublicDataDocRef('accounts', user.id), user)
                         .then(() => {
                             startTrackingActivity();
-                            window.startChatRoomsSync();
                         })
                         .catch(err => console.error(err));
                 } else {
@@ -498,14 +443,6 @@
         window.handleLogout = function() {
             stopTrackingActivity();
             
-            // Hapus pendengar real-time yang sedang berjalan
-            for (const roomId in activeChatListeners) {
-                if (activeChatListeners[roomId]) {
-                    activeChatListeners[roomId]();
-                }
-            }
-            activeChatListeners = {};
-
             isUserLoggedIn = false;
             currentUserId = "";
             localStorage.removeItem('pg_logged_in_id');
