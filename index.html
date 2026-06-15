@@ -65,7 +65,7 @@
                 }
             }
         } catch (e) {
-            console.warn("Konfigurasi Firebase belum terpasang atau tidak valid. Menggunakan penyimpanan Lokal.", e);
+            console.warn("Konfigurasi Firebase belum terpasang atau tidak valid. Mengaktifkan sistem Sinkronisasi Hybrid Online.", e);
         }
 
         if (useCloud) {
@@ -79,8 +79,8 @@
             }
         }
 
-        // --- PENGHAPUSAN DAN PENYEGARAN DATA TOTAL (CLEAN WIPE) ---
-        const HAS_RESET = 'plengergram_force_wipe_all_data_v140_clean_slate';
+        // --- PENGHAPUSAN DAN PENYEGARAN DATA TOTAL (CLEAN WIPE ON NEW VERSION) ---
+        const HAS_RESET = 'plengergram_force_wipe_all_data_v150_hybrid_online';
         if (!localStorage.getItem(HAS_RESET)) {
             localStorage.clear();
             localStorage.setItem(HAS_RESET, 'true');
@@ -111,13 +111,88 @@
         let isShortcutBarOpen = false;
         let shortcutSearchQuery = "";
 
-        // Interval waktu untuk status online
+        // Interval waktu untuk status online & sinkronisasi hybrid
         let activityIntervalId = null;
+        let hybridSyncIntervalId = null;
 
         const MONTH_NAMES = [
             "Januari", "Februari", "Maret", "April", "Mei", "Juni",
             "Juli", "Agustus", "September", "Oktober", "November", "Desember"
         ];
+
+        // --- SISTEM SINKRONISASI HYBRID ONLINE (KV RELAY) ---
+        // Jika Firebase dinonaktifkan/tidak terkonfigurasi, sistem menggunakan REST relay publik
+        // agar pengguna dan teman-temannya tetap bisa saling terhubung dan mengobrol secara real-time!
+        async function syncOfflineData() {
+            if (useCloud) return;
+            try {
+                // Tarik daftar akun terbaru
+                const resAcc = await fetch(`https://kvdb.io/M876Hsh87Gtsa98/${appId}_accounts`);
+                if (resAcc.ok) {
+                    const cloudAccs = await resAcc.json();
+                    if (Array.isArray(cloudAccs)) {
+                        accounts = cloudAccs;
+                    }
+                }
+                
+                // Tarik daftar momen terbaru
+                const resMem = await fetch(`https://kvdb.io/M876Hsh87Gtsa98/${appId}_memories`);
+                if (resMem.ok) {
+                    const cloudMems = await resMem.json();
+                    if (Array.isArray(cloudMems)) {
+                        memories = cloudMems;
+                    }
+                }
+
+                // Tarik obrolan terbaru
+                const resChats = await fetch(`https://kvdb.io/M876Hsh87Gtsa98/${appId}_chats`);
+                if (resChats.ok) {
+                    const cloudChats = await resChats.json();
+                    if (cloudChats && typeof cloudChats === 'object') {
+                        chats = cloudChats;
+                    }
+                }
+                
+                renderApp();
+            } catch (e) {
+                console.warn("Sinkronisasi hybrid offline:", e);
+            }
+        }
+
+        async function pushOfflineData(type) {
+            if (useCloud) return;
+            try {
+                let key = "";
+                let data = null;
+                if (type === 'accounts') {
+                    key = `${appId}_accounts`;
+                    data = accounts;
+                } else if (type === 'memories') {
+                    key = `${appId}_memories`;
+                    data = memories;
+                } else if (type === 'chats') {
+                    key = `${appId}_chats`;
+                    data = chats;
+                }
+                if (key) {
+                    await fetch(`https://kvdb.io/M876Hsh87Gtsa98/${key}`, {
+                        method: 'POST',
+                        body: JSON.stringify(data),
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                }
+            } catch (e) {
+                console.warn("Penyimpanan sinkronisasi gagal:", e);
+            }
+        }
+
+        function startHybridSync() {
+            if (!useCloud) {
+                syncOfflineData();
+                if (hybridSyncIntervalId) clearInterval(hybridSyncIntervalId);
+                hybridSyncIntervalId = setInterval(syncOfflineData, 4000); // Polling setiap 4 detik untuk update instan
+            }
+        }
 
         // --- SYSTEM LOCAL FALLBACK UTILITIES ---
         function saveLocalData() {
@@ -215,6 +290,7 @@
                     if (idx !== -1) {
                         accounts[idx].lastActive = Date.now();
                         saveLocalData();
+                        await pushOfflineData('accounts');
                     }
                 }
             } catch (err) {
@@ -244,7 +320,6 @@
 
         // --- SALIN TAUTAN BAGIKAN ---
         window.copyShareLink = function() {
-            // Membuat input sementara untuk menyalin teks karena keterbatasan iframe
             const tempInput = document.createElement("input");
             tempInput.value = window.location.href;
             document.body.appendChild(tempInput);
@@ -284,6 +359,7 @@
                     await updateDoc(memoryDocRef, { likes: m.likes });
                 } else {
                     saveLocalData();
+                    await pushOfflineData('memories');
                     renderApp();
                 }
             } catch (err) {
@@ -324,6 +400,7 @@
                     await updateDoc(memoryDocRef, { comments: m.comments });
                 } else {
                     saveLocalData();
+                    await pushOfflineData('memories');
                     renderApp();
                 }
                 showCustomToast("Komentar ditambahkan! 💬");
@@ -430,6 +507,7 @@
                 } else {
                     currentUser.followingIds = updatedFollowing;
                     saveLocalData();
+                    await pushOfflineData('accounts');
                     renderApp();
                 }
             } catch (err) {
@@ -496,6 +574,7 @@
                 } else {
                     accounts.push(newAccount);
                     saveLocalData();
+                    await pushOfflineData('accounts');
                 }
                 currentUserId = newId;
                 isUserLoggedIn = true;
@@ -751,9 +830,9 @@
                             <div class="bg-gradient-to-r from-igDarkBlue/40 to-igBlue/20 border border-igBlue/30 p-4 rounded-xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <div class="text-center sm:text-left">
                                     <h4 class="text-xs font-bold text-white flex items-center gap-1.5 justify-center sm:justify-start">
-                                        <i class="fa-solid fa-user-plus text-igBlue"></i> Belum ada teman terdaftar?
+                                        <i class="fa-solid fa-user-plus text-igBlue"></i> Undang Teman Gabung!
                                     </h4>
-                                    <p class="text-[10px] text-gray-400 mt-1">Kirimkan tautan website ini kepada teman-temanmu agar mereka bisa langsung mendaftar dan saling berinteraksi!</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">Salin dan kirimkan tautan web ini kepada temanmu agar mereka langsung terdaftar di server yang sama denganmu!</p>
                                 </div>
                                 <button onclick="copyShareLink()" class="bg-igBlue hover:bg-blue-600 active:scale-95 transition text-[10px] font-bold px-4 py-2 rounded-lg text-white whitespace-nowrap">
                                     <i class="fa-regular fa-clone mr-1"></i> Salin Link Web
@@ -763,10 +842,10 @@
                             <!-- INSTAGRAM STORIES BAR: Semua Teman Terdaftar (Terutama yang Online) -->
                             <div class="bg-igGray border border-igBorder p-4 rounded-xl flex flex-col gap-2 shadow-lg">
                                 <h4 class="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center justify-between">
-                                    <span>Teman Aktif & Terdaftar</span>
+                                    <span>Teman Online Saat Ini</span>
                                     <span class="text-green-500 flex items-center gap-1 text-[9px]">
                                         <span class="w-1.5 h-1.5 bg-green-500 rounded-full ${onlineFriends.length > 0 ? 'animate-pulse' : ''}"></span> 
-                                        ${onlineFriends.length} Sedang Online
+                                        ${onlineFriends.length} Aktif
                                     </span>
                                 </h4>
                                 <div class="flex items-center gap-4 overflow-x-auto py-2 no-scrollbar">
@@ -783,7 +862,7 @@
                                     ${registeredUsers.length > 0 ? registeredUsers.map(friend => {
                                         const isOnline = isUserOnline(friend);
                                         return `
-                                            <div onclick="viewUserProfil('${friend.id}')" class="flex flex-col items-center gap-1 cursor-pointer flex-shrink-0">
+                                            <div onclick="viewUserProfil('${friend.id}')" class="flex flex-col items-center gap-1 cursor-pointer flex-shrink-0 relative group">
                                                 <div class="relative">
                                                     <img src="${friend.avatar}" class="w-14 h-14 rounded-full p-0.5 border-2 ${isOnline ? 'border-green-500' : 'border-gray-700'} bg-black transition hover:scale-105 duration-200">
                                                     ${isOnline ? `<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full animate-pulse"></span>` : ''}
@@ -793,8 +872,32 @@
                                         `;
                                     }).join('') : `
                                         <div class="text-[10px] text-gray-500 italic py-2 px-1 whitespace-nowrap">
-                                            Belum ada teman terdaftar...
+                                            Belum ada teman lain. Salin Link diatas & bagikan!
                                         </div>
+                                    `}
+                                </div>
+                            </div>
+
+                            <!-- TEMAN TERDAFTAR SECARA GLOBAL (Mempermudah Mobile mencari user yang baru daftar) -->
+                            <div class="bg-igGray border border-igBorder p-4 rounded-xl flex flex-col gap-2.5 shadow-lg lg:hidden">
+                                <h4 class="text-[10px] text-gray-400 font-bold uppercase tracking-wider"><i class="fa-solid fa-users"></i> Temukan Pengguna Lain</h4>
+                                <div class="flex gap-3 overflow-x-auto py-1 no-scrollbar">
+                                    ${registeredUsers.length > 0 ? registeredUsers.map(acc => {
+                                        const online = isUserOnline(acc);
+                                        return `
+                                            <div onclick="viewUserProfil('${acc.id}')" class="flex items-center gap-2 bg-black/40 border border-igBorder p-2 rounded-xl flex-shrink-0 cursor-pointer">
+                                                <div class="relative">
+                                                    <img src="${acc.avatar}" class="w-8 h-8 rounded-full bg-igGray">
+                                                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 ${online ? 'bg-green-500' : 'bg-gray-600'} rounded-full border border-black"></span>
+                                                </div>
+                                                <div class="text-left min-w-0">
+                                                    <p class="font-bold text-[10px] text-white truncate">@${acc.username}</p>
+                                                    <p class="text-[8px] text-gray-400 truncate">${acc.fullName}</p>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('') : `
+                                        <p class="text-[10px] text-gray-500 italic py-1">Belum ada akun lain terdaftar.</p>
                                     `}
                                 </div>
                             </div>
@@ -1122,6 +1225,7 @@
                 } else {
                     memories.push(newMemory);
                     saveLocalData();
+                    await pushOfflineData('memories');
                 }
 
                 const targetDate = new Date(date);
@@ -1168,6 +1272,7 @@
                 
                 memories = memories.filter(m => m.id != id);
                 saveLocalData();
+                await pushOfflineData('memories');
                 closeConfirmDelete();
                 showCustomToast("Plengeran berhasil dihapus.");
                 renderApp();
@@ -1418,6 +1523,7 @@
                 } else {
                     chats[activeRoomId] = updatedHistory;
                     saveLocalData();
+                    await pushOfflineData('chats');
                     renderApp();
                 }
                 scrollToBottom();
@@ -1454,6 +1560,7 @@
                 } else {
                     chats[activeRoomId] = updatedHistory;
                     saveLocalData();
+                    await pushOfflineData('chats');
                     renderApp();
                 }
                 scrollToBottom();
@@ -1712,6 +1819,7 @@
                         accounts[idx].fullName = fullName;
                         accounts[idx].bio = bio;
                         saveLocalData();
+                        await pushOfflineData('accounts');
                     }
                 }
                 closeCustomModal();
@@ -1861,6 +1969,9 @@
                     isUserLoggedIn = true;
                     startTrackingActivity();
                 }
+                
+                // Mulai sistem sinkronisasi hybrid jika tidak menggunakan Cloud Firebase langsung
+                startHybridSync();
             }
 
             // Render antarmuka aplikasi instan
