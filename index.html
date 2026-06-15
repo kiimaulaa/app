@@ -123,6 +123,9 @@
         let currentChatWithId = 'group_public'; 
         let isUserLoggedIn = false;
 
+        // Fitur balas pesan langsung
+        let replyToMsg = null; 
+
         let userSearchQuery = "";
         let profileSearchQuery = "";
 
@@ -193,20 +196,33 @@
 
             syncPresetAccountsToCloud();
 
+            // Menggunakan penggabungan cerdas agar akun bawaan tidak hilang saat database cloud disinkronkan
             onSnapshot(getPublicDataColRef('accounts'), (snapshot) => {
-                const cloudAccounts = [];
+                const cloudAccounts = {};
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     if (data && data.id) {
-                        cloudAccounts.push(data);
+                        cloudAccounts[data.id] = data;
                     }
                 });
                 
-                if (cloudAccounts.length > 0) {
-                    accounts = cloudAccounts;
-                } else {
-                    accounts = [...PRESET_ACCOUNTS];
-                }
+                // Gabungkan akun preset dengan update status teranyar dari cloud
+                const merged = PRESET_ACCOUNTS.map(preset => {
+                    if (cloudAccounts[preset.id]) {
+                        return { ...preset, ...cloudAccounts[preset.id] };
+                    }
+                    return preset;
+                });
+
+                // Tambahkan jika ada akun baru di cloud yang bukan preset
+                const presetIds = PRESET_ACCOUNTS.map(p => p.id);
+                Object.values(cloudAccounts).forEach(cloudAcc => {
+                    if (!presetIds.includes(cloudAcc.id)) {
+                        merged.push(cloudAcc);
+                    }
+                });
+
+                accounts = merged;
                 
                 const loggedInId = localStorage.getItem('pg_logged_in_id');
                 if (loggedInId && accounts.some(acc => acc.id === loggedInId)) {
@@ -1089,6 +1105,14 @@
                                     const isMe = msg.sender === currentUser.id;
                                     const msgSender = accounts.find(a => a.id === msg.sender) || { username: 'anggota', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=anon' };
                                     
+                                    // Layout jika balon chat ini merupakan balasan/kutipan chat lain
+                                    const replyBubbleHtml = msg.replyTo ? `
+                                        <div class="mb-1.5 p-2 rounded bg-black/45 border-l-2 border-igBlue text-[10px] text-gray-300">
+                                            <p class="font-bold text-igBlue text-[9px]">@${msg.replyTo.sender}</p>
+                                            <p class="truncate opacity-80">${msg.replyTo.text}</p>
+                                        </div>
+                                    ` : '';
+
                                     return `
                                         <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
                                             <div class="max-w-[75%] flex flex-col">
@@ -1099,19 +1123,29 @@
                                                     ${activeFriend.id === 'group_public' && !isMe ? `
                                                         <img src="${msgSender.avatar}" class="w-4 h-4 rounded-full bg-black/30">
                                                     ` : ''}
-                                                    <div>
-                                                        ${msg.isSharedMemory ? `
-                                                            <div class="flex flex-col gap-2 rounded-lg overflow-hidden bg-black/30 p-2 border border-white/10 max-w-[220px]">
-                                                                <p class="text-[9px] font-bold text-yellow-400 flex items-center gap-1">
-                                                                    <i class="fa-solid fa-calendar-heart"></i> Berbagi Plengeran Bersama
-                                                                </p>
-                                                                <img src="${msg.memoryImage}" class="w-full aspect-video object-cover rounded" onerror="this.src='https://picsum.photos/400/300'">
-                                                                <p class="text-[10px] font-semibold leading-snug">${msg.text}</p>
-                                                            </div>
-                                                        ` : msg.text}
+                                                    <div class="w-full">
+                                                        ${replyBubbleHtml}
+                                                        <div>
+                                                            ${msg.isSharedMemory ? `
+                                                                <div class="flex flex-col gap-2 rounded-lg overflow-hidden bg-black/30 p-2 border border-white/10 max-w-[220px]">
+                                                                    <p class="text-[9px] font-bold text-yellow-400 flex items-center gap-1">
+                                                                        <i class="fa-solid fa-calendar-heart"></i> Berbagi Plengeran Bersama
+                                                                    </p>
+                                                                    <img src="${msg.memoryImage}" class="w-full aspect-video object-cover rounded" onerror="this.src='https://picsum.photos/400/300'">
+                                                                    <p class="text-[10px] font-semibold leading-snug">${msg.text}</p>
+                                                                </div>
+                                                            ` : msg.text}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <span class="text-[8px] text-gray-500 mt-0.5 ${isMe ? 'text-right' : 'text-left'}">${msg.time}</span>
+                                                
+                                                <!-- Metadata Balas Obrolan -->
+                                                <div class="flex items-center gap-2 mt-1 ${isMe ? 'justify-end' : 'justify-start'}">
+                                                    <span class="text-[8px] text-gray-500">${msg.time}</span>
+                                                    <button onclick="setReplyTarget('${msgSender.username}', '${msg.text.replace(/'/g, "\\'")}')" class="text-[9px] text-gray-500 hover:text-igBlue transition font-semibold flex items-center gap-1">
+                                                        <i class="fa-solid fa-reply text-[8px]"></i> Balas
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     `;
@@ -1122,8 +1156,20 @@
                                 `}
                             </div>
 
+                            <!-- Form Input dengan Dukungan Bar Balasan Langsung -->
                             <div class="p-4 border-t border-igBorder bg-black">
-                                <form onsubmit="sendMessage(event)" class="flex items-center bg-igGray border border-igBorder rounded-full px-4 py-2">
+                                <div id="reply-container">
+                                    ${replyToMsg ? `
+                                        <div class="flex items-center justify-between bg-igHover border border-igBorder px-4 py-2 rounded-t-xl text-xs text-gray-300">
+                                            <div class="flex flex-col min-w-0">
+                                                <span class="text-[10px] text-igBlue font-bold">Membalas @${replyToMsg.sender}</span>
+                                                <span class="truncate text-[11px] opacity-80">${replyToMsg.text}</span>
+                                            </div>
+                                            <button onclick="cancelReply()" class="text-gray-400 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <form onsubmit="sendMessage(event)" class="flex items-center bg-igGray border border-igBorder rounded-full px-4 py-2 ${replyToMsg ? 'rounded-t-none border-t-0' : ''}">
                                     <input id="message-input" type="text" placeholder="Ketik pesan..." class="flex-1 bg-transparent border-none text-xs outline-none text-white placeholder-gray-500 py-1">
                                     <button type="submit" class="text-igBlue font-bold text-xs hover:text-white transition ml-2">Kirim</button>
                                 </form>
@@ -1140,14 +1186,30 @@
             `;
         }
 
+        // --- SISTEM CHAT SELECTION & UTILITIES ---
         window.selectChat = function(friendId) {
             currentChatWithId = friendId;
+            replyToMsg = null; // Reset target balas saat berpindah ruang chat
             renderApp();
             scrollToBottom();
         }
 
         window.backToChatList = function() {
             currentChatWithId = null;
+            replyToMsg = null;
+            renderApp();
+        }
+
+        // Fungsi pemicu balas pesan langsung
+        window.setReplyTarget = function(sender, text) {
+            replyToMsg = { sender, text };
+            renderApp();
+            const input = document.getElementById('message-input');
+            if (input) input.focus();
+        }
+
+        window.cancelReply = function() {
+            replyToMsg = null;
             renderApp();
         }
 
@@ -1210,11 +1272,16 @@
 
             const activeRoomId = getChatRoomId(currentUser.id, currentChatWithId);
             const activeHistory = chats[activeRoomId] || [];
+            
+            // Masukkan metadata balas jika user sedang menggunakan Balas Pesan
             const updatedHistory = [...activeHistory, {
                 sender: currentUser.id,
                 text: text,
-                time: timeStr
+                time: timeStr,
+                replyTo: replyToMsg ? { sender: replyToMsg.sender, text: replyToMsg.text } : null
             }];
+
+            replyToMsg = null; // Reset setelah pesan dikirim
 
             try {
                 if (useCloud) {
