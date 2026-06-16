@@ -106,7 +106,6 @@
             "https://placehold.co/150x150/4bffeb/ffffff?text=🐼"
         ];
 
-        // Seed users is now completely empty
         const SEED_USERS = [];
 
         const getLocalStorageData = (key, defaultValue) => {
@@ -248,7 +247,7 @@
                 return () => unsubscribeAuth();
             }, []);
 
-            // Handle Cloud Firestore Live sync listeners
+            // Handle Cloud Firestore Live sync listeners (Rule 1 Compliant)
             useEffect(() => {
                 if (!isFirebaseActive || !firestoreDb || !fbUser) return;
 
@@ -450,7 +449,7 @@
                 }
             };
 
-            const handleLogin = (e) => {
+            const handleLogin = async (e) => {
                 e.preventDefault();
                 if (!loginUsername || !loginPassword) {
                     showToast("Harap masukkan nama pengguna dan kata sandi!");
@@ -473,7 +472,9 @@
                 const updatedUser = { ...matchedUser, isOnline: true, lastActive: Date.now() };
                 setCurrentUser(updatedUser);
                 
-                if (!isFirebaseActive) {
+                if (isFirebaseActive && firestoreDb) {
+                    await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(updatedUser.id).set(updatedUser);
+                } else {
                     setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
                 }
 
@@ -482,10 +483,12 @@
                 setActiveTab('momen');
             };
 
-            const handleLogout = () => {
+            const handleLogout = async () => {
                 if (currentUser) {
                     const offlineUser = { ...currentUser, isOnline: false, lastActive: Date.now() };
-                    if (!isFirebaseActive) {
+                    if (isFirebaseActive && firestoreDb) {
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(currentUser.id).set(offlineUser);
+                    } else {
                         setUsers(prev => prev.map(u => u.id === currentUser.id ? offlineUser : u));
                     }
                 }
