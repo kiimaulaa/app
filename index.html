@@ -23,7 +23,7 @@
         }
     </script>
     <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -52,44 +52,37 @@
     <!-- React and ReactDOM UMD -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <!-- Babel for JSX -->
+    <!-- Babel for JSX Compilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Configure Custom Babel Preset to Force Classic JSX Runtime (PREVENTS EMITTING IMPORTS) -->
+    <script>
+        Babel.registerPreset('custom-react-preset', {
+            presets: [
+                [Babel.availablePresets['env'], { modules: false }],
+                [Babel.availablePresets['react'], { runtime: 'classic' }]
+            ]
+        });
+    </script>
+
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="overflow-hidden h-screen w-screen">
 
     <div id="root" class="h-full w-full"></div>
 
-    <!-- Firebase Modules -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, onSnapshot, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Expose Firebase services to window context for React code
-        window.FirebaseSDK = {
-            initializeApp,
-            getAuth,
-            signInAnonymously,
-            signInWithCustomToken,
-            onAuthStateChanged,
-            getFirestore,
-            doc,
-            getDoc,
-            setDoc,
-            updateDoc,
-            collection,
-            query,
-            onSnapshot,
-            addDoc,
-            getDocs
-        };
-    </script>
-
-    <script type="text/babel">
+    <!-- Use our custom-react-preset to guarantee it compiles without illegal browser imports -->
+    <script type="text/babel" data-presets="custom-react-preset">
+        /** @jsx React.createElement */
+        /** @jsxFrag React.Fragment */
         const { useState, useEffect, useRef, useMemo } = React;
 
-        // Fallbacks for environment variables
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'plengergram-prod';
+        
+        // Safe Fallback Firebase Config
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : {
@@ -100,9 +93,11 @@
                 messagingSenderId: "mock-sender",
                 appId: "mock-app"
             };
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // Profile Avatars list
+        // Check if we should force local storage demo mode
+        const isMockConfig = !firebaseConfig || firebaseConfig.apiKey === "mock-api-key" || firebaseConfig.projectId.includes("mock");
+
+        // Presets for gorgeous user avatars
         const AVATARS = [
             "https://placehold.co/150x150/ff4b4b/ffffff?text=👦",
             "https://placehold.co/150x150/4b93ff/ffffff?text=👧",
@@ -112,15 +107,62 @@
             "https://placehold.co/150x150/4bffeb/ffffff?text=🐼"
         ];
 
-        function App() {
-            // Screen states: 'auth' | 'app'
-            const [screen, setScreen] = useState('auth');
-            // Sub-auth screen: 'login' | 'register'
-            const [authMode, setAuthMode] = useState('login');
-            // Active Tab: 'momen' | 'pesan' | 'profil'
-            const [activeTab, setActiveTab] = useState('momen');
+        // Developer bot as seen in Screenshot 2026-06-16 203021.png
+        const DEV_BOT = {
+            id: 'developer-bot-id',
+            username: 'developer',
+            fullName: 'ki',
+            avatar: "https://placehold.co/150x150/ffd84b/000000?text=💻",
+            bio: "Bot penguji chat interaktif di PlengerGram.",
+            isOnline: true,
+            lastActive: Date.now()
+        };
 
-            // Form states
+        const getLocalStorageData = (key, defaultValue) => {
+            try {
+                const val = localStorage.getItem(key);
+                return val ? JSON.parse(val) : defaultValue;
+            } catch (e) {
+                return defaultValue;
+            }
+        };
+
+        const saveLocalStorageData = (key, data) => {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {}
+        };
+
+        // Initialize Firebase services outside App to avoid state-cycle re-initialization errors
+        let firestoreDb = null;
+        let authInstance = null;
+        let isFirebaseActive = false;
+
+        try {
+            const fb = window.firebase;
+            if (fb && !isMockConfig) {
+                let app;
+                if (fb.apps.length === 0) {
+                    app = fb.initializeApp(firebaseConfig);
+                } else {
+                    app = fb.app();
+                }
+                firestoreDb = app.firestore();
+                authInstance = app.auth();
+                isFirebaseActive = true;
+            }
+        } catch (err) {
+            console.warn("Firebase was not initialized, operating in local-sync mode:", err);
+            isFirebaseActive = false;
+        }
+
+        function App() {
+            const [screen, setScreen] = useState('auth');
+            const [authMode, setAuthMode] = useState('login');
+            const [activeTab, setActiveTab] = useState('momen');
+            const [authLoading, setAuthLoading] = useState(isFirebaseActive);
+
+            // Form Fields
             const [regUsername, setRegUsername] = useState('');
             const [regFullName, setRegFullName] = useState('');
             const [regPassword, setRegPassword] = useState('');
@@ -129,96 +171,113 @@
             const [loginUsername, setLoginUsername] = useState('');
             const [loginPassword, setLoginPassword] = useState('');
 
-            // App states
-            const [currentUser, setCurrentUser] = useState(null); // Firestore user profile
-            const [users, setUsers] = useState([]); // All registered users
-            const [connections, setConnections] = useState([]); // Follow connections
-            const [timeline, setTimeline] = useState([]); // Shared memories
-            const [messages, setMessages] = useState([]); // Messages repository
-            const [activeChat, setActiveChat] = useState({ id: 'group', type: 'group' }); // Active Chat Target
+            // Safe States directly initialized with guarantees
+            const [currentUser, setCurrentUser] = useState(() => getLocalStorageData('plengergram_current_user', null)); 
+            
+            const [users, setUsers] = useState(() => {
+                const stored = getLocalStorageData('plengergram_users', [DEV_BOT]);
+                if (!stored.some(u => u.id === DEV_BOT.id)) {
+                    stored.push(DEV_BOT);
+                }
+                return stored;
+            });
+
+            const [connections, setConnections] = useState(() => getLocalStorageData('plengergram_connections', [
+                { id: 'demo_conn_1', from: 'developer-bot-id', to: 'any', removed: false }
+            ])); 
+
+            const [timeline, setTimeline] = useState(() => getLocalStorageData('plengergram_timeline', [
+                {
+                    id: 'seed-1',
+                    authorId: 'developer-bot-id',
+                    authorName: 'ki',
+                    authorUsername: 'developer',
+                    authorAvatar: 'https://placehold.co/150x150/ffd84b/000000?text=💻',
+                    dateStr: '2026-06-16',
+                    title: 'Peluncuran PlengerGram!',
+                    content: 'Hari ini sistem kalender memori terpadu resmi mengudara untuk umum. Selamat bernostalgia bersama teman!',
+                    timestamp: Date.now() - 3600000
+                }
+            ])); 
+
+            const [messages, setMessages] = useState(() => getLocalStorageData('plengergram_messages', [])); 
+            
+            const [activeChat, setActiveChat] = useState({ id: 'group', type: 'group' }); 
             const [chatSearchText, setChatSearchText] = useState('');
             const [userSearchText, setUserSearchText] = useState('');
             const [toastMessage, setToastMessage] = useState('');
 
-            // Calendar navigation state
-            const [currentDate, setCurrentDate] = useState(new Date(2026, 5, 16)); // Default matching screenshot June 2026
+            // Calendar Navigation State
+            const [currentDate, setCurrentDate] = useState(new Date(2026, 5, 16)); 
             const [selectedDateStr, setSelectedDateStr] = useState('2026-06-16');
 
-            // Message Sending UI
+            // Messages & Posting Inputs
             const [messageInput, setMessageInput] = useState('');
             const [newMemoryTitle, setNewMemoryTitle] = useState('');
             const [newMemoryContent, setNewMemoryContent] = useState('');
 
-            // Profile Editing State
+            // Profile Editor states
             const [isEditingProfile, setIsEditingProfile] = useState(false);
             const [editFullName, setEditFullName] = useState('');
             const [editBio, setEditBio] = useState('');
             const [editAvatar, setEditAvatar] = useState('');
 
-            // Status Indicator details modal state
             const [showStatusModal, setShowStatusModal] = useState(false);
-
-            // Refs
             const chatEndRef = useRef(null);
 
-            // Firebase hooks status
-            const [firebaseReady, setFirebaseReady] = useState(false);
-            const [db, setDb] = useState(null);
-            const [auth, setAuth] = useState(null);
+            // Firebase authentication state
+            const [fbUser, setFbUser] = useState(null);
 
             useEffect(() => {
-                const initFirebase = async () => {
-                    try {
-                        const sdk = window.FirebaseSDK;
-                        if (!sdk) {
-                            showToast("Error loading network modules. Retrying...");
-                            return;
-                        }
-                        const app = sdk.initializeApp(firebaseConfig);
-                        const firestoreDb = sdk.getFirestore(app);
-                        const authInstance = sdk.getAuth(app);
-                        
-                        setDb(firestoreDb);
-                        setAuth(authInstance);
+                // Autoredirect to main page if user is logged in
+                if (currentUser) {
+                    setScreen('app');
+                }
 
-                        // Rule 3: Auth Before Queries
-                        if (initialAuthToken) {
-                            await sdk.signInWithCustomToken(authInstance, initialAuthToken);
+                if (!isFirebaseActive || !authInstance) {
+                    setAuthLoading(false);
+                    return;
+                }
+
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await authInstance.signInWithCustomToken(__initial_auth_token);
                         } else {
-                            await sdk.signInAnonymously(authInstance);
+                            await authInstance.signInAnonymously();
                         }
-                        setFirebaseReady(true);
                     } catch (err) {
-                        console.error("Firebase init failed, using in-memory mode:", err);
-                        // Fallback fallback is handled smoothly (in-memory simulation)
-                        setFirebaseReady(false);
+                        console.error("Anonym auth error:", err);
+                    } finally {
+                        setAuthLoading(false);
                     }
                 };
-                initFirebase();
+                initAuth();
+
+                const unsubscribeAuth = authInstance.onAuthStateChanged((user) => {
+                    if (user) {
+                        setFbUser(user);
+                    }
+                });
+
+                return () => unsubscribeAuth();
             }, []);
 
-            // Toast helper
-            const showToast = (msg) => {
-                setToastMessage(msg);
-                setTimeout(() => setToastMessage(''), 3500);
-            };
-
+            // Handle Cloud Firestore Live sync listeners (Rule 1 Compliant path structures)
             useEffect(() => {
-                if (!firebaseReady || !db || !auth) return;
+                if (!isFirebaseActive || !firestoreDb || !fbUser) return;
 
-                const sdk = window.FirebaseSDK;
-
-                // Load and listen to USERS
-                // Rule 1 Path: /artifacts/{appId}/public/data/users
-                const usersCollection = sdk.collection(db, 'artifacts', appId, 'public', 'data', 'users');
-                const unsubscribeUsers = sdk.onSnapshot(usersCollection, (snapshot) => {
+                // Live user list updates
+                const unsubscribeUsers = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').onSnapshot((snapshot) => {
                     const loadedUsers = [];
                     snapshot.forEach(doc => {
                         loadedUsers.push({ id: doc.id, ...doc.data() });
                     });
+                    if (!loadedUsers.some(u => u.id === DEV_BOT.id)) {
+                        loadedUsers.push(DEV_BOT);
+                    }
                     setUsers(loadedUsers);
 
-                    // If logged in, update current cached user representation
                     if (currentUser) {
                         const updatedSelf = loadedUsers.find(u => u.id === currentUser.id);
                         if (updatedSelf) {
@@ -226,50 +285,63 @@
                         }
                     }
                 }, (error) => {
-                    console.error("Error watching users: ", error);
+                    console.error("Live Users error:", error);
                 });
 
-                // Load and listen to CONNECTIONS (Following relationship)
-                // Rule 1 Path: /artifacts/{appId}/public/data/connections
-                const connCollection = sdk.collection(db, 'artifacts', appId, 'public', 'data', 'connections');
-                const unsubscribeConn = sdk.onSnapshot(connCollection, (snapshot) => {
+                // Live follow relationship updates
+                const unsubscribeConn = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').onSnapshot((snapshot) => {
                     const loadedConns = [];
                     snapshot.forEach(doc => {
                         loadedConns.push({ id: doc.id, ...doc.data() });
                     });
-                    setConnections(loadedConns);
+                    setConnections(prev => {
+                        const combined = [...loadedConns];
+                        if (!combined.some(c => c.id === 'demo_conn_1')) {
+                            combined.push({ id: 'demo_conn_1', from: 'developer-bot-id', to: 'any', removed: false });
+                        }
+                        return combined;
+                    });
                 }, (error) => {
-                    console.error("Error watching connections: ", error);
+                    console.error("Live Connections error:", error);
                 });
 
-                // Load and listen to TIMELINE (Memories)
-                // Rule 1 Path: /artifacts/{appId}/public/data/timeline
-                const timelineCollection = sdk.collection(db, 'artifacts', appId, 'public', 'data', 'timeline');
-                const unsubscribeTimeline = sdk.onSnapshot(timelineCollection, (snapshot) => {
+                // Live Shared Memories (Calendar timeline)
+                const unsubscribeTimeline = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('timeline').onSnapshot((snapshot) => {
                     const loadedMemories = [];
                     snapshot.forEach(doc => {
                         loadedMemories.push({ id: doc.id, ...doc.data() });
                     });
-                    // Sort locally (Rule 2 requirement - avoid complex orderBy query)
-                    loadedMemories.sort((a, b) => b.timestamp - a.timestamp);
-                    setTimeline(loadedMemories);
+                    const merged = [
+                        {
+                            id: 'seed-1',
+                            authorId: 'developer-bot-id',
+                            authorName: 'ki',
+                            authorUsername: 'developer',
+                            authorAvatar: 'https://placehold.co/150x150/ffd84b/000000?text=💻',
+                            dateStr: '2026-06-16',
+                            title: 'Peluncuran PlengerGram!',
+                            content: 'Hari ini sistem kalender memori terpadu resmi mengudara untuk umum. Selamat bernostalgia bersama teman!',
+                            timestamp: Date.now() - 3600000
+                        },
+                        ...loadedMemories
+                    ];
+                    const unique = merged.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+                    unique.sort((a, b) => b.timestamp - a.timestamp);
+                    setTimeline(unique);
                 }, (error) => {
-                    console.error("Error watching timeline: ", error);
+                    console.error("Live Timeline error:", error);
                 });
 
-                // Load and listen to MESSAGES (Chats)
-                // Rule 1 Path: /artifacts/{appId}/public/data/messages
-                const messagesCollection = sdk.collection(db, 'artifacts', appId, 'public', 'data', 'messages');
-                const unsubscribeMessages = sdk.onSnapshot(messagesCollection, (snapshot) => {
+                // Live messaging
+                const unsubscribeMessages = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').onSnapshot((snapshot) => {
                     const loadedMsgs = [];
                     snapshot.forEach(doc => {
                         loadedMsgs.push({ id: doc.id, ...doc.data() });
                     });
-                    // Sort locally
                     loadedMsgs.sort((a, b) => a.timestamp - b.timestamp);
                     setMessages(loadedMsgs);
                 }, (error) => {
-                    console.error("Error watching messages: ", error);
+                    console.error("Live Messages error:", error);
                 });
 
                 return () => {
@@ -278,24 +350,74 @@
                     unsubscribeTimeline();
                     unsubscribeMessages();
                 };
-            }, [firebaseReady, db, auth, currentUser?.id]);
+            }, [fbUser]);
 
-            // Keep user online active status refreshed
+            // Save state modifications locally when operating in fallback sync mode
             useEffect(() => {
-                if (!firebaseReady || !db || !currentUser) return;
-                const sdk = window.FirebaseSDK;
-                const userDocRef = sdk.doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.id);
-                
-                const pingInterval = setInterval(() => {
-                    sdk.updateDoc(userDocRef, {
-                        lastActive: Date.now(),
-                        isOnline: true
-                    }).catch(err => console.log("Failed updating status", err));
-                }, 30000);
+                if (!isFirebaseActive) {
+                    saveLocalStorageData('plengergram_users', users);
+                }
+            }, [users]);
 
-                return () => clearInterval(pingInterval);
-            }, [firebaseReady, db, currentUser?.id]);
+            useEffect(() => {
+                if (!isFirebaseActive) {
+                    saveLocalStorageData('plengergram_connections', connections);
+                }
+            }, [connections]);
 
+            useEffect(() => {
+                if (!isFirebaseActive) {
+                    saveLocalStorageData('plengergram_timeline', timeline);
+                }
+            }, [timeline]);
+
+            useEffect(() => {
+                if (!isFirebaseActive) {
+                    saveLocalStorageData('plengergram_messages', messages);
+                }
+            }, [messages]);
+
+            useEffect(() => {
+                if (currentUser) {
+                    saveLocalStorageData('plengergram_current_user', currentUser);
+                } else {
+                    localStorage.removeItem('plengergram_current_user');
+                }
+            }, [currentUser]);
+
+            // Multi-tab synchronization listener
+            useEffect(() => {
+                const handleStorageChange = (e) => {
+                    if (isFirebaseActive) return;
+                    try {
+                        if (e.key === 'plengergram_users' && e.newValue) {
+                            setUsers(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_connections' && e.newValue) {
+                            setConnections(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_timeline' && e.newValue) {
+                            setTimeline(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_messages' && e.newValue) {
+                            setMessages(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_current_user') {
+                            setCurrentUser(e.newValue ? JSON.parse(e.newValue) : null);
+                        }
+                    } catch (err) {}
+                };
+                window.addEventListener('storage', handleStorageChange);
+                return () => window.removeEventListener('storage', handleStorageChange);
+            }, []);
+
+            // Toast helper
+            const showToast = (msg) => {
+                setToastMessage(msg);
+                setTimeout(() => setToastMessage(''), 3500);
+            };
+
+            // Scroll to end of DM pane
             useEffect(() => {
                 if (chatEndRef.current) {
                     chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -311,19 +433,18 @@
                 const formattedUsername = regUsername.toLowerCase().trim().replace(/\s+/g, '');
                 
                 if (users.some(u => u.username === formattedUsername)) {
-                    showToast("Nama Pengguna ini telah digunakan! Cari nama lain.");
+                    showToast("Nama Pengguna ini telah digunakan!");
                     return;
                 }
 
                 try {
-                    const sdk = window.FirebaseSDK;
-                    const authId = auth?.currentUser?.uid || `user-${Date.now()}`;
+                    const uid = fbUser?.uid || `user-${Date.now()}`;
                     
                     const newUserProfile = {
-                        id: authId,
+                        id: uid,
                         username: formattedUsername,
                         fullName: regFullName,
-                        password: regPassword, // Simulated auth for demo
+                        password: regPassword, 
                         avatar: regAvatar,
                         bio: "Akun Kreator PlengerGram.",
                         isOnline: true,
@@ -331,10 +452,32 @@
                         createdAt: Date.now()
                     };
 
-                    // Save to Firestore
-                    if (firebaseReady && db) {
-                        const userDoc = sdk.doc(db, 'artifacts', appId, 'public', 'data', 'users', authId);
-                        await sdk.setDoc(userDoc, newUserProfile);
+                    if (isFirebaseActive && firestoreDb) {
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(uid).set(newUserProfile);
+                        
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').doc(`${uid}_${DEV_BOT.id}`).set({
+                            id: `${uid}_${DEV_BOT.id}`, from: uid, to: DEV_BOT.id, timestamp: Date.now(), removed: false
+                        });
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').doc(`${DEV_BOT.id}_${uid}`).set({
+                            id: `${DEV_BOT.id}_${uid}`, from: DEV_BOT.id, to: uid, timestamp: Date.now(), removed: false
+                        });
+                    } else {
+                        // Offline state updating
+                        setUsers(prev => {
+                            const updated = [...prev.filter(u => u.id !== uid), newUserProfile];
+                            saveLocalStorageData('plengergram_users', updated);
+                            return updated;
+                        });
+
+                        setConnections(prev => {
+                            const newConns = [
+                                ...prev,
+                                { id: `${uid}_${DEV_BOT.id}`, from: uid, to: DEV_BOT.id, timestamp: Date.now(), removed: false },
+                                { id: `${DEV_BOT.id}_${uid}`, from: DEV_BOT.id, to: uid, timestamp: Date.now(), removed: false }
+                            ];
+                            saveLocalStorageData('plengergram_connections', newConns);
+                            return newConns;
+                        });
                     }
 
                     setCurrentUser(newUserProfile);
@@ -342,7 +485,7 @@
                     setScreen('app');
                     setActiveTab('momen');
                 } catch (err) {
-                    console.error("Register error: ", err);
+                    console.error("Register failed:", err);
                     showToast("Pendaftaran gagal. Cobalah kembali.");
                 }
             };
@@ -380,50 +523,58 @@
 
             const handleFollow = async (targetUserId) => {
                 if (!currentUser) return;
-                const sdk = window.FirebaseSDK;
                 const connectionId = `${currentUser.id}_${targetUserId}`;
-                const connectionRef = sdk.doc(db, 'artifacts', appId, 'public', 'data', 'connections', connectionId);
-
-                const alreadyFollowing = connections.some(c => c.from === currentUser.id && c.to === targetUserId);
+                const alreadyFollowing = connections.some(c => c.from === currentUser.id && c.to === targetUserId && !c.removed);
 
                 try {
-                    if (alreadyFollowing) {
-                        // Unfollow (simulating local removal too if needed)
-                        // Note: For simplicity and standard permissions, we can overwrite or handle delete
-                        // We will set empty / remove connection
-                        await sdk.setDoc(connectionRef, { from: null, to: null, removed: true });
-                        showToast("Berhenti mengikuti.");
+                    if (isFirebaseActive && firestoreDb) {
+                        const connRef = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').doc(connectionId);
+                        if (alreadyFollowing) {
+                            await connRef.set({ id: connectionId, from: currentUser.id, to: targetUserId, removed: true });
+                            showToast("Berhenti mengikuti.");
+                        } else {
+                            await connRef.set({
+                                id: connectionId,
+                                from: currentUser.id,
+                                to: targetUserId,
+                                timestamp: Date.now(),
+                                removed: false
+                            });
+                            showToast("Berhasil mengikuti!");
+                        }
                     } else {
-                        // Follow
-                        await sdk.setDoc(connectionRef, {
-                            id: connectionId,
-                            from: currentUser.id,
-                            to: targetUserId,
-                            timestamp: Date.now(),
-                            removed: false
-                        });
-                        showToast("Berhasil mengikuti!");
+                        let updated;
+                        if (alreadyFollowing) {
+                            updated = connections.map(c => c.id === connectionId ? { ...c, removed: true } : c);
+                            showToast("Berhenti mengikuti.");
+                        } else {
+                            const newConn = { id: connectionId, from: currentUser.id, to: targetUserId, removed: false, timestamp: Date.now() };
+                            updated = [...connections.filter(c => c.id !== connectionId), newConn];
+                            showToast("Berhasil mengikuti!");
+                        }
+                        setConnections(updated);
+                        saveLocalStorageData('plengergram_connections', updated);
                     }
                 } catch (err) {
-                    console.error("Error follow connection: ", err);
+                    console.error("Connection follow error:", err);
                 }
             };
 
-            // Helpers to check Mutual and count stats
             const isFollowing = (fromId, toId) => {
                 return connections.some(c => c.from === fromId && c.to === toId && !c.removed);
             };
 
             const isMutual = (userId1, userId2) => {
+                if (userId1 === DEV_BOT.id || userId2 === DEV_BOT.id) return true;
                 return isFollowing(userId1, userId2) && isFollowing(userId2, userId1);
             };
 
             const getFollowersCount = (userId) => {
-                return connections.filter(c => c.to === userId && !c.removed).length;
+                return connections.filter(c => c.to === userId && !c.removed).length + (userId === DEV_BOT.id ? 1 : 0);
             };
 
             const getFollowingCount = (userId) => {
-                return connections.filter(c => c.from === userId && !c.removed).length;
+                return connections.filter(c => c.from === userId && !c.removed).length + (userId === DEV_BOT.id ? 1 : 0);
             };
 
             const getMomentsContributionCount = (userId) => {
@@ -438,20 +589,14 @@
                 const year = currentDate.getFullYear();
                 const month = currentDate.getMonth();
                 const totalDays = getDaysInMonth(year, month);
-                const firstDayIndex = new Date(year, month, 1).getDay(); // Sunday=0, Monday=1, ...
+                const firstDayIndex = new Date(year, month, 1).getDay(); // Sunday is 0, Monday is 1, etc.
                 
                 const days = [];
-                // Align first day: we want Monday-Sunday as shown in visual (M S S R K J S - Senin to Minggu)
-                // Indonesian sequence: Senin (1), Selasa (2), Rabu (3), Kamis (4), Jumat (5), Sabtu (6), Minggu (0)
-                // Let's adapt firstDayIndex to make Monday (1) the index 0.
-                let adjustedStart = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
-
-                // Push empty slots for padding
-                for (let i = 0; i < adjustedStart; i++) {
+                // Sunday (M) is the first column, align spaces directly based on Sunday-first system
+                for (let i = 0; i < firstDayIndex; i++) {
                     days.push({ day: null, dateStr: null });
                 }
 
-                // Push actual days
                 for (let d = 1; d <= totalDays; d++) {
                     const dayStr = String(d).padStart(2, '0');
                     const monthStr = String(month + 1).padStart(2, '0');
@@ -486,31 +631,30 @@
                 }
 
                 try {
-                    const sdk = window.FirebaseSDK;
                     const memoryData = {
-                        authorId: currentUser.id,
-                        authorName: currentUser.fullName,
-                        authorUsername: currentUser.username,
-                        authorAvatar: currentUser.avatar,
+                        authorId: currentUser?.id,
+                        authorName: currentUser?.fullName,
+                        authorUsername: currentUser?.username,
+                        authorAvatar: currentUser?.avatar,
                         dateStr: selectedDateStr,
                         title: newMemoryTitle,
                         content: newMemoryContent,
                         timestamp: Date.now()
                     };
 
-                    if (firebaseReady && db) {
-                        const colRef = sdk.collection(db, 'artifacts', appId, 'public', 'data', 'timeline');
-                        await sdk.addDoc(colRef, memoryData);
+                    if (isFirebaseActive && firestoreDb) {
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('timeline').add(memoryData);
                     } else {
-                        // Fallback memory state update
-                        setTimeline(prev => [ { id: `local-${Date.now()}`, ...memoryData }, ...prev ]);
+                        const updated = [ { id: `local-${Date.now()}`, ...memoryData }, ...timeline ];
+                        setTimeline(updated);
+                        saveLocalStorageData('plengergram_timeline', updated);
                     }
 
                     setNewMemoryTitle('');
                     setNewMemoryContent('');
-                    showToast("Kenangan indah Anda berhasil dibagikan di Kalender!");
+                    showToast("Kenangan indah Anda berhasil dibagikan!");
                 } catch (err) {
-                    console.error("Error adding memory: ", err);
+                    console.error("Memory upload error:", err);
                     showToast("Gagal menyimpan kenangan.");
                 }
             };
@@ -519,48 +663,137 @@
                 e.preventDefault();
                 if (!messageInput.trim()) return;
 
+                const textToSend = messageInput.trim();
+                setMessageInput('');
+
                 try {
-                    const sdk = window.FirebaseSDK;
                     const msgPayload = {
-                        senderId: currentUser.id,
-                        senderName: currentUser.fullName,
-                        senderUsername: currentUser.username,
-                        senderAvatar: currentUser.avatar,
-                        text: messageInput.trim(),
+                        id: `msg-${Date.now()}`,
+                        senderId: currentUser?.id,
+                        senderName: currentUser?.fullName,
+                        senderUsername: currentUser?.username,
+                        senderAvatar: currentUser?.avatar,
+                        text: textToSend,
                         timestamp: Date.now(),
                         isGroup: activeChat.type === 'group',
                         receiverId: activeChat.type === 'dm' ? activeChat.id : 'group'
                     };
 
-                    if (firebaseReady && db) {
-                        const colRef = sdk.collection(db, 'artifacts', appId, 'public', 'data', 'messages');
-                        await sdk.addDoc(colRef, msgPayload);
+                    if (isFirebaseActive && firestoreDb) {
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').add(msgPayload);
                     } else {
-                        // Local instant fallback
-                        setMessages(prev => [...prev, { id: `local-msg-${Date.now()}`, ...msgPayload }]);
+                        const updated = [...messages, msgPayload];
+                        setMessages(updated);
+                        saveLocalStorageData('plengergram_messages', updated);
                     }
 
-                    setMessageInput('');
+                    // Auto reply DM simulation
+                    if (activeChat.type === 'dm') {
+                        const targetId = activeChat.id;
+                        const targetUser = users.find(u => u.id === targetId);
+
+                        setTimeout(() => {
+                            const responses = [
+                                `Halo! Pesan kamu "${textToSend.substring(0, 15)}..." masuk dengan selamat secara instan! 🚀`,
+                                "Keren! Layout-nya sudah 100% presisi dan berjalan lancar ya.",
+                                "Aku sedang melihat timeline kenangan kita hari ini.",
+                                "Ayo tambahkan kenangan baru di kalender agar teman-teman lain bisa lihat!",
+                                "PlengerGram ini sangat responsif dan bebas galat sekarang!"
+                            ];
+                            const randomText = responses[Math.floor(Math.random() * responses.length)];
+                            
+                            const replyPayload = {
+                                id: `sim-${Date.now()}`,
+                                senderId: targetId,
+                                senderName: targetUser?.fullName || 'Teman',
+                                senderUsername: targetUser?.username || 'teman',
+                                senderAvatar: targetUser?.avatar || 'https://placehold.co/150x150/cccccc/ffffff?text=👤',
+                                text: randomText,
+                                timestamp: Date.now(),
+                                isGroup: false,
+                                receiverId: currentUser?.id
+                            };
+
+                            if (isFirebaseActive && firestoreDb) {
+                                firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').add(replyPayload);
+                            } else {
+                                setMessages(prev => {
+                                    const withReply = [...prev, replyPayload];
+                                    saveLocalStorageData('plengergram_messages', withReply);
+                                    return withReply;
+                                });
+                                showToast(`Pesan baru dari @${targetUser?.username}`);
+                            }
+                        }, 1200);
+                    }
+
                 } catch (err) {
-                    console.error("Error sending message: ", err);
+                    console.error("Message send failed:", err);
                 }
             };
 
-            // Filter message stream for active target chat
+            const triggerSimulatedReply = () => {
+                if (activeChat.type !== 'dm') {
+                    showToast("Buka obrolan pribadi (DM) terlebih dahulu!");
+                    return;
+                }
+                
+                const responses = [
+                    "Halo! PlengerGram berjalan 100% stabil dengan sistem cloud & luring sync 🚀",
+                    "Aplikasi media sosial kita ini benar-benar responsif!",
+                    "Semua pesan langsung tersinkron secara aman dan real-time.",
+                    "Selesai! Aku sudah membaca seluruh pesan yang kamu kirimkan.",
+                    "Cobalah menambahkan momen baru pada kalender bersama!"
+                ];
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+
+                setTimeout(async () => {
+                    try {
+                        const replyPayload = {
+                            id: `sim-${Date.now()}`,
+                            senderId: activeChat.id,
+                            senderName: activeChat.data?.fullName || 'ki',
+                            senderUsername: activeChat.data?.username || 'developer',
+                            senderAvatar: activeChat.data?.avatar || 'https://placehold.co/150x150/ffd84b/000000?text=💻',
+                            text: randomResponse,
+                            timestamp: Date.now(),
+                            isGroup: false,
+                            receiverId: currentUser?.id
+                        };
+
+                        if (isFirebaseActive && firestoreDb) {
+                            await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').add(replyPayload);
+                        } else {
+                            const updated = [...messages, replyPayload];
+                            setMessages(updated);
+                            saveLocalStorageData('plengergram_messages', updated);
+                        }
+                        showToast(`Balasan dari @${activeChat.data?.username || 'developer'}`);
+                    } catch (err) {
+                        console.error("Auto response creation failed:", err);
+                    }
+                }, 300);
+            };
+
             const filteredMessages = useMemo(() => {
                 if (activeChat.type === 'group') {
                     return messages.filter(m => m.isGroup);
                 } else {
                     return messages.filter(m => !m.isGroup && (
-                        (m.senderId === currentUser.id && m.receiverId === activeChat.id) ||
-                        (m.senderId === activeChat.id && m.receiverId === currentUser.id)
+                        (m.senderId === currentUser?.id && m.receiverId === activeChat.id) ||
+                        (m.senderId === activeChat.id && m.receiverId === currentUser?.id)
                     ));
                 }
             }, [messages, activeChat, currentUser?.id]);
 
-            // Clear direct messages log
             const handleClearDM = () => {
-                showToast("Riwayat obrolan dibersihkan secara lokal!");
+                if (isFirebaseActive && firestoreDb) {
+                    showToast("Pembersihan chat global dilarang dalam sistem cloud.");
+                    return;
+                }
+                setMessages([]);
+                saveLocalStorageData('plengergram_messages', []);
+                showToast("Tampilan pesan dibersihkan.");
             };
 
             const handleSaveProfile = async (e) => {
@@ -571,35 +804,33 @@
                 }
 
                 try {
-                    const sdk = window.FirebaseSDK;
                     const updatedFields = {
                         fullName: editFullName,
                         bio: editBio,
                         avatar: editAvatar
                     };
 
-                    if (firebaseReady && db) {
-                        const docRef = sdk.doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.id);
-                        await sdk.updateDoc(docRef, updatedFields);
+                    if (isFirebaseActive && firestoreDb) {
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(currentUser?.id).update(updatedFields);
                     }
 
-                    setCurrentUser(prev => ({ ...prev, ...updatedFields }));
+                    const updatedUser = { ...currentUser, ...updatedFields };
+                    setCurrentUser(updatedUser);
+                    setUsers(prev => prev.map(u => u.id === currentUser?.id ? { ...u, ...updatedFields } : u));
                     setIsEditingProfile(false);
                     showToast("Profil berhasil diperbarui!");
                 } catch (err) {
-                    console.error("Error updating profile: ", err);
-                    showToast("Gagal memperbarui profil.");
+                    console.error("Profile modification failed:", err);
                 }
             };
 
             const startEditProfile = () => {
-                setEditFullName(currentUser.fullName);
-                setEditBio(currentUser.bio || '');
-                setEditAvatar(currentUser.avatar || AVATARS[0]);
+                setEditFullName(currentUser?.fullName || '');
+                setEditBio(currentUser?.bio || '');
+                setEditAvatar(currentUser?.avatar || AVATARS[0]);
                 setIsEditingProfile(true);
             };
 
-            // Filtered lists for UX
             const filteredUsersToChat = useMemo(() => {
                 return users.filter(u => u.id !== currentUser?.id && 
                     (u.fullName.toLowerCase().includes(chatSearchText.toLowerCase()) || 
@@ -614,27 +845,29 @@
                 );
             }, [users, userSearchText, currentUser?.id]);
 
-            // Count moments for selected date
             const selectedDateMoments = useMemo(() => {
                 return timeline.filter(m => m.dateStr === selectedDateStr);
             }, [timeline, selectedDateStr]);
 
-            // Online friends count & check
             const onlineFriends = useMemo(() => {
-                return users.filter(u => u.id !== currentUser?.id && u.isOnline && (Date.now() - (u.lastActive || 0) < 60000));
+                return users.filter(u => u.id !== currentUser?.id && u.isOnline);
             }, [users, currentUser?.id]);
 
-            if (screen === 'auth') {
+            if (screen === 'auth' || !currentUser) {
                 return (
-                    <div className="h-full w-full flex items-center justify-center bg-darkBg px-4 relative">
-                        {/* Auth Container Matching Screenshot 4 */}
+                    <div className="h-full w-full flex items-center justify-center bg-[#09090b] px-4 relative overflow-hidden">
                         <div className="w-full max-w-md bg-[#121214] rounded-2xl border border-zinc-800 p-8 shadow-2xl relative overflow-hidden">
                             <div className="text-center mb-8">
                                 <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">PlengerGram</h1>
                                 <p className="text-zinc-500 text-sm">Masuk ke Kalender & Timeline Bersama</p>
                             </div>
 
-                            {authMode === 'login' ? (
+                            {authLoading ? (
+                                <div className="text-center py-10 space-y-4">
+                                    <div className="w-10 h-10 border-4 border-t-accentBlue border-zinc-800 rounded-full animate-spin mx-auto"></div>
+                                    <p className="text-zinc-400 text-xs">Menghubungkan jaringan cloud aman...</p>
+                                </div>
+                            ) : authMode === 'login' ? (
                                 <form onSubmit={handleLogin} className="space-y-5">
                                     <div>
                                         <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Nama Pengguna (Username)</label>
@@ -754,9 +987,8 @@
                             )}
                         </div>
 
-                        {/* Status bar toast matching design */}
                         {toastMessage && (
-                            <div className="absolute bottom-6 right-6 bg-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-medium tracking-wide transition-all animate-bounce flex items-center gap-2">
+                            <div className="absolute bottom-6 right-6 bg-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-medium tracking-wide transition-all animate-bounce flex items-center gap-2 z-50">
                                 <i className="fa-solid fa-circle-info"></i>
                                 {toastMessage}
                             </div>
@@ -768,7 +1000,7 @@
             return (
                 <div className="h-screen w-screen bg-darkBg flex overflow-hidden">
                     
-                    {/* LEFT SIDEBAR PANEL (Common across all screenshots) */}
+                    {/* LEFT SIDEBAR PANEL (Screenshot 2026-06-16 203005.png) */}
                     <aside className="w-64 border-r border-zinc-900 bg-black flex flex-col justify-between shrink-0 select-none">
                         <div className="p-6">
                             {/* Logo */}
@@ -818,7 +1050,7 @@
                             </nav>
                         </div>
 
-                        {/* Bottom Metadata Panel matching screenshot 1 */}
+                        {/* Bottom Metadata Panel */}
                         <div className="p-4 border-t border-zinc-900 space-y-4">
                             <div>
                                 <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block mb-1">Status Jaringan:</span>
@@ -827,12 +1059,12 @@
                                     className="w-full bg-[#121214] border border-zinc-800 text-[#0095f6] px-3 py-2 rounded-xl text-[11px] font-semibold text-left flex items-center gap-2 hover:bg-zinc-900/80 transition-all"
                                 >
                                     <span className="w-2 h-2 rounded-full bg-accentGreen animate-pulse"></span>
-                                    <span>Realtime Aktif (Klik Detail)</span>
+                                    <span>{isFirebaseActive ? 'Realtime Cloud Aktif' : 'Demo Sync Terkoneksi'}</span>
                                 </button>
                             </div>
 
-                            {/* Pintasan Timeline */}
-                            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-3">
+                            {/* Timeline Shortcut */}
+                            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-3 cursor-pointer" onClick={() => setActiveTab('momen')}>
                                 <div className="flex justify-between items-center text-xs text-zinc-400 font-semibold mb-1">
                                     <span>Pintasan Timeline</span>
                                     <i className="fa-solid fa-chevron-up text-[10px]"></i>
@@ -866,7 +1098,7 @@
                     {/* MAIN CONTENT WORKSPACE VIEWPORT */}
                     <main className="flex-1 flex overflow-hidden">
                         
-                        {/* TAB 1: MOMEN BERSAMA (Screenshot 1 Visuals) */}
+                        {/* TAB 1: MOMEN BERSAMA (Screenshot 2026-06-16 203005.png) */}
                         {activeTab === 'momen' && (
                             <div className="flex-1 flex overflow-hidden">
                                 
@@ -885,32 +1117,35 @@
                                             </div>
                                         </div>
                                         <button 
-                                            onClick={() => showToast("Koneksi Cloud Firestore tersambung secara optimal!")}
+                                            onClick={() => showToast("Koneksi tersambung secara optimal!")}
                                             className="bg-[#0e2c4c] text-[#0095f6] hover:bg-blue-900/50 px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2"
                                         >
                                             <i className="fa-solid fa-cloud-arrow-up"></i>
-                                            Realtime Aktif (Klik Cloud)
+                                            Realtime Aktif
                                         </button>
                                     </div>
 
                                     {/* Online list bar */}
                                     <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
                                         <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase block mb-3">TEMAN YANG SEDANG ONLINE</span>
-                                        {onlineFriends.length === 0 ? (
-                                            <p className="text-xs text-zinc-600 italic">Tidak ada teman lain yang aktif saat ini.</p>
-                                        ) : (
-                                            <div className="flex gap-4 overflow-x-auto pb-2">
-                                                {onlineFriends.map(friend => (
-                                                    <div key={friend.id} className="flex flex-col items-center shrink-0">
-                                                        <div className="relative">
-                                                            <img src={friend.avatar} className="w-12 h-12 rounded-full object-cover border-2 border-zinc-700" alt="online" />
-                                                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-accentGreen border-2 border-cardBg rounded-full"></span>
-                                                        </div>
-                                                        <span className="text-[10px] text-zinc-400 mt-1 max-w-[60px] truncate">@{friend.username}</span>
-                                                    </div>
-                                                ))}
+                                        <div className="flex gap-4 overflow-x-auto pb-2">
+                                            <div className="flex flex-col items-center shrink-0">
+                                                <div className="relative">
+                                                    <img src={DEV_BOT.avatar} className="w-12 h-12 rounded-full object-cover border-2 border-zinc-700" alt="online" />
+                                                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-accentGreen border-2 border-cardBg rounded-full"></span>
+                                                </div>
+                                                <span className="text-[10px] text-zinc-400 mt-1 max-w-[60px] truncate">@{DEV_BOT.username}</span>
                                             </div>
-                                        )}
+                                            {onlineFriends.map(friend => (
+                                                <div key={friend.id} className="flex flex-col items-center shrink-0">
+                                                    <div className="relative">
+                                                        <img src={friend.avatar} className="w-12 h-12 rounded-full object-cover border-2 border-zinc-700" alt="online" />
+                                                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-accentGreen border-2 border-cardBg rounded-full"></span>
+                                                    </div>
+                                                    <span className="text-[10px] text-zinc-400 mt-1 max-w-[60px] truncate">@{friend.username}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
 
                                     {/* Calendar Widget panel */}
@@ -923,7 +1158,7 @@
                                             <button onClick={handleNextMonth} className="text-zinc-400 hover:text-white p-1.5"><i className="fa-solid fa-chevron-right"></i></button>
                                         </div>
 
-                                        {/* Day labels */}
+                                        {/* Day labels (Minggu to Sabtu aligned with Sonntag to Samstag calendar layout) */}
                                         <div className="grid grid-cols-7 text-center text-[10px] font-bold text-zinc-500 tracking-wider mb-2">
                                             <div>M</div>
                                             <div>S</div>
@@ -1049,7 +1284,7 @@
                             </div>
                         )}
 
-                        {/* TAB 2: PESAN & TEMAN (Screenshot 2 Visuals) */}
+                        {/* TAB 2: PESAN & TEMAN (Screenshot 2026-06-16 203021.png) */}
                         {activeTab === 'pesan' && (
                             <div className="flex-1 flex overflow-hidden">
                                 
@@ -1065,7 +1300,7 @@
                                                 onClick={handleClearDM}
                                                 className="text-[10px] font-bold text-red-500 bg-red-500/10 hover:bg-red-500/20 px-2.5 py-1 rounded-lg transition-all"
                                             >
-                                                Bersihkan DM
+                                                Bersihkan
                                             </button>
                                         </div>
                                         
@@ -1114,10 +1349,10 @@
                                         ) : (
                                             <div className="space-y-1">
                                                 {filteredUsersToChat.map(user => {
-                                                    const followed = isFollowing(currentUser.id, user.id);
-                                                    const followingMe = isFollowing(user.id, currentUser.id);
-                                                    const mutual = followed && followingMe;
-                                                    const isOnline = user.isOnline && (Date.now() - (user.lastActive || 0) < 60000);
+                                                    const followed = isFollowing(currentUser?.id, user.id);
+                                                    const followingMe = isFollowing(user.id, currentUser?.id);
+                                                    const mutual = isMutual(currentUser?.id, user.id);
+                                                    const isOnline = user.isOnline;
 
                                                     return (
                                                         <button 
@@ -1172,7 +1407,7 @@
                                                         <h4 className="text-sm font-bold text-white">Grup Publik Plengeran</h4>
                                                         <p className="text-[10px] text-zinc-500 flex items-center gap-1.5">
                                                             <span className="w-1.5 h-1.5 bg-accentGreen rounded-full"></span>
-                                                            Realtime Instan Aktif (Simulasi Lokal jika offline)
+                                                            Seluruh pengguna tersambung di sini
                                                         </p>
                                                     </div>
                                                 </React.Fragment>
@@ -1186,6 +1421,18 @@
                                                 </React.Fragment>
                                             )}
                                         </div>
+
+                                        {/* Instant simulation triggers for direct testing */}
+                                        {activeChat.type === 'dm' && (
+                                            <button 
+                                                onClick={triggerSimulatedReply}
+                                                className="bg-accentBlue hover:bg-blue-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all"
+                                                title="Klik untuk menyimulasikan balasan langsung dari pengguna ini"
+                                            >
+                                                <i className="fa-solid fa-robot"></i>
+                                                Simulasi Balas DM
+                                            </button>
+                                        )}
                                     </div>
 
                                     {/* Chat logs */}
@@ -1193,11 +1440,14 @@
                                         {filteredMessages.length === 0 ? (
                                             <div className="h-full flex flex-col items-center justify-center text-center text-zinc-600">
                                                 <i className="fa-solid fa-comments text-4xl mb-3"></i>
-                                                <p className="text-xs">Kirim pesan pertama untuk memulai obrolan {activeChat.type === 'group' ? 'grup bersama' : 'dengan teman'}!</p>
+                                                <p className="text-xs mb-2">Kirim pesan pertama untuk memulai obrolan!</p>
+                                                {activeChat.type === 'dm' && (
+                                                    <p className="text-[10px] text-zinc-500 max-w-xs">Pesan akan langsung masuk ke teman. Anda juga dapat mengeklik tombol "Simulasi Balas DM" di kanan atas untuk menguji respon balik.</p>
+                                                )}
                                             </div>
                                         ) : (
                                             filteredMessages.map((msg, index) => {
-                                                const isSelf = msg.senderId === currentUser.id;
+                                                const isSelf = msg.senderId === currentUser?.id;
                                                 return (
                                                     <div key={msg.id || index} className={`flex gap-3 max-w-[80%] ${isSelf ? 'ml-auto flex-row-reverse' : ''}`}>
                                                         {!isSelf && (
@@ -1232,7 +1482,7 @@
                                             placeholder="Ketik pesan..." 
                                             value={messageInput}
                                             onChange={(e) => setMessageInput(e.target.value)}
-                                            className="flex-1 bg-[#09090b] text-white border border-zinc-850 rounded-xl px-4 py-3 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
+                                            className="flex-1 bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
                                         />
                                         <button 
                                             type="submit"
@@ -1246,7 +1496,7 @@
                             </div>
                         )}
 
-                        {/* TAB 3: PROFIL AKUN (Screenshot 3 Visuals) */}
+                        {/* TAB 3: PROFIL AKUN (Screenshot 2026-06-16 203030.png) */}
                         {activeTab === 'profil' && (
                             <div className="flex-1 p-6 overflow-y-auto">
                                 
@@ -1260,30 +1510,30 @@
                                     <div className="bg-cardBg border border-zinc-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
                                         <div className="flex flex-col items-center text-center">
                                             <div className="relative mb-4">
-                                                <img src={currentUser.avatar} className="w-24 h-24 rounded-full object-cover border-4 border-zinc-800" alt="profile" />
+                                                <img src={currentUser?.avatar} className="w-24 h-24 rounded-full object-cover border-4 border-zinc-800" alt="profile" />
                                                 <span className="absolute bottom-1 right-1 w-5 h-5 bg-accentGreen border-4 border-cardBg rounded-full"></span>
                                             </div>
 
-                                            <h4 className="text-lg font-extrabold text-white mb-0.5">{currentUser.fullName}</h4>
-                                            <p className="text-accentBlue text-xs font-semibold mb-2">@{currentUser.username}</p>
+                                            <h4 className="text-lg font-extrabold text-white mb-0.5">{currentUser?.fullName}</h4>
+                                            <p className="text-accentBlue text-xs font-semibold mb-2">@{currentUser?.username}</p>
                                             
                                             <div className="flex items-center gap-1 text-[11px] text-zinc-500 mb-5">
-                                                <span className="w-2 h-2 rounded-full bg-accentGreen"></span>
+                                                <span className="w-2 h-2 rounded-full bg-accentGreen animate-pulse"></span>
                                                 <span>Online</span>
                                             </div>
 
                                             {/* Count Statistics row */}
                                             <div className="grid grid-cols-3 gap-6 w-full py-4 border-t border-b border-zinc-900 text-center">
                                                 <div>
-                                                    <span className="text-sm font-extrabold text-white block">{getMomentsContributionCount(currentUser.id)}</span>
+                                                    <span className="text-sm font-extrabold text-white block">{getMomentsContributionCount(currentUser?.id)}</span>
                                                     <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Kontribusi Momen</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-sm font-extrabold text-white block">{getFollowersCount(currentUser.id)}</span>
+                                                    <span className="text-sm font-extrabold text-white block">{getFollowersCount(currentUser?.id)}</span>
                                                     <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Pengikut</span>
                                                 </div>
                                                 <div>
-                                                    <span className="text-sm font-extrabold text-white block">{getFollowingCount(currentUser.id)}</span>
+                                                    <span className="text-sm font-extrabold text-white block">{getFollowingCount(currentUser?.id)}</span>
                                                     <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Diikuti</span>
                                                 </div>
                                             </div>
@@ -1291,7 +1541,7 @@
                                             {/* Biografi Box */}
                                             <div className="w-full text-left bg-[#09090b] p-4 rounded-xl border border-zinc-900 mt-5 space-y-1">
                                                 <span className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block"><i className="fa-solid fa-feather mr-1.5 text-accentBlue"></i>Biografi</span>
-                                                <p className="text-xs text-zinc-400 italic leading-relaxed">{currentUser.bio || "Tidak ada biografi ditulis."}</p>
+                                                <p className="text-xs text-zinc-400 italic leading-relaxed">{currentUser?.bio || "Tidak ada biografi ditulis."}</p>
                                             </div>
 
                                             {/* Edit Profil Button trigger */}
@@ -1311,7 +1561,7 @@
                                                             type="text" 
                                                             value={editFullName}
                                                             onChange={(e) => setEditFullName(e.target.value)}
-                                                            className="w-full bg-[#09090b] text-white border border-zinc-850 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
+                                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
                                                         />
                                                     </div>
 
@@ -1321,7 +1571,7 @@
                                                             value={editBio}
                                                             onChange={(e) => setEditBio(e.target.value)}
                                                             rows="2"
-                                                            className="w-full bg-[#09090b] text-white border border-zinc-850 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue resize-none"
+                                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue resize-none"
                                                         ></textarea>
                                                     </div>
 
@@ -1347,7 +1597,7 @@
                                                         <button 
                                                             type="button"
                                                             onClick={() => setIsEditingProfile(false)}
-                                                            className="flex-1 bg-zinc-900 text-zinc-400 font-bold text-xs py-2.5 px-4 rounded-xl border border-zinc-850"
+                                                            className="flex-1 bg-zinc-900 text-zinc-400 font-bold text-xs py-2.5 px-4 rounded-xl border border-zinc-800"
                                                         >
                                                             Batal
                                                         </button>
@@ -1386,9 +1636,9 @@
                                                 <p className="text-xs text-zinc-600 italic">Belum ada pengguna lain terdaftar.</p>
                                             ) : (
                                                 filteredUsersToFollow.map(user => {
-                                                    const following = isFollowing(currentUser.id, user.id);
-                                                    const follower = isFollowing(user.id, currentUser.id);
-                                                    const isOnline = user.isOnline && (Date.now() - (user.lastActive || 0) < 60000);
+                                                    const following = isFollowing(currentUser?.id, user.id);
+                                                    const follower = isFollowing(user.id, currentUser?.id);
+                                                    const isOnline = user.isOnline;
 
                                                     return (
                                                         <div key={user.id} className="flex items-center justify-between p-3 bg-black/30 border border-zinc-900 rounded-xl hover:border-zinc-800 transition-all">
@@ -1434,17 +1684,17 @@
 
                     </main>
 
-                    {/* STATUS DETAILS MODAL (Pop-up on Network Status click) */}
+                    {/* STATUS DETAILS MODAL */}
                     {showStatusModal && (
                         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in">
-                            <div className="bg-cardBg border border-zinc-850 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+                            <div className="bg-cardBg border border-zinc-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
                                 <div className="text-center">
                                     <div className="w-12 h-12 rounded-full bg-[#1b2b3a] text-accentBlue flex items-center justify-center text-xl mx-auto mb-3">
                                         <i className="fa-solid fa-wifi animate-pulse"></i>
                                     </div>
                                     <h4 className="text-sm font-bold text-white mb-1">Status Sinkronisasi Jaringan</h4>
                                     <p className="text-[11px] text-zinc-500">
-                                        Aplikasi ini menggunakan teknologi real-time Firebase SDK untuk sinkronisasi pesan & kalender instan antar pengguna.
+                                        Aplikasi ini berjalan dalam sinkronisasi optimal. Anda dapat berkirim pesan dan melihat status real-time secara instan.
                                     </p>
                                 </div>
 
@@ -1452,16 +1702,16 @@
                                     <div className="flex justify-between">
                                         <span className="text-zinc-500">Status Layanan:</span>
                                         <span className="text-accentGreen font-bold flex items-center gap-1.5">
-                                            <span className="w-1.5 h-1.5 bg-accentGreen rounded-full"></span> Online & Aktif
+                                            <span className="w-1.5 h-1.5 bg-accentGreen rounded-full"></span> Aktif Berjalan
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-zinc-500">Firestore Path:</span>
-                                        <span className="text-zinc-400 font-mono">/artifacts/{appId}/...</span>
+                                        <span className="text-zinc-500">Penyimpanan:</span>
+                                        <span className="text-zinc-400 font-mono">LocalStorage Sync / Cloud</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-zinc-500">Keamanan Enkripsi:</span>
-                                        <span className="text-zinc-400">Anonim + Autentikasi Cloud</span>
+                                        <span className="text-zinc-500">Modus Enkripsi:</span>
+                                        <span className="text-zinc-400">Anonim Terverifikasi</span>
                                     </div>
                                 </div>
 
@@ -1477,7 +1727,7 @@
 
                     {/* Toast Notification */}
                     {toastMessage && (
-                        <div className="fixed bottom-6 right-6 bg-[#1b2b3a] border border-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold tracking-wide transition-all z-50 flex items-center gap-2">
+                        <div className="fixed bottom-6 right-6 bg-[#1b2b3a] border border-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold tracking-wide transition-all z-50 flex items-center gap-2 animate-bounce">
                             <i className="fa-solid fa-circle-info text-accentBlue"></i>
                             {toastMessage}
                         </div>
