@@ -207,6 +207,7 @@
             const [editAvatar, setEditAvatar] = useState('');
 
             const [showStatusModal, setShowStatusModal] = useState(false);
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
             const chatEndRef = useRef(null);
 
             // Firebase authentication state
@@ -536,6 +537,52 @@
                 }
             };
 
+            // Diagnostic Reset Function
+            const handleClearAllAccountsAndData = async () => {
+                try {
+                    // Reset LocalStorage
+                    localStorage.removeItem('plengergram_users');
+                    localStorage.removeItem('plengergram_connections');
+                    localStorage.removeItem('plengergram_timeline');
+                    localStorage.removeItem('plengergram_messages');
+                    localStorage.removeItem('plengergram_current_user');
+
+                    // If Cloud mode is on and we want to purge, we clear local states and send delete commands if we have collections
+                    if (isFirebaseActive && firestoreDb) {
+                        // For safety inside this iframe, we clear out the local UI states
+                        // Realtime Cloud will auto-repopulate dynamically, but locally we clean up
+                        showToast("Penyimpanan lokal dibersihkan! Hubungi admin untuk menghapus koleksi awan.");
+                    }
+
+                    // Reset React States to empty defaults
+                    setUsers([]);
+                    setConnections([]);
+                    setMessages([]);
+                    setTimeline([
+                        {
+                            id: 'seed-1',
+                            authorId: 'system',
+                            authorName: 'Sistem PlengerGram',
+                            authorUsername: 'system',
+                            authorAvatar: 'https://placehold.co/150x150/0095f6/ffffff?text=📢',
+                            dateStr: '2026-06-16',
+                            title: 'Selamat Datang di PlengerGram!',
+                            content: 'Aplikasi kalender memori terpadu ini telah siap digunakan. Silakan daftar akun baru Anda untuk mulai mengabadikan momen!',
+                            timestamp: Date.now() - 3600000
+                        }
+                    ]);
+                    
+                    setCurrentUser(null);
+                    setScreen('auth');
+                    setAuthMode('login');
+                    setShowResetConfirm(false);
+                    setShowStatusModal(false);
+                } catch (e) {
+                    console.error(e);
+                    showToast("Gagal melakukan reset.");
+                }
+            };
+
             const isFollowing = (fromId, toId) => {
                 return connections.some(c => c.from === fromId && c.to === toId && !c.removed);
             };
@@ -747,6 +794,13 @@
             if (screen === 'auth' || !currentUser) {
                 return (
                     <div className="h-full w-full flex items-center justify-center bg-[#09090b] px-4 relative overflow-hidden">
+                        {/* Safe Clear Data shortcut on auth screen */}
+                        <button 
+                            onClick={() => setShowResetConfirm(true)}
+                            className="absolute top-4 right-4 bg-red-950/20 text-red-500 border border-red-900/40 hover:bg-red-950/50 px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
+                        >
+                        </button>
+
                         <div className="w-full max-w-md bg-[#121214] rounded-2xl border border-zinc-800 p-8 shadow-2xl relative overflow-hidden">
                             <div className="text-center mb-8">
                                 <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">PlengerGram</h1>
@@ -877,7 +931,7 @@
                                 </form>
                             )}
                         </div>
-
+                        
                         {toastMessage && (
                             <div className="absolute bottom-6 right-6 bg-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-medium tracking-wide transition-all animate-bounce flex items-center gap-2 z-50">
                                 <i className="fa-solid fa-circle-info"></i>
@@ -1591,12 +1645,51 @@
                                     </div>
                                 </div>
 
-                                <button 
-                                    onClick={() => setShowStatusModal(false)}
-                                    className="w-full bg-accentBlue hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs transition-all"
-                                >
-                                    Selesai & Tutup
-                                </button>
+                                <div className="pt-2 border-t border-zinc-900 space-y-2">
+                                    <button 
+                                        onClick={() => setShowResetConfirm(true)}
+                                        className="w-full bg-red-950/40 text-red-500 hover:bg-red-950/60 border border-red-900/50 font-bold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
+                                    >
+                                        <i className="fa-solid fa-trash-can"></i>
+                                        Sapu Bersih Semua Data Lokal
+                                    </button>
+
+                                    <button 
+                                        onClick={() => setShowStatusModal(false)}
+                                        className="w-full bg-accentBlue hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs transition-all"
+                                    >
+                                        Selesai & Tutup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Global Reset Confirm inside App Viewport */}
+                    {showResetConfirm && (
+                        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
+                            <div className="bg-cardBg border border-zinc-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-center">
+                                <div className="w-12 h-12 rounded-full bg-red-950 text-red-500 flex items-center justify-center text-xl mx-auto mb-1">
+                                    <i className="fa-solid fa-triangle-exclamation"></i>
+                                </div>
+                                <h4 className="text-sm font-bold text-white uppercase tracking-wider">Konfirmasi Sapu Bersih</h4>
+                                <p className="text-xs text-zinc-400">
+                                    Apakah Anda yakin ingin menghapus semua akun terdaftar, pesan obrolan, riwayat relasi pertemanan, dan riwayat memori di penyimpanan lokal? Tindakan ini tidak dapat dibatalkan.
+                                </p>
+                                <div className="flex gap-3">
+                                    <button 
+                                        onClick={() => setShowResetConfirm(false)}
+                                        className="flex-1 bg-zinc-900 text-zinc-400 font-bold py-2 rounded-xl text-xs border border-zinc-800 hover:bg-zinc-800"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button 
+                                        onClick={handleClearAllAccountsAndData}
+                                        className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl text-xs hover:bg-red-700 transition-all"
+                                    >
+                                        Ya, Hapus Semua
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
