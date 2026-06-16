@@ -135,14 +135,14 @@
             } catch (e) {}
         };
 
-        // Inisialisasi Firebase secara Global
+        // Inisialisasi Firebase secara Global (Hanya jika bukan Mock)
         let firestoreDb = null;
         let authInstance = null;
         let isFirebaseActive = false;
 
         try {
             const fb = window.firebase;
-            if (fb) {
+            if (fb && !isMockConfig) {
                 let app;
                 if (fb.apps.length === 0) {
                     app = fb.initializeApp(firebaseConfig);
@@ -162,6 +162,7 @@
             const [screen, setScreen] = useState('auth');
             const [activeTab, setActiveTab] = useState('momen');
             const [authLoading, setAuthLoading] = useState(true);
+            const [firebaseActive, setFirebaseActive] = useState(isFirebaseActive);
 
             // Form Fields untuk kustomisasi Profil Cepat
             const [regUsername, setRegUsername] = useState('');
@@ -216,13 +217,33 @@
             // Firebase User Auth State
             const [fbUser, setFbUser] = useState(null);
 
-            // Inisialisasi Autentikasi Anonim Otomatis di Background
+            // Inisialisasi Autentikasi Anonim Otomatis di Background (dengan Failsafe Timeout)
             useEffect(() => {
-                if (!isFirebaseActive || !authInstance) {
+                // Failsafe timer (3.5 detik) agar aplikasi tidak stuck jika jaringan lambat atau Firebase diblokir
+                const timeoutId = setTimeout(() => {
+                    console.warn("Koneksi Firebase melampaui batas waktu. Beralih otomatis ke mode Lokal.");
+                    setFirebaseActive(false);
                     setAuthLoading(false);
-                    // Jika offline/lokal, langsung pakai pengguna tersimpan atau berikan identitas acak
                     if (currentUser) {
                         setScreen('app');
+                    } else {
+                        const identity = generateRandomName();
+                        setRegFullName(identity.fullName);
+                        setRegUsername(identity.username);
+                    }
+                    showToast("Terhubung via Sinkronisasi Lokal");
+                }, 3500);
+
+                if (!isFirebaseActive || !authInstance) {
+                    clearTimeout(timeoutId);
+                    setFirebaseActive(false);
+                    setAuthLoading(false);
+                    if (currentUser) {
+                        setScreen('app');
+                    } else {
+                        const identity = generateRandomName();
+                        setRegFullName(identity.fullName);
+                        setRegUsername(identity.username);
                     }
                     return;
                 }
@@ -236,6 +257,8 @@
                             credential = await authInstance.signInAnonymously();
                         }
                         
+                        clearTimeout(timeoutId);
+
                         if (credential && credential.user) {
                             setFbUser(credential.user);
                             
@@ -258,8 +281,17 @@
                             }
                         }
                     } catch (err) {
+                        clearTimeout(timeoutId);
                         console.error("Kesalahan koneksi autentikasi:", err);
-                        showToast("Koneksi cloud lambat. Menggunakan penyimpanan browser.");
+                        setFirebaseActive(false);
+                        showToast("Beralih ke mode penyimpanan lokal aman.");
+                        if (currentUser) {
+                            setScreen('app');
+                        } else {
+                            const identity = generateRandomName();
+                            setRegFullName(identity.fullName);
+                            setRegUsername(identity.username);
+                        }
                     } finally {
                         setAuthLoading(false);
                     }
@@ -272,12 +304,15 @@
                     }
                 });
 
-                return () => unsubscribeAuth();
+                return () => {
+                    clearTimeout(timeoutId);
+                    unsubscribeAuth();
+                };
             }, []);
 
             // Sinkronisasi Data Realtime Satu Server (Firestore Cloud)
             useEffect(() => {
-                if (!isFirebaseActive || !firestoreDb || !fbUser) return;
+                if (!firebaseActive || !firestoreDb || !fbUser) return;
 
                 // 1. Ambil daftar semua user yang tersambung di server
                 const unsubscribeUsers = firestoreDb.collection('artifacts').doc(appId)
@@ -350,26 +385,26 @@
                     unsubscribeTimeline();
                     unsubscribeMessages();
                 };
-            }, [fbUser]);
+            }, [fbUser, firebaseActive]);
 
             // Simpan perubahan secara lokal untuk redundansi darurat
             useEffect(() => {
-                if (!isFirebaseActive) {
+                if (!firebaseActive) {
                     saveLocalStorageData('plengergram_users', users);
                 }
-            }, [users]);
+            }, [users, firebaseActive]);
 
             useEffect(() => {
-                if (!isFirebaseActive) {
+                if (!firebaseActive) {
                     saveLocalStorageData('plengergram_timeline', timeline);
                 }
-            }, [timeline]);
+            }, [timeline, firebaseActive]);
 
             useEffect(() => {
-                if (!isFirebaseActive) {
+                if (!firebaseActive) {
                     saveLocalStorageData('plengergram_messages', messages);
                 }
-            }, [messages]);
+            }, [messages, firebaseActive]);
 
             useEffect(() => {
                 if (currentUser) {
@@ -378,6 +413,29 @@
                     localStorage.removeItem('plengergram_current_user');
                 }
             }, [currentUser]);
+
+            // Sinkronisasi Lintas Tab Otomatis saat mode Offline/Lokal Aktif
+            useEffect(() => {
+                const handleStorageChange = (e) => {
+                    if (firebaseActive) return;
+                    try {
+                        if (e.key === 'plengergram_users' && e.newValue) {
+                            setUsers(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_timeline' && e.newValue) {
+                            setTimeline(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_messages' && e.newValue) {
+                            setMessages(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_current_user') {
+                            setCurrentUser(e.newValue ? JSON.parse(e.newValue) : null);
+                        }
+                    } catch (err) {}
+                };
+                window.addEventListener('storage', handleStorageChange);
+                return () => window.removeEventListener('storage', handleStorageChange);
+            }, [firebaseActive]);
 
             // Tampilkan Toast Notifikasi
             const showToast = (msg) => {
@@ -402,44 +460,71 @@
 
                 const cleanUsername = regUsername.toLowerCase().trim().replace(/\s+/g, '');
                 
-                // Cari apakah username sudah diambil oleh orang lain di server
-                if (users.some(u => u.username === cleanUsername && u.id !== fbUser?.uid)) {
-                    showToast("Username ini sudah digunakan di server. Coba buat yang lain!");
-                    return;
-                }
+                // Cari apakah user dengan username tersebut sudah terdaftar di server
+                const existingUser = users.find(u => u.username === cleanUsername);
 
                 try {
-                    const uid = fbUser?.uid || `user-${Date.now()}`;
-                    
-                    const newUserProfile = {
-                        id: uid,
-                        username: cleanUsername,
-                        fullName: regFullName.trim(),
-                        avatar: regAvatar,
-                        bio: "Mari membuat kenangan indah bersama di PlengerGram!",
-                        isOnline: true,
-                        lastActive: Date.now(),
-                        createdAt: Date.now()
-                    };
+                    let uid;
+                    let finalUser;
 
-                    if (isFirebaseActive && firestoreDb) {
+                    if (existingUser) {
+                        // Memungkinkan pengguna masuk dengan akun yang sama dari browser/perangkat berbeda
+                        uid = existingUser.id;
+                        finalUser = {
+                            ...existingUser,
+                            fullName: regFullName.trim(),
+                            avatar: regAvatar,
+                            isOnline: true,
+                            lastActive: Date.now()
+                        };
+                        showToast(`Menghubungkan kembali sebagai @${cleanUsername}...`);
+                    } else {
+                        // Daftarkan sebagai user baru
+                        uid = fbUser?.uid || `user-${Date.now()}`;
+                        finalUser = {
+                            id: uid,
+                            username: cleanUsername,
+                            fullName: regFullName.trim(),
+                            avatar: regAvatar,
+                            bio: "Mari membuat kenangan indah bersama di PlengerGram!",
+                            isOnline: true,
+                            lastActive: Date.now(),
+                            createdAt: Date.now()
+                        };
+                    }
+
+                    if (firebaseActive && firestoreDb) {
                         await firestoreDb.collection('artifacts').doc(appId)
                             .collection('public').doc('data')
-                            .collection('users').doc(uid).set(newUserProfile);
+                            .collection('users').doc(uid).set(finalUser);
                     } else {
                         setUsers(prev => {
-                            const updated = [...prev.filter(u => u.id !== uid), newUserProfile];
+                            const updated = [...prev.filter(u => u.id !== uid), finalUser];
                             saveLocalStorageData('plengergram_users', updated);
                             return updated;
                         });
                     }
 
-                    setCurrentUser(newUserProfile);
+                    setCurrentUser(finalUser);
                     showToast(`Halo @${cleanUsername}, Selamat datang di server bersama!`);
                     setScreen('app');
                 } catch (err) {
                     console.error("Gagal mendaftarkan ke server:", err);
-                    showToast("Gagal menyambung ke server. Silakan coba lagi.");
+                    showToast("Gagal menyambung ke server. Menggunakan akses darurat lokal.");
+                    // Fallback darurat
+                    const localUid = `user-${Date.now()}`;
+                    const fallbackUser = {
+                        id: localUid,
+                        username: cleanUsername,
+                        fullName: regFullName.trim(),
+                        avatar: regAvatar,
+                        bio: "Mari membuat kenangan bersama!",
+                        isOnline: true,
+                        lastActive: Date.now(),
+                        createdAt: Date.now()
+                    };
+                    setCurrentUser(fallbackUser);
+                    setScreen('app');
                 }
             };
 
@@ -447,7 +532,7 @@
             const handleLogout = async () => {
                 if (currentUser) {
                     const offlineUser = { ...currentUser, isOnline: false, lastActive: Date.now() };
-                    if (isFirebaseActive && firestoreDb) {
+                    if (firebaseActive && firestoreDb) {
                         await firestoreDb.collection('artifacts').doc(appId)
                             .collection('public').doc('data')
                             .collection('users').doc(currentUser.id).set(offlineUser, { merge: true });
@@ -458,7 +543,7 @@
                 showToast("Anda telah keluar dari server bersama.");
             };
 
-            // Hapus semua data dari server lokal untuk troubleshoot darurat
+            // Hapus semua data dari sesi browser untuk troubleshoot darurat
             const handleClearAllAccountsAndData = async () => {
                 try {
                     localStorage.clear();
@@ -481,7 +566,7 @@
                     setScreen('auth');
                     setShowResetConfirm(false);
                     setShowStatusModal(false);
-                    showToast("Penyimpanan lokal berhasil direset ulang!");
+                    showToast("Sesi lokal browser berhasil dibersihkan!");
                 } catch (e) {
                     showToast("Gagal membersihkan data.");
                 }
@@ -549,18 +634,19 @@
                         timestamp: Date.now()
                     };
 
-                    if (isFirebaseActive && firestoreDb) {
+                    if (firebaseActive && firestoreDb) {
                         await firestoreDb.collection('artifacts').doc(appId)
                             .collection('public').doc('data')
                             .collection('timeline').add(memoryData);
                     } else {
                         const updated = [ { id: `local-${Date.now()}`, ...memoryData }, ...timeline ];
                         setTimeline(updated);
+                        saveLocalStorageData('plengergram_timeline', updated);
                     }
 
                     setNewMemoryTitle('');
                     setNewMemoryContent('');
-                    showToast("Momen baru berhasil ditambahkan ke kalender bersama!");
+                    showToast("Momen baru berhasil ditambahkan!");
                 } catch (err) {
                     console.error("Gagal mengupload kenangan:", err);
                     showToast("Gagal menyimpan kenangan.");
@@ -587,13 +673,14 @@
                         receiverId: activeChat.type === 'dm' ? activeChat.id : 'group'
                     };
 
-                    if (isFirebaseActive && firestoreDb) {
+                    if (firebaseActive && firestoreDb) {
                         await firestoreDb.collection('artifacts').doc(appId)
                             .collection('public').doc('data')
                             .collection('messages').add(msgPayload);
                     } else {
                         const updated = [...messages, { id: `msg-${Date.now()}`, ...msgPayload }];
                         setMessages(updated);
+                        saveLocalStorageData('plengergram_messages', updated);
                     }
 
                 } catch (err) {
@@ -628,7 +715,7 @@
                         avatar: editAvatar
                     };
 
-                    if (isFirebaseActive && firestoreDb) {
+                    if (firebaseActive && firestoreDb) {
                         await firestoreDb.collection('artifacts').doc(appId)
                             .collection('public').doc('data')
                             .collection('users').doc(currentUser?.id).update(updatedFields);
@@ -812,7 +899,7 @@
                                     className="w-full bg-[#121214] border border-zinc-800 text-[#0095f6] px-3 py-2 rounded-xl text-[11px] font-semibold text-left flex items-center gap-2 hover:bg-zinc-900/80 transition-all"
                                 >
                                     <span className="w-2 h-2 rounded-full bg-accentGreen animate-pulse"></span>
-                                    <span>{isFirebaseActive ? 'Terhubung ke Cloud Utama' : 'Penyimpanan Offline Lokal'}</span>
+                                    <span>{firebaseActive ? 'Terhubung ke Cloud Utama' : 'Penyimpanan Offline Lokal'}</span>
                                 </button>
                             </div>
 
