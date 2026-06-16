@@ -46,7 +46,7 @@
             background: #3f3f46;
         }
     </style>
-    <!-- FontAwesome Icons for visual match -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- React and ReactDOM UMD -->
@@ -55,7 +55,7 @@
     <!-- Babel for JSX Compilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Configure Custom Babel Preset to Force Classic JSX Runtime (PREVENTS EMITTING IMPORTS) -->
+    <!-- Configure Custom Babel Preset to Force Classic JSX Runtime -->
     <script>
         Babel.registerPreset('custom-react-preset', {
             presets: [
@@ -74,7 +74,6 @@
 
     <div id="root" class="h-full w-full"></div>
 
-    <!-- Use our custom-react-preset to guarantee it compiles without illegal browser imports -->
     <script type="text/babel" data-presets="custom-react-preset">
         /** @jsx React.createElement */
         /** @jsxFrag React.Fragment */
@@ -107,16 +106,8 @@
             "https://placehold.co/150x150/4bffeb/ffffff?text=🐼"
         ];
 
-        // Developer bot as seen in Screenshot 2026-06-16 203021.png
-        const DEV_BOT = {
-            id: 'developer-bot-id',
-            username: 'developer',
-            fullName: 'ki',
-            avatar: "https://placehold.co/150x150/ffd84b/000000?text=💻",
-            bio: "Bot penguji chat interaktif di PlengerGram.",
-            isOnline: true,
-            lastActive: Date.now()
-        };
+        // Seed users is now completely empty
+        const SEED_USERS = [];
 
         const getLocalStorageData = (key, defaultValue) => {
             try {
@@ -133,7 +124,7 @@
             } catch (e) {}
         };
 
-        // Initialize Firebase services outside App to avoid state-cycle re-initialization errors
+        // Initialize Firebase services outside App
         let firestoreDb = null;
         let authInstance = null;
         let isFirebaseActive = false;
@@ -175,27 +166,21 @@
             const [currentUser, setCurrentUser] = useState(() => getLocalStorageData('plengergram_current_user', null)); 
             
             const [users, setUsers] = useState(() => {
-                const stored = getLocalStorageData('plengergram_users', [DEV_BOT]);
-                if (!stored.some(u => u.id === DEV_BOT.id)) {
-                    stored.push(DEV_BOT);
-                }
-                return stored;
+                return getLocalStorageData('plengergram_users', SEED_USERS);
             });
 
-            const [connections, setConnections] = useState(() => getLocalStorageData('plengergram_connections', [
-                { id: 'demo_conn_1', from: 'developer-bot-id', to: 'any', removed: false }
-            ])); 
+            const [connections, setConnections] = useState(() => getLocalStorageData('plengergram_connections', [])); 
 
             const [timeline, setTimeline] = useState(() => getLocalStorageData('plengergram_timeline', [
                 {
                     id: 'seed-1',
-                    authorId: 'developer-bot-id',
-                    authorName: 'ki',
-                    authorUsername: 'developer',
-                    authorAvatar: 'https://placehold.co/150x150/ffd84b/000000?text=💻',
+                    authorId: 'system',
+                    authorName: 'Sistem PlengerGram',
+                    authorUsername: 'system',
+                    authorAvatar: 'https://placehold.co/150x150/0095f6/ffffff?text=📢',
                     dateStr: '2026-06-16',
-                    title: 'Peluncuran PlengerGram!',
-                    content: 'Hari ini sistem kalender memori terpadu resmi mengudara untuk umum. Selamat bernostalgia bersama teman!',
+                    title: 'Selamat Datang di PlengerGram!',
+                    content: 'Aplikasi kalender memori terpadu ini telah siap digunakan. Silakan daftar akun baru Anda untuk mulai mengabadikan momen!',
                     timestamp: Date.now() - 3600000
                 }
             ])); 
@@ -263,7 +248,7 @@
                 return () => unsubscribeAuth();
             }, []);
 
-            // Handle Cloud Firestore Live sync listeners (Rule 1 Compliant path structures)
+            // Handle Cloud Firestore Live sync listeners
             useEffect(() => {
                 if (!isFirebaseActive || !firestoreDb || !fbUser) return;
 
@@ -273,9 +258,7 @@
                     snapshot.forEach(doc => {
                         loadedUsers.push({ id: doc.id, ...doc.data() });
                     });
-                    if (!loadedUsers.some(u => u.id === DEV_BOT.id)) {
-                        loadedUsers.push(DEV_BOT);
-                    }
+                    
                     setUsers(loadedUsers);
 
                     if (currentUser) {
@@ -294,13 +277,7 @@
                     snapshot.forEach(doc => {
                         loadedConns.push({ id: doc.id, ...doc.data() });
                     });
-                    setConnections(prev => {
-                        const combined = [...loadedConns];
-                        if (!combined.some(c => c.id === 'demo_conn_1')) {
-                            combined.push({ id: 'demo_conn_1', from: 'developer-bot-id', to: 'any', removed: false });
-                        }
-                        return combined;
-                    });
+                    setConnections(loadedConns);
                 }, (error) => {
                     console.error("Live Connections error:", error);
                 });
@@ -314,13 +291,13 @@
                     const merged = [
                         {
                             id: 'seed-1',
-                            authorId: 'developer-bot-id',
-                            authorName: 'ki',
-                            authorUsername: 'developer',
-                            authorAvatar: 'https://placehold.co/150x150/ffd84b/000000?text=💻',
+                            authorId: 'system',
+                            authorName: 'Sistem PlengerGram',
+                            authorUsername: 'system',
+                            authorAvatar: 'https://placehold.co/150x150/0095f6/ffffff?text=📢',
                             dateStr: '2026-06-16',
-                            title: 'Peluncuran PlengerGram!',
-                            content: 'Hari ini sistem kalender memori terpadu resmi mengudara untuk umum. Selamat bernostalgia bersama teman!',
+                            title: 'Selamat Datang di PlengerGram!',
+                            content: 'Aplikasi kalender memori terpadu ini telah siap digunakan. Silakan daftar akun baru Anda untuk mulai mengabadikan momen!',
                             timestamp: Date.now() - 3600000
                         },
                         ...loadedMemories
@@ -446,7 +423,7 @@
                         fullName: regFullName,
                         password: regPassword, 
                         avatar: regAvatar,
-                        bio: "Akun Kreator PlengerGram.",
+                        bio: "Pengguna PlengerGram baru.",
                         isOnline: true,
                         lastActive: Date.now(),
                         createdAt: Date.now()
@@ -454,29 +431,12 @@
 
                     if (isFirebaseActive && firestoreDb) {
                         await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(uid).set(newUserProfile);
-                        
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').doc(`${uid}_${DEV_BOT.id}`).set({
-                            id: `${uid}_${DEV_BOT.id}`, from: uid, to: DEV_BOT.id, timestamp: Date.now(), removed: false
-                        });
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').doc(`${DEV_BOT.id}_${uid}`).set({
-                            id: `${DEV_BOT.id}_${uid}`, from: DEV_BOT.id, to: uid, timestamp: Date.now(), removed: false
-                        });
                     } else {
                         // Offline state updating
                         setUsers(prev => {
                             const updated = [...prev.filter(u => u.id !== uid), newUserProfile];
                             saveLocalStorageData('plengergram_users', updated);
                             return updated;
-                        });
-
-                        setConnections(prev => {
-                            const newConns = [
-                                ...prev,
-                                { id: `${uid}_${DEV_BOT.id}`, from: uid, to: DEV_BOT.id, timestamp: Date.now(), removed: false },
-                                { id: `${DEV_BOT.id}_${uid}`, from: DEV_BOT.id, to: uid, timestamp: Date.now(), removed: false }
-                            ];
-                            saveLocalStorageData('plengergram_connections', newConns);
-                            return newConns;
                         });
                     }
 
@@ -509,13 +469,26 @@
                     return;
                 }
 
-                setCurrentUser(matchedUser);
-                showToast(`Selamat datang kembali, @${matchedUser.username}!`);
+                // Update online status
+                const updatedUser = { ...matchedUser, isOnline: true, lastActive: Date.now() };
+                setCurrentUser(updatedUser);
+                
+                if (!isFirebaseActive) {
+                    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+                }
+
+                showToast(`Selamat datang kembali, @${updatedUser.username}!`);
                 setScreen('app');
                 setActiveTab('momen');
             };
 
             const handleLogout = () => {
+                if (currentUser) {
+                    const offlineUser = { ...currentUser, isOnline: false, lastActive: Date.now() };
+                    if (!isFirebaseActive) {
+                        setUsers(prev => prev.map(u => u.id === currentUser.id ? offlineUser : u));
+                    }
+                }
                 setCurrentUser(null);
                 setScreen('auth');
                 showToast("Anda telah keluar akun.");
@@ -565,16 +538,15 @@
             };
 
             const isMutual = (userId1, userId2) => {
-                if (userId1 === DEV_BOT.id || userId2 === DEV_BOT.id) return true;
                 return isFollowing(userId1, userId2) && isFollowing(userId2, userId1);
             };
 
             const getFollowersCount = (userId) => {
-                return connections.filter(c => c.to === userId && !c.removed).length + (userId === DEV_BOT.id ? 1 : 0);
+                return connections.filter(c => c.to === userId && !c.removed).length;
             };
 
             const getFollowingCount = (userId) => {
-                return connections.filter(c => c.from === userId && !c.removed).length + (userId === DEV_BOT.id ? 1 : 0);
+                return connections.filter(c => c.from === userId && !c.removed).length;
             };
 
             const getMomentsContributionCount = (userId) => {
@@ -589,10 +561,9 @@
                 const year = currentDate.getFullYear();
                 const month = currentDate.getMonth();
                 const totalDays = getDaysInMonth(year, month);
-                const firstDayIndex = new Date(year, month, 1).getDay(); // Sunday is 0, Monday is 1, etc.
+                const firstDayIndex = new Date(year, month, 1).getDay();
                 
                 const days = [];
-                // Sunday (M) is the first column, align spaces directly based on Sunday-first system
                 for (let i = 0; i < firstDayIndex; i++) {
                     days.push({ day: null, dateStr: null });
                 }
@@ -687,92 +658,9 @@
                         saveLocalStorageData('plengergram_messages', updated);
                     }
 
-                    // Auto reply DM simulation
-                    if (activeChat.type === 'dm') {
-                        const targetId = activeChat.id;
-                        const targetUser = users.find(u => u.id === targetId);
-
-                        setTimeout(() => {
-                            const responses = [
-                                `Halo! Pesan kamu "${textToSend.substring(0, 15)}..." masuk dengan selamat secara instan! 🚀`,
-                                "Keren! Layout-nya sudah 100% presisi dan berjalan lancar ya.",
-                                "Aku sedang melihat timeline kenangan kita hari ini.",
-                                "Ayo tambahkan kenangan baru di kalender agar teman-teman lain bisa lihat!",
-                                "PlengerGram ini sangat responsif dan bebas galat sekarang!"
-                            ];
-                            const randomText = responses[Math.floor(Math.random() * responses.length)];
-                            
-                            const replyPayload = {
-                                id: `sim-${Date.now()}`,
-                                senderId: targetId,
-                                senderName: targetUser?.fullName || 'Teman',
-                                senderUsername: targetUser?.username || 'teman',
-                                senderAvatar: targetUser?.avatar || 'https://placehold.co/150x150/cccccc/ffffff?text=👤',
-                                text: randomText,
-                                timestamp: Date.now(),
-                                isGroup: false,
-                                receiverId: currentUser?.id
-                            };
-
-                            if (isFirebaseActive && firestoreDb) {
-                                firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').add(replyPayload);
-                            } else {
-                                setMessages(prev => {
-                                    const withReply = [...prev, replyPayload];
-                                    saveLocalStorageData('plengergram_messages', withReply);
-                                    return withReply;
-                                });
-                                showToast(`Pesan baru dari @${targetUser?.username}`);
-                            }
-                        }, 1200);
-                    }
-
                 } catch (err) {
                     console.error("Message send failed:", err);
                 }
-            };
-
-            const triggerSimulatedReply = () => {
-                if (activeChat.type !== 'dm') {
-                    showToast("Buka obrolan pribadi (DM) terlebih dahulu!");
-                    return;
-                }
-                
-                const responses = [
-                    "Halo! PlengerGram berjalan 100% stabil dengan sistem cloud & luring sync 🚀",
-                    "Aplikasi media sosial kita ini benar-benar responsif!",
-                    "Semua pesan langsung tersinkron secara aman dan real-time.",
-                    "Selesai! Aku sudah membaca seluruh pesan yang kamu kirimkan.",
-                    "Cobalah menambahkan momen baru pada kalender bersama!"
-                ];
-                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-
-                setTimeout(async () => {
-                    try {
-                        const replyPayload = {
-                            id: `sim-${Date.now()}`,
-                            senderId: activeChat.id,
-                            senderName: activeChat.data?.fullName || 'ki',
-                            senderUsername: activeChat.data?.username || 'developer',
-                            senderAvatar: activeChat.data?.avatar || 'https://placehold.co/150x150/ffd84b/000000?text=💻',
-                            text: randomResponse,
-                            timestamp: Date.now(),
-                            isGroup: false,
-                            receiverId: currentUser?.id
-                        };
-
-                        if (isFirebaseActive && firestoreDb) {
-                            await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').add(replyPayload);
-                        } else {
-                            const updated = [...messages, replyPayload];
-                            setMessages(updated);
-                            saveLocalStorageData('plengergram_messages', updated);
-                        }
-                        showToast(`Balasan dari @${activeChat.data?.username || 'developer'}`);
-                    } catch (err) {
-                        console.error("Auto response creation failed:", err);
-                    }
-                }, 300);
             };
 
             const filteredMessages = useMemo(() => {
@@ -788,7 +676,7 @@
 
             const handleClearDM = () => {
                 if (isFirebaseActive && firestoreDb) {
-                    showToast("Pembersihan chat global dilarang dalam sistem cloud.");
+                    showToast("Pembersihan chat global dinonaktifkan dalam sistem cloud.");
                     return;
                 }
                 setMessages([]);
@@ -873,7 +761,7 @@
                                         <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Nama Pengguna (Username)</label>
                                         <input 
                                             type="text" 
-                                            placeholder="Masukkan username" 
+                                            placeholder="Masukkan username Anda" 
                                             value={loginUsername}
                                             onChange={(e) => setLoginUsername(e.target.value)}
                                             className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
@@ -884,7 +772,7 @@
                                         <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Kata Sandi (Password)</label>
                                         <input 
                                             type="password" 
-                                            placeholder="Masukkan password" 
+                                            placeholder="Masukkan password Anda" 
                                             value={loginPassword}
                                             onChange={(e) => setLoginPassword(e.target.value)}
                                             className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
@@ -898,7 +786,7 @@
                                         Masuk Akun
                                     </button>
 
-                                    <div className="text-center pt-4 border-t border-zinc-800 mt-6">
+                                    <div className="text-center pt-4 border-t border-zinc-800 mt-2">
                                         <p className="text-xs text-zinc-500">
                                             Belum punya akun?{' '}
                                             <button 
@@ -928,7 +816,7 @@
                                         <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1.5">Username unik</label>
                                         <input 
                                             type="text" 
-                                            placeholder="Contoh: whana_" 
+                                            placeholder="Contoh: whana" 
                                             value={regUsername}
                                             onChange={(e) => setRegUsername(e.target.value)}
                                             className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
@@ -1000,7 +888,7 @@
             return (
                 <div className="h-screen w-screen bg-darkBg flex overflow-hidden">
                     
-                    {/* LEFT SIDEBAR PANEL (Screenshot 2026-06-16 203005.png) */}
+                    {/* LEFT SIDEBAR PANEL */}
                     <aside className="w-64 border-r border-zinc-900 bg-black flex flex-col justify-between shrink-0 select-none">
                         <div className="p-6">
                             {/* Logo */}
@@ -1059,7 +947,7 @@
                                     className="w-full bg-[#121214] border border-zinc-800 text-[#0095f6] px-3 py-2 rounded-xl text-[11px] font-semibold text-left flex items-center gap-2 hover:bg-zinc-900/80 transition-all"
                                 >
                                     <span className="w-2 h-2 rounded-full bg-accentGreen animate-pulse"></span>
-                                    <span>{isFirebaseActive ? 'Realtime Cloud Aktif' : 'Demo Sync Terkoneksi'}</span>
+                                    <span>{isFirebaseActive ? 'Realtime Cloud Aktif' : 'Penyimpanan Lokal Aktif'}</span>
                                 </button>
                             </div>
 
@@ -1098,11 +986,11 @@
                     {/* MAIN CONTENT WORKSPACE VIEWPORT */}
                     <main className="flex-1 flex overflow-hidden">
                         
-                        {/* TAB 1: MOMEN BERSAMA (Screenshot 2026-06-16 203005.png) */}
+                        {/* TAB 1: MOMEN BERSAMA */}
                         {activeTab === 'momen' && (
                             <div className="flex-1 flex overflow-hidden">
                                 
-                                {/* Middle Panel: Welcome User, Online status list, Calendar & Add memory */}
+                                {/* Middle Panel */}
                                 <div className="w-1/2 border-r border-zinc-900 p-6 flex flex-col gap-6 overflow-y-auto">
                                     {/* Welcome greeting card */}
                                     <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 flex items-center justify-between shadow-xl">
@@ -1120,8 +1008,8 @@
                                             onClick={() => showToast("Koneksi tersambung secara optimal!")}
                                             className="bg-[#0e2c4c] text-[#0095f6] hover:bg-blue-900/50 px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2"
                                         >
-                                            <i className="fa-solid fa-cloud-arrow-up"></i>
-                                            Realtime Aktif
+                                            <i className="fa-solid fa-cloud"></i>
+                                            Aktif Lancar
                                         </button>
                                     </div>
 
@@ -1129,22 +1017,19 @@
                                     <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
                                         <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase block mb-3">TEMAN YANG SEDANG ONLINE</span>
                                         <div className="flex gap-4 overflow-x-auto pb-2">
-                                            <div className="flex flex-col items-center shrink-0">
-                                                <div className="relative">
-                                                    <img src={DEV_BOT.avatar} className="w-12 h-12 rounded-full object-cover border-2 border-zinc-700" alt="online" />
-                                                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-accentGreen border-2 border-cardBg rounded-full"></span>
-                                                </div>
-                                                <span className="text-[10px] text-zinc-400 mt-1 max-w-[60px] truncate">@{DEV_BOT.username}</span>
-                                            </div>
-                                            {onlineFriends.map(friend => (
-                                                <div key={friend.id} className="flex flex-col items-center shrink-0">
-                                                    <div className="relative">
-                                                        <img src={friend.avatar} className="w-12 h-12 rounded-full object-cover border-2 border-zinc-700" alt="online" />
-                                                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-accentGreen border-2 border-cardBg rounded-full"></span>
+                                            {onlineFriends.length === 0 ? (
+                                                <span className="text-xs text-zinc-600">Tidak ada teman lain yang sedang online.</span>
+                                            ) : (
+                                                onlineFriends.map(friend => (
+                                                    <div key={friend.id} className="flex flex-col items-center shrink-0">
+                                                        <div className="relative">
+                                                            <img src={friend.avatar} className="w-12 h-12 rounded-full object-cover border-2 border-zinc-700" alt="online" />
+                                                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-accentGreen border-2 border-cardBg rounded-full"></span>
+                                                        </div>
+                                                        <span className="text-[10px] text-zinc-400 mt-1 max-w-[60px] truncate">@{friend.username}</span>
                                                     </div>
-                                                    <span className="text-[10px] text-zinc-400 mt-1 max-w-[60px] truncate">@{friend.username}</span>
-                                                </div>
-                                            ))}
+                                                ))
+                                            )}
                                         </div>
                                     </div>
 
@@ -1158,7 +1043,7 @@
                                             <button onClick={handleNextMonth} className="text-zinc-400 hover:text-white p-1.5"><i className="fa-solid fa-chevron-right"></i></button>
                                         </div>
 
-                                        {/* Day labels (Minggu to Sabtu aligned with Sonntag to Samstag calendar layout) */}
+                                        {/* Day labels */}
                                         <div className="grid grid-cols-7 text-center text-[10px] font-bold text-zinc-500 tracking-wider mb-2">
                                             <div>M</div>
                                             <div>S</div>
@@ -1284,7 +1169,7 @@
                             </div>
                         )}
 
-                        {/* TAB 2: PESAN & TEMAN (Screenshot 2026-06-16 203021.png) */}
+                        {/* TAB 2: PESAN & TEMAN */}
                         {activeTab === 'pesan' && (
                             <div className="flex-1 flex overflow-hidden">
                                 
@@ -1373,11 +1258,11 @@
                                                             <div className="min-w-0 flex-1">
                                                                 <div className="flex justify-between items-center mb-0.5">
                                                                     <span className="text-xs font-bold text-white truncate">@{user.username}</span>
-                                                                    <span className="text-[9px] text-zinc-600">Active</span>
+                                                                    <span className="text-[9px] text-zinc-600">Aktif</span>
                                                                 </div>
                                                                 <p className="text-[10px] text-zinc-500 truncate">{user.fullName}</p>
                                                                 <div className="flex gap-1.5 mt-1">
-                                                                    {mutual && (
+                                                                    {followed && (
                                                                         <span className="bg-[#1b2b3a] text-[#0095f6] text-[8px] font-bold px-1.5 py-0.5 rounded">Diikuti</span>
                                                                     )}
                                                                     <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${isOnline ? 'bg-green-950/40 text-accentGreen' : 'bg-zinc-900 text-zinc-500'}`}>
@@ -1421,18 +1306,6 @@
                                                 </React.Fragment>
                                             )}
                                         </div>
-
-                                        {/* Instant simulation triggers for direct testing */}
-                                        {activeChat.type === 'dm' && (
-                                            <button 
-                                                onClick={triggerSimulatedReply}
-                                                className="bg-accentBlue hover:bg-blue-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all"
-                                                title="Klik untuk menyimulasikan balasan langsung dari pengguna ini"
-                                            >
-                                                <i className="fa-solid fa-robot"></i>
-                                                Simulasi Balas DM
-                                            </button>
-                                        )}
                                     </div>
 
                                     {/* Chat logs */}
@@ -1442,7 +1315,7 @@
                                                 <i className="fa-solid fa-comments text-4xl mb-3"></i>
                                                 <p className="text-xs mb-2">Kirim pesan pertama untuk memulai obrolan!</p>
                                                 {activeChat.type === 'dm' && (
-                                                    <p className="text-[10px] text-zinc-500 max-w-xs">Pesan akan langsung masuk ke teman. Anda juga dapat mengeklik tombol "Simulasi Balas DM" di kanan atas untuk menguji respon balik.</p>
+                                                    <p className="text-[10px] text-zinc-500 max-w-xs">Pesan Anda akan langsung masuk secara privat dan real-time.</p>
                                                 )}
                                             </div>
                                         ) : (
@@ -1496,7 +1369,7 @@
                             </div>
                         )}
 
-                        {/* TAB 3: PROFIL AKUN (Screenshot 2026-06-16 203030.png) */}
+                        {/* TAB 3: PROFIL AKUN */}
                         {activeTab === 'profil' && (
                             <div className="flex-1 p-6 overflow-y-auto">
                                 
@@ -1690,7 +1563,7 @@
                             <div className="bg-cardBg border border-zinc-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
                                 <div className="text-center">
                                     <div className="w-12 h-12 rounded-full bg-[#1b2b3a] text-accentBlue flex items-center justify-center text-xl mx-auto mb-3">
-                                        <i className="fa-solid fa-wifi animate-pulse"></i>
+                                        <i className="fa-solid fa-wifi"></i>
                                     </div>
                                     <h4 className="text-sm font-bold text-white mb-1">Status Sinkronisasi Jaringan</h4>
                                     <p className="text-[11px] text-zinc-500">
@@ -1727,7 +1600,7 @@
 
                     {/* Toast Notification */}
                     {toastMessage && (
-                        <div className="fixed bottom-6 right-6 bg-[#1b2b3a] border border-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold tracking-wide transition-all z-50 flex items-center gap-2 animate-bounce">
+                        <div className="fixed bottom-6 right-6 bg-[#1b2b3a] border border-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold tracking-wide transition-all z-50 flex items-center gap-2">
                             <i className="fa-solid fa-circle-info text-accentBlue"></i>
                             {toastMessage}
                         </div>
