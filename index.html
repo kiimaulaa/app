@@ -79,9 +79,9 @@
         /** @jsxFrag React.Fragment */
         const { useState, useEffect, useRef, useMemo } = React;
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'plengergram-prod';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'plengergram-shared-server';
         
-        // Safe Fallback Firebase Config
+        // Konfigurasi Firebase dengan fallback dinamis agar selalu aktif
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : {
@@ -93,20 +93,32 @@
                 appId: "mock-app"
             };
 
-        // Check if we should force local storage demo mode
+        // Deteksi apakah menggunakan Mock
         const isMockConfig = !firebaseConfig || firebaseConfig.apiKey === "mock-api-key" || firebaseConfig.projectId.includes("mock");
 
-        // Presets for gorgeous user avatars
+        // Daftar Pilihan Avatar Menarik
         const AVATARS = [
-            "https://placehold.co/150x150/ff4b4b/ffffff?text=👦",
-            "https://placehold.co/150x150/4b93ff/ffffff?text=👧",
-            "https://placehold.co/150x150/4bff6a/ffffff?text=🦊",
-            "https://placehold.co/150x150/ffd84b/ffffff?text=🦁",
-            "https://placehold.co/150x150/d24bff/ffffff?text=🐱",
-            "https://placehold.co/150x150/4bffeb/ffffff?text=🐼"
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Felix",
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Aneka",
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Buster",
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Garfield",
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Midnight",
+            "https://api.dicebear.com/7.x/adventurer/svg?seed=Peanut"
         ];
 
-        const SEED_USERS = [];
+        // Generator Nama Keren Acak untuk Mempercepat Penggabungan User Baru
+        const ADJECTIVES = ["Bintang", "Rusa", "Kucing", "Awan", "Panda", "Elang", "Serigala", "Zebra", "Sobat"];
+        const NOUNS = ["Keren", "Senja", "Santuy", "Ceria", "Petualang", "Hore", "Plenger", "Aktif", "Syahdu"];
+
+        const generateRandomName = () => {
+            const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+            const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+            const num = Math.floor(Math.random() * 900) + 100;
+            return {
+                fullName: `${adj} ${noun}`,
+                username: `${adj.toLowerCase()}_${noun.toLowerCase()}${num}`
+            };
+        };
 
         const getLocalStorageData = (key, defaultValue) => {
             try {
@@ -123,14 +135,14 @@
             } catch (e) {}
         };
 
-        // Initialize Firebase services outside App
+        // Inisialisasi Firebase secara Global
         let firestoreDb = null;
         let authInstance = null;
         let isFirebaseActive = false;
 
         try {
             const fb = window.firebase;
-            if (fb && !isMockConfig) {
+            if (fb) {
                 let app;
                 if (fb.apps.length === 0) {
                     app = fb.initializeApp(firebaseConfig);
@@ -142,44 +154,35 @@
                 isFirebaseActive = true;
             }
         } catch (err) {
-            console.warn("Firebase was not initialized, operating in local-sync mode:", err);
+            console.warn("Firebase tidak terdeteksi, beralih ke mode Penyimpanan Lokal Terdistribusi:", err);
             isFirebaseActive = false;
         }
 
         function App() {
             const [screen, setScreen] = useState('auth');
-            const [authMode, setAuthMode] = useState('login');
             const [activeTab, setActiveTab] = useState('momen');
-            const [authLoading, setAuthLoading] = useState(isFirebaseActive);
+            const [authLoading, setAuthLoading] = useState(true);
 
-            // Form Fields
+            // Form Fields untuk kustomisasi Profil Cepat
             const [regUsername, setRegUsername] = useState('');
             const [regFullName, setRegFullName] = useState('');
-            const [regPassword, setRegPassword] = useState('');
             const [regAvatar, setRegAvatar] = useState(AVATARS[0]);
 
-            const [loginUsername, setLoginUsername] = useState('');
-            const [loginPassword, setLoginPassword] = useState('');
-
-            // Safe States directly initialized with guarantees
+            // State Terpusat Pengguna
             const [currentUser, setCurrentUser] = useState(() => getLocalStorageData('plengergram_current_user', null)); 
-            
-            const [users, setUsers] = useState(() => {
-                return getLocalStorageData('plengergram_users', SEED_USERS);
-            });
+            const [users, setUsers] = useState(() => getLocalStorageData('plengergram_users', []));
 
-            const [connections, setConnections] = useState(() => getLocalStorageData('plengergram_connections', [])); 
-
+            // State Data Utama
             const [timeline, setTimeline] = useState(() => getLocalStorageData('plengergram_timeline', [
                 {
                     id: 'seed-1',
                     authorId: 'system',
                     authorName: 'Sistem PlengerGram',
                     authorUsername: 'system',
-                    authorAvatar: 'https://placehold.co/150x150/0095f6/ffffff?text=📢',
+                    authorAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=System',
                     dateStr: '2026-06-16',
-                    title: 'Selamat Datang di PlengerGram!',
-                    content: 'Aplikasi kalender memori terpadu ini telah siap digunakan. Silakan daftar akun baru Anda untuk mulai mengabadikan momen!',
+                    title: 'Selamat Datang di Server Utama PlengerGram!',
+                    content: 'Server ini menyatukan semua pengguna di satu tempat. Anda bisa melihat kalender memori bersama secara langsung.',
                     timestamp: Date.now() - 3600000
                 }
             ])); 
@@ -191,16 +194,16 @@
             const [userSearchText, setUserSearchText] = useState('');
             const [toastMessage, setToastMessage] = useState('');
 
-            // Calendar Navigation State
+            // Navigasi Tanggal Kalender
             const [currentDate, setCurrentDate] = useState(new Date(2026, 5, 16)); 
             const [selectedDateStr, setSelectedDateStr] = useState('2026-06-16');
 
-            // Messages & Posting Inputs
+            // Form Inputs
             const [messageInput, setMessageInput] = useState('');
             const [newMemoryTitle, setNewMemoryTitle] = useState('');
             const [newMemoryContent, setNewMemoryContent] = useState('');
 
-            // Profile Editor states
+            // Edit Profil state
             const [isEditingProfile, setIsEditingProfile] = useState(false);
             const [editFullName, setEditFullName] = useState('');
             const [editBio, setEditBio] = useState('');
@@ -210,29 +213,53 @@
             const [showResetConfirm, setShowResetConfirm] = useState(false);
             const chatEndRef = useRef(null);
 
-            // Firebase authentication state
+            // Firebase User Auth State
             const [fbUser, setFbUser] = useState(null);
 
+            // Inisialisasi Autentikasi Anonim Otomatis di Background
             useEffect(() => {
-                // Autoredirect to main page if user is logged in
-                if (currentUser) {
-                    setScreen('app');
-                }
-
                 if (!isFirebaseActive || !authInstance) {
                     setAuthLoading(false);
+                    // Jika offline/lokal, langsung pakai pengguna tersimpan atau berikan identitas acak
+                    if (currentUser) {
+                        setScreen('app');
+                    }
                     return;
                 }
 
                 const initAuth = async () => {
                     try {
+                        let credential;
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await authInstance.signInWithCustomToken(__initial_auth_token);
+                            credential = await authInstance.signInWithCustomToken(__initial_auth_token);
                         } else {
-                            await authInstance.signInAnonymously();
+                            credential = await authInstance.signInAnonymously();
+                        }
+                        
+                        if (credential && credential.user) {
+                            setFbUser(credential.user);
+                            
+                            // Jika user sudah login sebelumnya di browser ini
+                            if (currentUser) {
+                                setScreen('app');
+                                // Perbarui status online di database cloud
+                                await firestoreDb.collection('artifacts').doc(appId)
+                                    .collection('public').doc('data')
+                                    .collection('users').doc(currentUser.id).set({
+                                        ...currentUser,
+                                        isOnline: true,
+                                        lastActive: Date.now()
+                                    }, { merge: true });
+                            } else {
+                                // Buatkan info profil acak instan agar user bisa langsung masuk tanpa hambatan
+                                const identity = generateRandomName();
+                                setRegFullName(identity.fullName);
+                                setRegUsername(identity.username);
+                            }
                         }
                     } catch (err) {
-                        console.error("Anonym auth error:", err);
+                        console.error("Kesalahan koneksi autentikasi:", err);
+                        showToast("Koneksi cloud lambat. Menggunakan penyimpanan browser.");
                     } finally {
                         setAuthLoading(false);
                     }
@@ -248,99 +275,89 @@
                 return () => unsubscribeAuth();
             }, []);
 
-            // Handle Cloud Firestore Live sync listeners (Rule 1 Compliant)
+            // Sinkronisasi Data Realtime Satu Server (Firestore Cloud)
             useEffect(() => {
                 if (!isFirebaseActive || !firestoreDb || !fbUser) return;
 
-                // Live user list updates
-                const unsubscribeUsers = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').onSnapshot((snapshot) => {
-                    const loadedUsers = [];
-                    snapshot.forEach(doc => {
-                        loadedUsers.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    setUsers(loadedUsers);
+                // 1. Ambil daftar semua user yang tersambung di server
+                const unsubscribeUsers = firestoreDb.collection('artifacts').doc(appId)
+                    .collection('public').doc('data')
+                    .collection('users').onSnapshot((snapshot) => {
+                        const loadedUsers = [];
+                        snapshot.forEach(doc => {
+                            loadedUsers.push({ id: doc.id, ...doc.data() });
+                        });
+                        setUsers(loadedUsers);
 
-                    if (currentUser) {
-                        const updatedSelf = loadedUsers.find(u => u.id === currentUser.id);
-                        if (updatedSelf) {
-                            setCurrentUser(updatedSelf);
+                        // Sinkronisasi data user aktif saat ini jika ada perubahan di cloud
+                        if (currentUser) {
+                            const updatedSelf = loadedUsers.find(u => u.id === currentUser.id);
+                            if (updatedSelf) {
+                                setCurrentUser(updatedSelf);
+                            }
                         }
-                    }
-                }, (error) => {
-                    console.error("Live Users error:", error);
-                });
-
-                // Live follow relationship updates
-                const unsubscribeConn = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').onSnapshot((snapshot) => {
-                    const loadedConns = [];
-                    snapshot.forEach(doc => {
-                        loadedConns.push({ id: doc.id, ...doc.data() });
+                    }, (error) => {
+                        console.error("Gagal sinkronisasi data pengguna:", error);
                     });
-                    setConnections(loadedConns);
-                }, (error) => {
-                    console.error("Live Connections error:", error);
-                });
 
-                // Live Shared Memories (Calendar timeline)
-                const unsubscribeTimeline = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('timeline').onSnapshot((snapshot) => {
-                    const loadedMemories = [];
-                    snapshot.forEach(doc => {
-                        loadedMemories.push({ id: doc.id, ...doc.data() });
-                    });
-                    const merged = [
-                        {
+                // 2. Ambil data Timeline bersama secara realtime
+                const unsubscribeTimeline = firestoreDb.collection('artifacts').doc(appId)
+                    .collection('public').doc('data')
+                    .collection('timeline').onSnapshot((snapshot) => {
+                        const loadedMemories = [];
+                        snapshot.forEach(doc => {
+                            loadedMemories.push({ id: doc.id, ...doc.data() });
+                        });
+                        
+                        // Gabungkan dengan postingan bawaan sistem
+                        const systemWelcome = {
                             id: 'seed-1',
                             authorId: 'system',
                             authorName: 'Sistem PlengerGram',
                             authorUsername: 'system',
-                            authorAvatar: 'https://placehold.co/150x150/0095f6/ffffff?text=📢',
+                            authorAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=System',
                             dateStr: '2026-06-16',
-                            title: 'Selamat Datang di PlengerGram!',
-                            content: 'Aplikasi kalender memori terpadu ini telah siap digunakan. Silakan daftar akun baru Anda untuk mulai mengabadikan momen!',
+                            title: 'Selamat Datang di Server Utama PlengerGram!',
+                            content: 'Server ini menyatukan semua pengguna di satu tempat. Anda bisa melihat kalender memori bersama secara langsung.',
                             timestamp: Date.now() - 3600000
-                        },
-                        ...loadedMemories
-                    ];
-                    const unique = merged.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-                    unique.sort((a, b) => b.timestamp - a.timestamp);
-                    setTimeline(unique);
-                }, (error) => {
-                    console.error("Live Timeline error:", error);
-                });
+                        };
 
-                // Live messaging
-                const unsubscribeMessages = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').onSnapshot((snapshot) => {
-                    const loadedMsgs = [];
-                    snapshot.forEach(doc => {
-                        loadedMsgs.push({ id: doc.id, ...doc.data() });
+                        const merged = [systemWelcome, ...loadedMemories];
+                        // Saring agar unik
+                        const unique = merged.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+                        unique.sort((a, b) => b.timestamp - a.timestamp);
+                        setTimeline(unique);
+                    }, (error) => {
+                        console.error("Gagal sinkronisasi timeline:", error);
                     });
-                    loadedMsgs.sort((a, b) => a.timestamp - b.timestamp);
-                    setMessages(loadedMsgs);
-                }, (error) => {
-                    console.error("Live Messages error:", error);
-                });
+
+                // 3. Ambil pesan obrolan realtime
+                const unsubscribeMessages = firestoreDb.collection('artifacts').doc(appId)
+                    .collection('public').doc('data')
+                    .collection('messages').onSnapshot((snapshot) => {
+                        const loadedMsgs = [];
+                        snapshot.forEach(doc => {
+                            loadedMsgs.push({ id: doc.id, ...doc.data() });
+                        });
+                        loadedMsgs.sort((a, b) => a.timestamp - b.timestamp);
+                        setMessages(loadedMsgs);
+                    }, (error) => {
+                        console.error("Gagal sinkronisasi pesan:", error);
+                    });
 
                 return () => {
                     unsubscribeUsers();
-                    unsubscribeConn();
                     unsubscribeTimeline();
                     unsubscribeMessages();
                 };
             }, [fbUser]);
 
-            // Save state modifications locally when operating in fallback sync mode
+            // Simpan perubahan secara lokal untuk redundansi darurat
             useEffect(() => {
                 if (!isFirebaseActive) {
                     saveLocalStorageData('plengergram_users', users);
                 }
             }, [users]);
-
-            useEffect(() => {
-                if (!isFirebaseActive) {
-                    saveLocalStorageData('plengergram_connections', connections);
-                }
-            }, [connections]);
 
             useEffect(() => {
                 if (!isFirebaseActive) {
@@ -362,55 +379,32 @@
                 }
             }, [currentUser]);
 
-            // Multi-tab synchronization listener
-            useEffect(() => {
-                const handleStorageChange = (e) => {
-                    if (isFirebaseActive) return;
-                    try {
-                        if (e.key === 'plengergram_users' && e.newValue) {
-                            setUsers(JSON.parse(e.newValue));
-                        }
-                        if (e.key === 'plengergram_connections' && e.newValue) {
-                            setConnections(JSON.parse(e.newValue));
-                        }
-                        if (e.key === 'plengergram_timeline' && e.newValue) {
-                            setTimeline(JSON.parse(e.newValue));
-                        }
-                        if (e.key === 'plengergram_messages' && e.newValue) {
-                            setMessages(JSON.parse(e.newValue));
-                        }
-                        if (e.key === 'plengergram_current_user') {
-                            setCurrentUser(e.newValue ? JSON.parse(e.newValue) : null);
-                        }
-                    } catch (err) {}
-                };
-                window.addEventListener('storage', handleStorageChange);
-                return () => window.removeEventListener('storage', handleStorageChange);
-            }, []);
-
-            // Toast helper
+            // Tampilkan Toast Notifikasi
             const showToast = (msg) => {
                 setToastMessage(msg);
                 setTimeout(() => setToastMessage(''), 3500);
             };
 
-            // Scroll to end of DM pane
+            // Otomatis scroll chat ke posisi terbawah
             useEffect(() => {
                 if (chatEndRef.current) {
                     chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
                 }
             }, [messages, activeChat]);
 
-            const handleRegister = async (e) => {
+            // Menghubungkan Pengguna Langsung ke Server Bersama
+            const handleJoinServer = async (e) => {
                 e.preventDefault();
-                if (!regUsername || !regFullName || !regPassword) {
-                    showToast("Harap isi seluruh formulir pendaftaran!");
+                if (!regFullName.trim() || !regUsername.trim()) {
+                    showToast("Silakan masukkan Nama dan Username Anda.");
                     return;
                 }
-                const formattedUsername = regUsername.toLowerCase().trim().replace(/\s+/g, '');
+
+                const cleanUsername = regUsername.toLowerCase().trim().replace(/\s+/g, '');
                 
-                if (users.some(u => u.username === formattedUsername)) {
-                    showToast("Nama Pengguna ini telah digunakan!");
+                // Cari apakah username sudah diambil oleh orang lain di server
+                if (users.some(u => u.username === cleanUsername && u.id !== fbUser?.uid)) {
+                    showToast("Username ini sudah digunakan di server. Coba buat yang lain!");
                     return;
                 }
 
@@ -419,20 +413,20 @@
                     
                     const newUserProfile = {
                         id: uid,
-                        username: formattedUsername,
-                        fullName: regFullName,
-                        password: regPassword, 
+                        username: cleanUsername,
+                        fullName: regFullName.trim(),
                         avatar: regAvatar,
-                        bio: "Pengguna PlengerGram baru.",
+                        bio: "Mari membuat kenangan indah bersama di PlengerGram!",
                         isOnline: true,
                         lastActive: Date.now(),
                         createdAt: Date.now()
                     };
 
                     if (isFirebaseActive && firestoreDb) {
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(uid).set(newUserProfile);
+                        await firestoreDb.collection('artifacts').doc(appId)
+                            .collection('public').doc('data')
+                            .collection('users').doc(uid).set(newUserProfile);
                     } else {
-                        // Offline state updating
                         setUsers(prev => {
                             const updated = [...prev.filter(u => u.id !== uid), newUserProfile];
                             saveLocalStorageData('plengergram_users', updated);
@@ -441,122 +435,34 @@
                     }
 
                     setCurrentUser(newUserProfile);
-                    showToast(`Pendaftaran sukses! Selamat datang, @${formattedUsername}`);
+                    showToast(`Halo @${cleanUsername}, Selamat datang di server bersama!`);
                     setScreen('app');
-                    setActiveTab('momen');
                 } catch (err) {
-                    console.error("Register failed:", err);
-                    showToast("Pendaftaran gagal. Cobalah kembali.");
+                    console.error("Gagal mendaftarkan ke server:", err);
+                    showToast("Gagal menyambung ke server. Silakan coba lagi.");
                 }
             };
 
-            const handleLogin = async (e) => {
-                e.preventDefault();
-                if (!loginUsername || !loginPassword) {
-                    showToast("Harap masukkan nama pengguna dan kata sandi!");
-                    return;
-                }
-                const cleanUsername = loginUsername.toLowerCase().trim();
-                const matchedUser = users.find(u => u.username === cleanUsername);
-
-                if (!matchedUser) {
-                    showToast("Nama Pengguna tidak terdaftar!");
-                    return;
-                }
-
-                if (matchedUser.password !== loginPassword) {
-                    showToast("Kata Sandi tidak cocok!");
-                    return;
-                }
-
-                // Update online status
-                const updatedUser = { ...matchedUser, isOnline: true, lastActive: Date.now() };
-                setCurrentUser(updatedUser);
-                
-                if (isFirebaseActive && firestoreDb) {
-                    await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(updatedUser.id).set(updatedUser);
-                } else {
-                    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-                }
-
-                showToast(`Selamat datang kembali, @${updatedUser.username}!`);
-                setScreen('app');
-                setActiveTab('momen');
-            };
-
+            // Keluar Akun dan hapus session lokal
             const handleLogout = async () => {
                 if (currentUser) {
                     const offlineUser = { ...currentUser, isOnline: false, lastActive: Date.now() };
                     if (isFirebaseActive && firestoreDb) {
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(currentUser.id).set(offlineUser);
-                    } else {
-                        setUsers(prev => prev.map(u => u.id === currentUser.id ? offlineUser : u));
+                        await firestoreDb.collection('artifacts').doc(appId)
+                            .collection('public').doc('data')
+                            .collection('users').doc(currentUser.id).set(offlineUser, { merge: true });
                     }
                 }
                 setCurrentUser(null);
                 setScreen('auth');
-                showToast("Anda telah keluar akun.");
+                showToast("Anda telah keluar dari server bersama.");
             };
 
-            const handleFollow = async (targetUserId) => {
-                if (!currentUser) return;
-                const connectionId = `${currentUser.id}_${targetUserId}`;
-                const alreadyFollowing = connections.some(c => c.from === currentUser.id && c.to === targetUserId && !c.removed);
-
-                try {
-                    if (isFirebaseActive && firestoreDb) {
-                        const connRef = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').doc(connectionId);
-                        if (alreadyFollowing) {
-                            await connRef.set({ id: connectionId, from: currentUser.id, to: targetUserId, removed: true });
-                            showToast("Berhenti mengikuti.");
-                        } else {
-                            await connRef.set({
-                                id: connectionId,
-                                from: currentUser.id,
-                                to: targetUserId,
-                                timestamp: Date.now(),
-                                removed: false
-                            });
-                            showToast("Berhasil mengikuti!");
-                        }
-                    } else {
-                        let updated;
-                        if (alreadyFollowing) {
-                            updated = connections.map(c => c.id === connectionId ? { ...c, removed: true } : c);
-                            showToast("Berhenti mengikuti.");
-                        } else {
-                            const newConn = { id: connectionId, from: currentUser.id, to: targetUserId, removed: false, timestamp: Date.now() };
-                            updated = [...connections.filter(c => c.id !== connectionId), newConn];
-                            showToast("Berhasil mengikuti!");
-                        }
-                        setConnections(updated);
-                        saveLocalStorageData('plengergram_connections', updated);
-                    }
-                } catch (err) {
-                    console.error("Connection follow error:", err);
-                }
-            };
-
-            // Diagnostic Reset Function
+            // Hapus semua data dari server lokal untuk troubleshoot darurat
             const handleClearAllAccountsAndData = async () => {
                 try {
-                    // Reset LocalStorage
-                    localStorage.removeItem('plengergram_users');
-                    localStorage.removeItem('plengergram_connections');
-                    localStorage.removeItem('plengergram_timeline');
-                    localStorage.removeItem('plengergram_messages');
-                    localStorage.removeItem('plengergram_current_user');
-
-                    // If Cloud mode is on and we want to purge, we clear local states and send delete commands if we have collections
-                    if (isFirebaseActive && firestoreDb) {
-                        // For safety inside this iframe, we clear out the local UI states
-                        // Realtime Cloud will auto-repopulate dynamically, but locally we clean up
-                        showToast("Penyimpanan lokal dibersihkan! Hubungi admin untuk menghapus koleksi awan.");
-                    }
-
-                    // Reset React States to empty defaults
+                    localStorage.clear();
                     setUsers([]);
-                    setConnections([]);
                     setMessages([]);
                     setTimeline([
                         {
@@ -564,45 +470,24 @@
                             authorId: 'system',
                             authorName: 'Sistem PlengerGram',
                             authorUsername: 'system',
-                            authorAvatar: 'https://placehold.co/150x150/0095f6/ffffff?text=📢',
+                            authorAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=System',
                             dateStr: '2026-06-16',
-                            title: 'Selamat Datang di PlengerGram!',
-                            content: 'Aplikasi kalender memori terpadu ini telah siap digunakan. Silakan daftar akun baru Anda untuk mulai mengabadikan momen!',
+                            title: 'Selamat Datang di Server Utama PlengerGram!',
+                            content: 'Server ini menyatukan semua pengguna di satu tempat. Anda bisa melihat kalender memori bersama secara langsung.',
                             timestamp: Date.now() - 3600000
                         }
                     ]);
-                    
                     setCurrentUser(null);
                     setScreen('auth');
-                    setAuthMode('login');
                     setShowResetConfirm(false);
                     setShowStatusModal(false);
+                    showToast("Penyimpanan lokal berhasil direset ulang!");
                 } catch (e) {
-                    console.error(e);
-                    showToast("Gagal melakukan reset.");
+                    showToast("Gagal membersihkan data.");
                 }
             };
 
-            const isFollowing = (fromId, toId) => {
-                return connections.some(c => c.from === fromId && c.to === toId && !c.removed);
-            };
-
-            const isMutual = (userId1, userId2) => {
-                return isFollowing(userId1, userId2) && isFollowing(userId2, userId1);
-            };
-
-            const getFollowersCount = (userId) => {
-                return connections.filter(c => c.to === userId && !c.removed).length;
-            };
-
-            const getFollowingCount = (userId) => {
-                return connections.filter(c => c.from === userId && !c.removed).length;
-            };
-
-            const getMomentsContributionCount = (userId) => {
-                return timeline.filter(m => m.authorId === userId).length;
-            };
-
+            // Kalender Generator
             const getDaysInMonth = (year, month) => {
                 return new Date(year, month + 1, 0).getDate();
             };
@@ -644,10 +529,11 @@
                 return months[monthIndex];
             };
 
+            // Kirim postingan Kenangan Baru ke Server Terpusat
             const handleAddMemory = async (e) => {
                 e.preventDefault();
-                if (!newMemoryTitle || !newMemoryContent) {
-                    showToast("Harap isi judul dan konten kenangan Anda!");
+                if (!newMemoryTitle.trim() || !newMemoryContent.trim()) {
+                    showToast("Judul dan cerita kenangan Anda tidak boleh kosong!");
                     return;
                 }
 
@@ -658,28 +544,30 @@
                         authorUsername: currentUser?.username,
                         authorAvatar: currentUser?.avatar,
                         dateStr: selectedDateStr,
-                        title: newMemoryTitle,
-                        content: newMemoryContent,
+                        title: newMemoryTitle.trim(),
+                        content: newMemoryContent.trim(),
                         timestamp: Date.now()
                     };
 
                     if (isFirebaseActive && firestoreDb) {
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('timeline').add(memoryData);
+                        await firestoreDb.collection('artifacts').doc(appId)
+                            .collection('public').doc('data')
+                            .collection('timeline').add(memoryData);
                     } else {
                         const updated = [ { id: `local-${Date.now()}`, ...memoryData }, ...timeline ];
                         setTimeline(updated);
-                        saveLocalStorageData('plengergram_timeline', updated);
                     }
 
                     setNewMemoryTitle('');
                     setNewMemoryContent('');
-                    showToast("Kenangan indah Anda berhasil dibagikan!");
+                    showToast("Momen baru berhasil ditambahkan ke kalender bersama!");
                 } catch (err) {
-                    console.error("Memory upload error:", err);
+                    console.error("Gagal mengupload kenangan:", err);
                     showToast("Gagal menyimpan kenangan.");
                 }
             };
 
+            // Kirim pesan obrolan ke server
             const handleSendMessage = async (e) => {
                 e.preventDefault();
                 if (!messageInput.trim()) return;
@@ -689,7 +577,6 @@
 
                 try {
                     const msgPayload = {
-                        id: `msg-${Date.now()}`,
                         senderId: currentUser?.id,
                         senderName: currentUser?.fullName,
                         senderUsername: currentUser?.username,
@@ -701,18 +588,20 @@
                     };
 
                     if (isFirebaseActive && firestoreDb) {
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').add(msgPayload);
+                        await firestoreDb.collection('artifacts').doc(appId)
+                            .collection('public').doc('data')
+                            .collection('messages').add(msgPayload);
                     } else {
-                        const updated = [...messages, msgPayload];
+                        const updated = [...messages, { id: `msg-${Date.now()}`, ...msgPayload }];
                         setMessages(updated);
-                        saveLocalStorageData('plengergram_messages', updated);
                     }
 
                 } catch (err) {
-                    console.error("Message send failed:", err);
+                    console.error("Gagal mengirimkan pesan:", err);
                 }
             };
 
+            // Filter Pesan Obrolan berdasarkan pilihan grup atau obrolan pribadi
             const filteredMessages = useMemo(() => {
                 if (activeChat.type === 'group') {
                     return messages.filter(m => m.isGroup);
@@ -724,41 +613,33 @@
                 }
             }, [messages, activeChat, currentUser?.id]);
 
-            const handleClearDM = () => {
-                if (isFirebaseActive && firestoreDb) {
-                    showToast("Pembersihan chat global dinonaktifkan dalam sistem cloud.");
-                    return;
-                }
-                setMessages([]);
-                saveLocalStorageData('plengergram_messages', []);
-                showToast("Tampilan pesan dibersihkan.");
-            };
-
+            // Perbarui data Profil Akun pengguna di server
             const handleSaveProfile = async (e) => {
                 e.preventDefault();
-                if (!editFullName) {
+                if (!editFullName.trim()) {
                     showToast("Nama tidak boleh kosong!");
                     return;
                 }
 
                 try {
                     const updatedFields = {
-                        fullName: editFullName,
-                        bio: editBio,
+                        fullName: editFullName.trim(),
+                        bio: editBio.trim(),
                         avatar: editAvatar
                     };
 
                     if (isFirebaseActive && firestoreDb) {
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(currentUser?.id).update(updatedFields);
+                        await firestoreDb.collection('artifacts').doc(appId)
+                            .collection('public').doc('data')
+                            .collection('users').doc(currentUser?.id).update(updatedFields);
                     }
 
                     const updatedUser = { ...currentUser, ...updatedFields };
                     setCurrentUser(updatedUser);
-                    setUsers(prev => prev.map(u => u.id === currentUser?.id ? { ...u, ...updatedFields } : u));
                     setIsEditingProfile(false);
                     showToast("Profil berhasil diperbarui!");
                 } catch (err) {
-                    console.error("Profile modification failed:", err);
+                    console.error("Gagal memperbarui profil:", err);
                 }
             };
 
@@ -776,13 +657,6 @@
                 );
             }, [users, chatSearchText, currentUser?.id]);
 
-            const filteredUsersToFollow = useMemo(() => {
-                return users.filter(u => u.id !== currentUser?.id && 
-                    (u.fullName.toLowerCase().includes(userSearchText.toLowerCase()) || 
-                     u.username.toLowerCase().includes(userSearchText.toLowerCase()))
-                );
-            }, [users, userSearchText, currentUser?.id]);
-
             const selectedDateMoments = useMemo(() => {
                 return timeline.filter(m => m.dateStr === selectedDateStr);
             }, [timeline, selectedDateStr]);
@@ -791,108 +665,54 @@
                 return users.filter(u => u.id !== currentUser?.id && u.isOnline);
             }, [users, currentUser?.id]);
 
+            // Tampilan Halaman Hubungkan Identitas / Masuk Server
             if (screen === 'auth' || !currentUser) {
                 return (
                     <div className="h-full w-full flex items-center justify-center bg-[#09090b] px-4 relative overflow-hidden">
-                        {/* Safe Clear Data shortcut on auth screen */}
-                        <button 
-                            onClick={() => setShowResetConfirm(true)}
-                            className="absolute top-4 right-4 bg-red-950/20 text-red-500 border border-red-900/40 hover:bg-red-950/50 px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
-                        >
-                        </button>
-
                         <div className="w-full max-w-md bg-[#121214] rounded-2xl border border-zinc-800 p-8 shadow-2xl relative overflow-hidden">
                             <div className="text-center mb-8">
                                 <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">PlengerGram</h1>
-                                <p className="text-zinc-500 text-sm">Masuk ke Kalender & Timeline Bersama</p>
+                                <p className="text-zinc-500 text-sm">Masuk ke Server Kalender Bersama Terpadu</p>
                             </div>
 
                             {authLoading ? (
                                 <div className="text-center py-10 space-y-4">
                                     <div className="w-10 h-10 border-4 border-t-accentBlue border-zinc-800 rounded-full animate-spin mx-auto"></div>
-                                    <p className="text-zinc-400 text-xs">Menghubungkan jaringan cloud aman...</p>
+                                    <p className="text-zinc-400 text-xs">Menyambungkan Anda ke server utama...</p>
                                 </div>
-                            ) : authMode === 'login' ? (
-                                <form onSubmit={handleLogin} className="space-y-5">
-                                    <div>
-                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Nama Pengguna (Username)</label>
-                                        <input 
-                                            type="text" 
-                                            placeholder="Masukkan username Anda" 
-                                            value={loginUsername}
-                                            onChange={(e) => setLoginUsername(e.target.value)}
-                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Kata Sandi (Password)</label>
-                                        <input 
-                                            type="password" 
-                                            placeholder="Masukkan password Anda" 
-                                            value={loginPassword}
-                                            onChange={(e) => setLoginPassword(e.target.value)}
-                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
-                                        />
-                                    </div>
-
-                                    <button 
-                                        type="submit"
-                                        className="w-full bg-accentBlue hover:bg-blue-600 text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-lg active:scale-[0.98] mt-2 text-sm"
-                                    >
-                                        Masuk Akun
-                                    </button>
-
-                                    <div className="text-center pt-4 border-t border-zinc-800 mt-2">
-                                        <p className="text-xs text-zinc-500">
-                                            Belum punya akun?{' '}
-                                            <button 
-                                                type="button" 
-                                                onClick={() => setAuthMode('register')}
-                                                className="text-accentBlue hover:underline font-medium"
-                                            >
-                                                Daftar Sekarang
-                                            </button>
-                                        </p>
-                                    </div>
-                                </form>
                             ) : (
-                                <form onSubmit={handleRegister} className="space-y-4">
+                                <form onSubmit={handleJoinServer} className="space-y-4">
+                                    <div className="bg-[#1b2b3a]/30 border border-accentBlue/20 rounded-xl p-4 text-xs text-zinc-300 mb-2">
+                                        <i className="fa-solid fa-circle-info text-accentBlue mr-1.5"></i>
+                                        Sistem secara otomatis mendeteksi browser Anda dan menyiapkannya untuk masuk ke satu server global.
+                                    </div>
+
                                     <div>
-                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1.5">Nama Lengkap</label>
+                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1.5">Nama Panggilan Anda</label>
                                         <input 
                                             type="text" 
-                                            placeholder="Nama Lengkap Anda" 
+                                            placeholder="Nama Anda yang tampil di server" 
                                             value={regFullName}
                                             onChange={(e) => setRegFullName(e.target.value)}
                                             className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
+                                            required
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1.5">Username unik</label>
+                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1.5">Username Unik Anda</label>
                                         <input 
                                             type="text" 
                                             placeholder="Contoh: whana" 
                                             value={regUsername}
                                             onChange={(e) => setRegUsername(e.target.value)}
                                             className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
+                                            required
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1.5">Kata Sandi (Password)</label>
-                                        <input 
-                                            type="password" 
-                                            placeholder="Masukkan kata sandi baru" 
-                                            value={regPassword}
-                                            onChange={(e) => setRegPassword(e.target.value)}
-                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Pilih Avatar Profil</label>
+                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Pilih Karakter Avatar Anda</label>
                                         <div className="flex justify-between items-center bg-[#09090b] p-2.5 rounded-xl border border-zinc-800">
                                             {AVATARS.map((av, idx) => (
                                                 <button
@@ -911,23 +731,11 @@
 
                                     <button 
                                         type="submit"
-                                        className="w-full bg-accentBlue hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-lg active:scale-[0.98] mt-2 text-sm"
+                                        className="w-full bg-accentBlue hover:bg-blue-600 text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-lg active:scale-[0.98] mt-2 text-sm flex items-center justify-center gap-2"
                                     >
-                                        Daftar & Masuk
+                                        <i className="fa-solid fa-right-to-bracket"></i>
+                                        Masuk Server Bersama
                                     </button>
-
-                                    <div className="text-center pt-3 border-t border-zinc-800 mt-4">
-                                        <p className="text-xs text-zinc-500">
-                                            Sudah punya akun?{' '}
-                                            <button 
-                                                type="button" 
-                                                onClick={() => setAuthMode('login')}
-                                                className="text-accentBlue hover:underline font-medium"
-                                            >
-                                                Masuk Akun
-                                            </button>
-                                        </p>
-                                    </div>
                                 </form>
                             )}
                         </div>
@@ -942,20 +750,20 @@
                 );
             }
 
+            // Tampilan Utama Aplikasi
             return (
                 <div className="h-screen w-screen bg-darkBg flex overflow-hidden">
                     
-                    {/* LEFT SIDEBAR PANEL */}
+                    {/* SIDEBAR UTAMA */}
                     <aside className="w-64 border-r border-zinc-900 bg-black flex flex-col justify-between shrink-0 select-none">
                         <div className="p-6">
-                            {/* Logo */}
                             <div className="mb-8">
                                 <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
                                     <span>PlengerGram</span>
                                 </h2>
+                                <span className="text-[10px] text-zinc-500 font-bold block tracking-wider mt-1">SERVER TERPADU</span>
                             </div>
 
-                            {/* Nav Menu */}
                             <nav className="space-y-2">
                                 <button 
                                     onClick={() => setActiveTab('momen')}
@@ -995,29 +803,19 @@
                             </nav>
                         </div>
 
-                        {/* Bottom Metadata Panel */}
+                        {/* Panel Status Jaringan */}
                         <div className="p-4 border-t border-zinc-900 space-y-4">
                             <div>
-                                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block mb-1">Status Jaringan:</span>
+                                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block mb-1">Status Sinkronisasi:</span>
                                 <button 
                                     onClick={() => setShowStatusModal(true)}
                                     className="w-full bg-[#121214] border border-zinc-800 text-[#0095f6] px-3 py-2 rounded-xl text-[11px] font-semibold text-left flex items-center gap-2 hover:bg-zinc-900/80 transition-all"
                                 >
                                     <span className="w-2 h-2 rounded-full bg-accentGreen animate-pulse"></span>
-                                    <span>{isFirebaseActive ? 'Realtime Cloud Aktif' : 'Penyimpanan Lokal Aktif'}</span>
+                                    <span>{isFirebaseActive ? 'Terhubung ke Cloud Utama' : 'Penyimpanan Offline Lokal'}</span>
                                 </button>
                             </div>
 
-                            {/* Timeline Shortcut */}
-                            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-3 cursor-pointer" onClick={() => setActiveTab('momen')}>
-                                <div className="flex justify-between items-center text-xs text-zinc-400 font-semibold mb-1">
-                                    <span>Pintasan Timeline</span>
-                                    <i className="fa-solid fa-chevron-up text-[10px]"></i>
-                                </div>
-                                <div className="text-[10px] text-zinc-600">Akses cepat ke kalender memori terpadu.</div>
-                            </div>
-
-                            {/* Active User Badge */}
                             <div className="flex items-center gap-3 bg-[#121214]/50 p-2 rounded-xl border border-zinc-900">
                                 <div className="relative">
                                     <img src={currentUser?.avatar} className="w-10 h-10 rounded-full object-cover" alt="badge" />
@@ -1029,27 +827,27 @@
                                 </div>
                             </div>
 
-                            {/* Logout link */}
                             <button 
                                 onClick={handleLogout}
                                 className="w-full flex items-center gap-3 px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
                             >
                                 <i className="fa-solid fa-right-from-bracket"></i>
-                                <span>Keluar Akun</span>
+                                <span>Keluar Server</span>
                             </button>
                         </div>
                     </aside>
 
-                    {/* MAIN CONTENT WORKSPACE VIEWPORT */}
+                    {/* HALAMAN PANEL UTAMA */}
                     <main className="flex-1 flex overflow-hidden">
                         
                         {/* TAB 1: MOMEN BERSAMA */}
                         {activeTab === 'momen' && (
                             <div className="flex-1 flex overflow-hidden">
                                 
-                                {/* Middle Panel */}
+                                {/* Bagian Kiri: Kalender & Input Momen */}
                                 <div className="w-1/2 border-r border-zinc-900 p-6 flex flex-col gap-6 overflow-y-auto">
-                                    {/* Welcome greeting card */}
+                                    
+                                    {/* Kartu Selamat Datang */}
                                     <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 flex items-center justify-between shadow-xl">
                                         <div className="flex items-center gap-4">
                                             <div className="relative">
@@ -1057,40 +855,37 @@
                                                 <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-accentGreen border-2 border-cardBg rounded-full"></span>
                                             </div>
                                             <div>
-                                                <p className="text-zinc-500 text-xs">Selamat datang,</p>
+                                                <p className="text-zinc-500 text-xs">Anda masuk sebagai,</p>
                                                 <h3 className="text-lg font-bold text-white">@{currentUser?.username}</h3>
                                             </div>
                                         </div>
-                                        <button 
-                                            onClick={() => showToast("Koneksi tersambung secara optimal!")}
-                                            className="bg-[#0e2c4c] text-[#0095f6] hover:bg-blue-900/50 px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2"
-                                        >
-                                            <i className="fa-solid fa-cloud"></i>
-                                            Aktif Lancar
-                                        </button>
+                                        <span className="bg-[#0e2c4c] text-[#0095f6] px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2">
+                                            <i className="fa-solid fa-network-wired"></i>
+                                            Satu Server Aktif
+                                        </span>
                                     </div>
 
-                                    {/* Online list bar */}
+                                    {/* Teman yang Sedang Online */}
                                     <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
-                                        <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase block mb-3">TEMAN YANG SEDANG ONLINE</span>
+                                        <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase block mb-3">PENGGUNA LAIN DI SERVER INI</span>
                                         <div className="flex gap-4 overflow-x-auto pb-2">
                                             {onlineFriends.length === 0 ? (
-                                                <span className="text-xs text-zinc-600">Tidak ada teman lain yang sedang online.</span>
+                                                <span className="text-xs text-zinc-600">Anda adalah pengguna pertama yang sedang online saat ini.</span>
                                             ) : (
                                                 onlineFriends.map(friend => (
                                                     <div key={friend.id} className="flex flex-col items-center shrink-0">
                                                         <div className="relative">
                                                             <img src={friend.avatar} className="w-12 h-12 rounded-full object-cover border-2 border-zinc-700" alt="online" />
-                                                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-accentGreen border-2 border-cardBg rounded-full"></span>
+                                                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-accentGreen border-2 border-cardBg rounded-full"></span>
                                                         </div>
-                                                        <span className="text-[10px] text-zinc-400 mt-1 max-w-[60px] truncate">@{friend.username}</span>
+                                                        <span className="text-[10px] text-zinc-400 mt-1 max-w-[70px] truncate">@{friend.username}</span>
                                                     </div>
                                                 ))
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Calendar Widget panel */}
+                                    {/* Kalender Memori Bersama */}
                                     <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
                                         <div className="flex justify-between items-center mb-4">
                                             <button onClick={handlePrevMonth} className="text-zinc-400 hover:text-white p-1.5"><i className="fa-solid fa-chevron-left"></i></button>
@@ -1100,18 +895,10 @@
                                             <button onClick={handleNextMonth} className="text-zinc-400 hover:text-white p-1.5"><i className="fa-solid fa-chevron-right"></i></button>
                                         </div>
 
-                                        {/* Day labels */}
                                         <div className="grid grid-cols-7 text-center text-[10px] font-bold text-zinc-500 tracking-wider mb-2">
-                                            <div>M</div>
-                                            <div>S</div>
-                                            <div>S</div>
-                                            <div>R</div>
-                                            <div>K</div>
-                                            <div>J</div>
-                                            <div>S</div>
+                                            <div>M</div><div>S</div><div>S</div><div>R</div><div>K</div><div>J</div><div>S</div>
                                         </div>
 
-                                        {/* Calendar Grid */}
                                         <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold">
                                             {generateCalendarDays().map((dayObj, idx) => {
                                                 if (!dayObj.day) {
@@ -1126,7 +913,7 @@
                                                         onClick={() => setSelectedDateStr(dayObj.dateStr)}
                                                         className={`py-2 rounded-lg relative transition-all duration-150 ${
                                                             isSelected 
-                                                                ? 'bg-accentBlue text-white shadow-lg' 
+                                                                ? 'bg-accentBlue text-white shadow-lg font-bold' 
                                                                 : hasMoment 
                                                                     ? 'bg-[#1b2b3a] text-accentBlue font-bold hover:bg-zinc-800' 
                                                                     : 'text-zinc-400 hover:bg-zinc-800/50'
@@ -1142,61 +929,63 @@
                                         </div>
                                     </div>
 
-                                    {/* Add New Memory form */}
+                                    {/* Formulir Penambahan Momen Bersama */}
                                     <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
                                         <div className="flex items-center gap-2 mb-2">
                                             <i className="fa-solid fa-circle-plus text-accentBlue text-sm"></i>
-                                            <h4 className="text-xs font-bold uppercase tracking-wider text-white">Tambah Kenangan Baru</h4>
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-white">Tambah Kenangan Bersama</h4>
                                         </div>
                                         <p className="text-[11px] text-zinc-500 mb-4">
-                                            Kenangan yang Anda tambahkan di bawah ini akan masuk ke timeline bersama dan dapat dilihat oleh semua teman Anda di tanggal <span className="text-white font-semibold underline">{selectedDateStr}</span>.
+                                            Cerita yang Anda tambahkan akan masuk langsung ke server dan dapat dilihat oleh seluruh browser serta pengguna lain pada tanggal <span className="text-white font-semibold underline">{selectedDateStr}</span>.
                                         </p>
 
                                         <form onSubmit={handleAddMemory} className="space-y-3">
                                             <input 
                                                 type="text" 
-                                                placeholder="Judul momen..." 
+                                                placeholder="Judul momen indahnya..." 
                                                 value={newMemoryTitle}
                                                 onChange={(e) => setNewMemoryTitle(e.target.value)}
-                                                className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-accentBlue/40 transition-all placeholder-zinc-700"
+                                                className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-accentBlue/40 transition-all placeholder-zinc-750"
+                                                required
                                             />
                                             <textarea 
                                                 rows="3"
-                                                placeholder="Ceritakan momen indah hari ini..." 
+                                                placeholder="Bagikan cerita lengkap momen hari ini..." 
                                                 value={newMemoryContent}
                                                 onChange={(e) => setNewMemoryContent(e.target.value)}
-                                                className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-accentBlue/40 transition-all placeholder-zinc-700 resize-none"
+                                                className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-accentBlue/40 transition-all placeholder-zinc-750 resize-none"
+                                                required
                                             ></textarea>
                                             
                                             <button 
                                                 type="submit"
                                                 className="w-full bg-accentBlue hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all active:scale-[0.98]"
                                             >
-                                                Bagikan Kenangan
+                                                Bagikan Kenangan Ke Semua Orang
                                             </button>
                                         </form>
                                     </div>
 
                                 </div>
 
-                                {/* Right Panel: Timeline Memory list */}
+                                {/* Bagian Kanan: Timeline Cerita yang Ditampilkan */}
                                 <div className="w-1/2 p-6 flex flex-col gap-6 overflow-y-auto">
                                     <div className="flex justify-between items-center pb-3 border-b border-zinc-900">
                                         <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                             <i className="fa-solid fa-clock-rotate-left"></i>
-                                            Timeline Plengeran Bersama
+                                            Timeline Tanggal: {selectedDateStr}
                                         </h3>
-                                        <span className="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
-                                            {selectedDateMoments.length} Momen
+                                        <span className="bg-[#1b2b3a] text-accentBlue text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
+                                            {selectedDateMoments.length} Kenangan
                                         </span>
                                     </div>
 
                                     {selectedDateMoments.length === 0 ? (
                                         <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-cardBg border border-zinc-900 rounded-2xl py-16">
                                             <i className="fa-solid fa-folder-open text-4xl text-zinc-700 mb-4"></i>
-                                            <h4 className="text-sm font-bold text-zinc-400 mb-1">Belum ada kenangan bersama</h4>
+                                            <h4 className="text-sm font-bold text-zinc-400 mb-1">Belum ada kenangan bersama di tanggal ini</h4>
                                             <p className="text-xs text-zinc-600 max-w-sm">
-                                                Ayo jadilah yang pertama membagikan kenangan indah Anda di kalender bersama ini pada tanggal {selectedDateStr}!
+                                                Jadilah yang pertama untuk mengukir sejarah memori bersama pada tanggal {selectedDateStr} di server ini!
                                             </p>
                                         </div>
                                     ) : (
@@ -1230,7 +1019,7 @@
                         {activeTab === 'pesan' && (
                             <div className="flex-1 flex overflow-hidden">
                                 
-                                {/* Middle Panel: Active Chats Directory & Search */}
+                                {/* Direktori Obrolan */}
                                 <div className="w-80 border-r border-zinc-900 flex flex-col overflow-hidden bg-black/40">
                                     <div className="p-4 border-b border-zinc-900 space-y-4">
                                         <div className="flex justify-between items-center">
@@ -1238,20 +1027,13 @@
                                                 <i className="fa-solid fa-paper-plane text-accentBlue"></i>
                                                 Ruang Obrolan
                                             </h3>
-                                            <button 
-                                                onClick={handleClearDM}
-                                                className="text-[10px] font-bold text-red-500 bg-red-500/10 hover:bg-red-500/20 px-2.5 py-1 rounded-lg transition-all"
-                                            >
-                                                Bersihkan
-                                            </button>
                                         </div>
                                         
-                                        {/* Search Input bar */}
                                         <div className="relative">
                                             <i className="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-zinc-500"></i>
                                             <input 
                                                 type="text" 
-                                                placeholder="Cari nama pengguna..." 
+                                                placeholder="Cari anggota server..." 
                                                 value={chatSearchText}
                                                 onChange={(e) => setChatSearchText(e.target.value)}
                                                 className="w-full bg-[#121214] text-white border border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
@@ -1259,9 +1041,9 @@
                                         </div>
                                     </div>
 
-                                    {/* Chat Directory Lists */}
+                                    {/* Daftar Chat */}
                                     <div className="flex-1 overflow-y-auto p-2.5 space-y-3">
-                                        {/* Group Chat Header Entry */}
+                                        {/* Saluran Publik Utama */}
                                         <button 
                                             onClick={() => setActiveChat({ id: 'group', type: 'group' })}
                                             className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
@@ -1276,24 +1058,19 @@
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex justify-between items-center mb-0.5">
                                                     <span className="text-xs font-bold">Grup Publik Bersama</span>
-                                                    <span className="bg-accentBlue text-[8px] font-extrabold px-1.5 py-0.5 rounded text-white tracking-widest uppercase">GRUP</span>
+                                                    <span className="bg-accentBlue text-[8px] font-extrabold px-1.5 py-0.5 rounded text-white tracking-widest uppercase">SERVER</span>
                                                 </div>
-                                                <p className="text-[10px] text-zinc-500 truncate">Kirim pesan ke semua teman di sini!</p>
+                                                <p className="text-[10px] text-zinc-500 truncate font-medium">Bicara langsung dengan semua browser aktif!</p>
                                             </div>
                                         </button>
 
-                                        {/* Separator */}
-                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block px-2.5 pt-2">Pesan Pribadi (DM)</span>
+                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block px-2.5 pt-2">Obrolan Jalur Pribadi (DM)</span>
 
-                                        {/* Mutual Friends lists for private messaging */}
                                         {filteredUsersToChat.length === 0 ? (
-                                            <p className="text-[11px] text-zinc-600 italic px-2.5">Belum ada pengguna lain terdaftar.</p>
+                                            <p className="text-[11px] text-zinc-600 italic px-2.5">Belum ada pengguna lain terdeteksi di server ini.</p>
                                         ) : (
                                             <div className="space-y-1">
                                                 {filteredUsersToChat.map(user => {
-                                                    const followed = isFollowing(currentUser?.id, user.id);
-                                                    const followingMe = isFollowing(user.id, currentUser?.id);
-                                                    const mutual = isMutual(currentUser?.id, user.id);
                                                     const isOnline = user.isOnline;
 
                                                     return (
@@ -1315,17 +1092,11 @@
                                                             <div className="min-w-0 flex-1">
                                                                 <div className="flex justify-between items-center mb-0.5">
                                                                     <span className="text-xs font-bold text-white truncate">@{user.username}</span>
-                                                                    <span className="text-[9px] text-zinc-600">Aktif</span>
                                                                 </div>
                                                                 <p className="text-[10px] text-zinc-500 truncate">{user.fullName}</p>
-                                                                <div className="flex gap-1.5 mt-1">
-                                                                    {followed && (
-                                                                        <span className="bg-[#1b2b3a] text-[#0095f6] text-[8px] font-bold px-1.5 py-0.5 rounded">Diikuti</span>
-                                                                    )}
-                                                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${isOnline ? 'bg-green-950/40 text-accentGreen' : 'bg-zinc-900 text-zinc-500'}`}>
-                                                                        {isOnline ? 'Online' : 'Offline'}
-                                                                    </span>
-                                                                </div>
+                                                                <span className={`inline-block text-[8px] font-bold px-1.5 py-0.5 mt-1 rounded ${isOnline ? 'bg-green-950/40 text-accentGreen' : 'bg-zinc-900 text-zinc-500'}`}>
+                                                                    {isOnline ? 'Online' : 'Offline'}
+                                                                </span>
                                                             </div>
                                                         </button>
                                                     );
@@ -1335,9 +1106,8 @@
                                     </div>
                                 </div>
 
-                                {/* Right Panel: Message Exchange Space */}
+                                {/* Area Pertukaran Obrolan Realtime */}
                                 <div className="flex-1 flex flex-col overflow-hidden bg-black">
-                                    {/* Chat Header */}
                                     <div className="p-4 border-b border-zinc-900 flex justify-between items-center bg-[#121214]">
                                         <div className="flex items-center gap-3">
                                             {activeChat.type === 'group' ? (
@@ -1346,10 +1116,10 @@
                                                         <i className="fa-solid fa-earth-asia"></i>
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-sm font-bold text-white">Grup Publik Plengeran</h4>
+                                                        <h4 className="text-sm font-bold text-white">Grup Publik Bersama</h4>
                                                         <p className="text-[10px] text-zinc-500 flex items-center gap-1.5">
                                                             <span className="w-1.5 h-1.5 bg-accentGreen rounded-full"></span>
-                                                            Seluruh pengguna tersambung di sini
+                                                            Semua orang dari browser berbeda berkumpul di sini
                                                         </p>
                                                     </div>
                                                 </React.Fragment>
@@ -1358,22 +1128,19 @@
                                                     <img src={activeChat.data?.avatar} className="w-10 h-10 rounded-full object-cover border border-zinc-800" alt="avatar" />
                                                     <div>
                                                         <h4 className="text-sm font-bold text-white">@{activeChat.data?.username}</h4>
-                                                        <p className="text-[10px] text-zinc-500">{activeChat.data?.fullName}</p>
+                                                        <p className="text-[10px] text-zinc-500">Kirim pesan langsung secara instan</p>
                                                     </div>
                                                 </React.Fragment>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Chat logs */}
+                                    {/* Logs Chat */}
                                     <div className="flex-1 overflow-y-auto p-4 space-y-4">
                                         {filteredMessages.length === 0 ? (
                                             <div className="h-full flex flex-col items-center justify-center text-center text-zinc-600">
                                                 <i className="fa-solid fa-comments text-4xl mb-3"></i>
-                                                <p className="text-xs mb-2">Kirim pesan pertama untuk memulai obrolan!</p>
-                                                {activeChat.type === 'dm' && (
-                                                    <p className="text-[10px] text-zinc-500 max-w-xs">Pesan Anda akan langsung masuk secara privat dan real-time.</p>
-                                                )}
+                                                <p className="text-xs mb-2">Kirim pesan pertama Anda untuk meramaikan server bersama ini!</p>
                                             </div>
                                         ) : (
                                             filteredMessages.map((msg, index) => {
@@ -1405,14 +1172,15 @@
                                         <div ref={chatEndRef}></div>
                                     </div>
 
-                                    {/* Chat Message Box Inputs */}
+                                    {/* Input Kirim Pesan */}
                                     <form onSubmit={handleSendMessage} className="p-4 bg-[#121214] border-t border-zinc-900 flex gap-3">
                                         <input 
                                             type="text" 
-                                            placeholder="Ketik pesan..." 
+                                            placeholder="Ketik pesan untuk dikirim ke seluruh server..." 
                                             value={messageInput}
                                             onChange={(e) => setMessageInput(e.target.value)}
                                             className="flex-1 bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
+                                            required
                                         />
                                         <button 
                                             type="submit"
@@ -1429,14 +1197,13 @@
                         {/* TAB 3: PROFIL AKUN */}
                         {activeTab === 'profil' && (
                             <div className="flex-1 p-6 overflow-y-auto">
-                                
                                 <div className="max-w-xl mx-auto space-y-6">
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2 pb-3 border-b border-zinc-900">
                                         <i className="fa-solid fa-user-gear text-accentBlue"></i>
-                                        Profil Akun Anda
+                                        Identitas Anda di Server
                                     </h3>
 
-                                    {/* User Profil card */}
+                                    {/* Kartu Profil */}
                                     <div className="bg-cardBg border border-zinc-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
                                         <div className="flex flex-col items-center text-center">
                                             <div className="relative mb-4">
@@ -1449,54 +1216,39 @@
                                             
                                             <div className="flex items-center gap-1 text-[11px] text-zinc-500 mb-5">
                                                 <span className="w-2 h-2 rounded-full bg-accentGreen animate-pulse"></span>
-                                                <span>Online</span>
+                                                <span>Aktif Online di Server</span>
                                             </div>
 
-                                            {/* Count Statistics row */}
-                                            <div className="grid grid-cols-3 gap-6 w-full py-4 border-t border-b border-zinc-900 text-center">
-                                                <div>
-                                                    <span className="text-sm font-extrabold text-white block">{getMomentsContributionCount(currentUser?.id)}</span>
-                                                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Kontribusi Momen</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-extrabold text-white block">{getFollowersCount(currentUser?.id)}</span>
-                                                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Pengikut</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-extrabold text-white block">{getFollowingCount(currentUser?.id)}</span>
-                                                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Diikuti</span>
-                                                </div>
+                                            {/* Biografi */}
+                                            <div className="w-full text-left bg-[#09090b] p-4 rounded-xl border border-zinc-900 mt-2 space-y-1">
+                                                <span className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block"><i className="fa-solid fa-feather mr-1.5 text-accentBlue"></i>Biografi Anda</span>
+                                                <p className="text-xs text-zinc-400 italic leading-relaxed">{currentUser?.bio || "Mari buat memori bersama!"}</p>
                                             </div>
 
-                                            {/* Biografi Box */}
-                                            <div className="w-full text-left bg-[#09090b] p-4 rounded-xl border border-zinc-900 mt-5 space-y-1">
-                                                <span className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block"><i className="fa-solid fa-feather mr-1.5 text-accentBlue"></i>Biografi</span>
-                                                <p className="text-xs text-zinc-400 italic leading-relaxed">{currentUser?.bio || "Tidak ada biografi ditulis."}</p>
-                                            </div>
-
-                                            {/* Edit Profil Button trigger */}
+                                            {/* Tombol Edit Profil */}
                                             {!isEditingProfile ? (
                                                 <button 
                                                     onClick={startEditProfile}
                                                     className="w-full bg-[#1c1c1f] hover:bg-zinc-800 text-zinc-300 font-bold text-xs py-3 px-4 rounded-xl transition-all border border-zinc-800 mt-5"
                                                 >
                                                     <i className="fa-solid fa-pen-to-square mr-2"></i>
-                                                    Edit Profil & Bio Anda
+                                                    Ubah Nama & Karakter Avatar Anda
                                                 </button>
                                             ) : (
                                                 <form onSubmit={handleSaveProfile} className="w-full mt-5 space-y-4 text-left border-t border-zinc-900 pt-5">
                                                     <div>
-                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Nama Lengkap</label>
+                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Nama Tampilan Baru</label>
                                                         <input 
                                                             type="text" 
                                                             value={editFullName}
                                                             onChange={(e) => setEditFullName(e.target.value)}
                                                             className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
+                                                            required
                                                         />
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Biografi (Bio)</label>
+                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Status / Bio Singkat</label>
                                                         <textarea 
                                                             value={editBio}
                                                             onChange={(e) => setEditBio(e.target.value)}
@@ -1506,7 +1258,7 @@
                                                     </div>
 
                                                     <div>
-                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-2">Pilih Avatar Profil</label>
+                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-2">Pilih Avatar Baru</label>
                                                         <div className="flex justify-between bg-[#09090b] p-2 rounded-xl border border-zinc-900">
                                                             {AVATARS.map((av, idx) => (
                                                                 <button
@@ -1535,7 +1287,7 @@
                                                             type="submit"
                                                             className="flex-1 bg-accentBlue text-white font-bold text-xs py-2.5 px-4 rounded-xl"
                                                         >
-                                                            Simpan
+                                                            Simpan Identitas
                                                         </button>
                                                     </div>
                                                 </form>
@@ -1543,18 +1295,17 @@
                                         </div>
                                     </div>
 
-                                    {/* Discover Users list */}
+                                    {/* Cari dan Lihat Daftar Seluruh Sobat Server */}
                                     <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
                                         <div className="flex justify-between items-center mb-4">
                                             <h4 className="text-xs font-bold uppercase text-white tracking-wider flex items-center gap-2">
                                                 <i className="fa-solid fa-users text-accentBlue"></i>
-                                                Temukan Pengguna Lain
+                                                Daftar Anggota Server Aktif ({users.length})
                                             </h4>
                                             
-                                            {/* Minimalistic search in profile directory */}
                                             <input 
                                                 type="text" 
-                                                placeholder="Cari teman..." 
+                                                placeholder="Cari Sobat..." 
                                                 value={userSearchText}
                                                 onChange={(e) => setUserSearchText(e.target.value)}
                                                 className="bg-[#09090b] text-white border border-zinc-800 rounded-lg px-2.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-accentBlue w-36"
@@ -1562,16 +1313,14 @@
                                         </div>
 
                                         <div className="space-y-3.5">
-                                            {filteredUsersToFollow.length === 0 ? (
-                                                <p className="text-xs text-zinc-600 italic">Belum ada pengguna lain terdaftar.</p>
+                                            {users.filter(u => u.fullName.toLowerCase().includes(userSearchText.toLowerCase())).length === 0 ? (
+                                                <p className="text-xs text-zinc-600 italic">Belum ada orang lain yang terhubung.</p>
                                             ) : (
-                                                filteredUsersToFollow.map(user => {
-                                                    const following = isFollowing(currentUser?.id, user.id);
-                                                    const follower = isFollowing(user.id, currentUser?.id);
+                                                users.filter(u => u.fullName.toLowerCase().includes(userSearchText.toLowerCase())).map(user => {
                                                     const isOnline = user.isOnline;
 
                                                     return (
-                                                        <div key={user.id} className="flex items-center justify-between p-3 bg-black/30 border border-zinc-900 rounded-xl hover:border-zinc-800 transition-all">
+                                                        <div key={user.id} className="flex items-center justify-between p-3 bg-black/30 border border-zinc-900 rounded-xl">
                                                             <div className="flex items-center gap-3">
                                                                 <div className="relative">
                                                                     <img src={user.avatar} className="w-10 h-10 rounded-full object-cover border border-zinc-800" alt="avatar" />
@@ -1582,24 +1331,16 @@
                                                                 <div>
                                                                     <div className="flex items-center gap-1.5">
                                                                         <span className="text-xs font-bold text-white">@{user.username}</span>
-                                                                        {follower && (
-                                                                            <span className="bg-zinc-800 text-zinc-500 text-[8px] font-bold px-1.5 py-0.2 rounded">Mengikuti Anda</span>
+                                                                        {user.id === currentUser?.id && (
+                                                                            <span className="bg-accentBlue/20 text-accentBlue text-[8px] font-bold px-1.5 py-0.2 rounded">Anda</span>
                                                                         )}
                                                                     </div>
                                                                     <p className="text-[10px] text-zinc-500">{user.fullName}</p>
                                                                 </div>
                                                             </div>
-
-                                                            <button 
-                                                                onClick={() => handleFollow(user.id)}
-                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                                                    following 
-                                                                        ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300' 
-                                                                        : 'bg-accentBlue hover:bg-blue-600 text-white'
-                                                                }`}
-                                                            >
-                                                                {following ? 'Batal Ikuti' : 'Ikuti'}
-                                                            </button>
+                                                            <span className="text-xs text-zinc-600 font-semibold italic">
+                                                                {isOnline ? 'Sedang Aktif' : 'Offline'}
+                                                            </span>
                                                         </div>
                                                     );
                                                 })
@@ -1608,13 +1349,12 @@
                                     </div>
 
                                 </div>
-
                             </div>
                         )}
 
                     </main>
 
-                    {/* STATUS DETAILS MODAL */}
+                    {/* MODAL STATUS KONEKSI */}
                     {showStatusModal && (
                         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in">
                             <div className="bg-cardBg border border-zinc-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
@@ -1624,24 +1364,24 @@
                                     </div>
                                     <h4 className="text-sm font-bold text-white mb-1">Status Sinkronisasi Jaringan</h4>
                                     <p className="text-[11px] text-zinc-500">
-                                        Aplikasi ini berjalan dalam sinkronisasi optimal. Anda dapat berkirim pesan dan melihat status real-time secara instan.
+                                        Seluruh aktivitas berkirim obrolan, mengukir momen di kalender bersama disinkronisasi ke server pusat realtime secara instan.
                                     </p>
                                 </div>
 
                                 <div className="space-y-2.5 bg-[#09090b] p-3 rounded-xl border border-zinc-900 text-[11px]">
                                     <div className="flex justify-between">
-                                        <span className="text-zinc-500">Status Layanan:</span>
+                                        <span className="text-zinc-500">Status Server:</span>
                                         <span className="text-accentGreen font-bold flex items-center gap-1.5">
-                                            <span className="w-1.5 h-1.5 bg-accentGreen rounded-full"></span> Aktif Berjalan
+                                            <span className="w-1.5 h-1.5 bg-accentGreen rounded-full"></span> Terhubung Stabil
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-zinc-500">Penyimpanan:</span>
-                                        <span className="text-zinc-400 font-mono">LocalStorage Sync / Cloud</span>
+                                        <span className="text-zinc-500">Database Utama:</span>
+                                        <span className="text-zinc-400 font-mono">Firestore Shared Sandbox</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-zinc-500">Modus Enkripsi:</span>
-                                        <span className="text-zinc-400">Anonim Terverifikasi</span>
+                                        <span className="text-zinc-500">Sistem Autentikasi:</span>
+                                        <span className="text-zinc-400">Anonim Terpadu Otomatis</span>
                                     </div>
                                 </div>
 
@@ -1651,30 +1391,30 @@
                                         className="w-full bg-red-950/40 text-red-500 hover:bg-red-950/60 border border-red-900/50 font-bold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
                                     >
                                         <i className="fa-solid fa-trash-can"></i>
-                                        Sapu Bersih Semua Data Lokal
+                                        Reset Ulang Sesi Lokal Browser Ini
                                     </button>
 
                                     <button 
                                         onClick={() => setShowStatusModal(false)}
                                         className="w-full bg-accentBlue hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs transition-all"
                                     >
-                                        Selesai & Tutup
+                                        Tutup
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Global Reset Confirm inside App Viewport */}
+                    {/* MODAL RESET SINKRONISASI */}
                     {showResetConfirm && (
                         <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
                             <div className="bg-cardBg border border-zinc-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-center">
                                 <div className="w-12 h-12 rounded-full bg-red-950 text-red-500 flex items-center justify-center text-xl mx-auto mb-1">
                                     <i className="fa-solid fa-triangle-exclamation"></i>
                                 </div>
-                                <h4 className="text-sm font-bold text-white uppercase tracking-wider">Konfirmasi Sapu Bersih</h4>
+                                <h4 className="text-sm font-bold text-white uppercase tracking-wider">Reset Sesi Browser</h4>
                                 <p className="text-xs text-zinc-400">
-                                    Apakah Anda yakin ingin menghapus semua akun terdaftar, pesan obrolan, riwayat relasi pertemanan, dan riwayat memori di penyimpanan lokal? Tindakan ini tidak dapat dibatalkan.
+                                    Tindakan ini akan mengeluarkan Anda dari profil saat ini di browser ini dan memungkinkan Anda membuat identitas baru di server bersama.
                                 </p>
                                 <div className="flex gap-3">
                                     <button 
@@ -1687,7 +1427,7 @@
                                         onClick={handleClearAllAccountsAndData}
                                         className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl text-xs hover:bg-red-700 transition-all"
                                     >
-                                        Ya, Hapus Semua
+                                        Ya, Bersihkan Sesi
                                     </button>
                                 </div>
                             </div>
