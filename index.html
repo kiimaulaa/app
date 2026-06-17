@@ -1,1361 +1,1576 @@
 <!DOCTYPE html>
 <html lang="id" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PlengerGram - Kalender & Timeline Bersama</title>
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: '#0ea5e9' // sky-500
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Google Fonts: Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #000000;
-    }
-    /* Sembunyikan scrollbar default tapi tetap bisa scroll */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  </style>
-
-  <!-- ALPINE APP LOGIC (Dideklarasikan sebelum library Alpine aktif) -->
-  <script>
-    document.addEventListener('alpine:init', () => {
-      Alpine.data('plengerApp', () => ({
-        // --- CONSTANTS ---
-        AVATARS: [
-          "https://api.dicebear.com/7.x/bottts/svg?seed=whana",
-          "https://api.dicebear.com/7.x/bottts/svg?seed=developer",
-          "https://api.dicebear.com/7.x/bottts/svg?seed=gaming",
-          "https://api.dicebear.com/7.x/bottts/svg?seed=ninja",
-          "https://api.dicebear.com/7.x/bottts/svg?seed=panda",
-          "https://api.dicebear.com/7.x/bottts/svg?seed=cyber"
-        ],
-
-        // --- APP STATES ---
-        user: null,
-        userData: null,
-        authLoading: true,
-        authMode: 'login',
-        activeTab: 'momen',
-
-        // Inputs
-        usernameInput: '',
-        emailInput: '',
-        passwordInput: '',
-        fullNameInput: '',
-        authError: '',
-        authSuccessMsg: '',
-
-        // Lists
-        usersList: [],
-        moments: [],
-        chatMessages: [],
-
-        // Calendar / Moment Upload
-        selectedDate: new Date(2026, 5, 1), // Default Juni 2026
-        momentTitle: '',
-        momentDesc: '',
-        momentMediaUrl: '',
-        momentMediaType: 'image',
-        momentDate: '2026-06-01',
-
-        // Chats
-        activeChatId: 'public_group',
-        messageInput: '',
-        searchUserQuery: '',
-
-        // Profiles edit
-        isEditingProfile: false,
-        editFullName: '',
-        editBio: '',
-        editAvatar: '',
-
-        // Feedback
-        isMock: false,
-        networkStatus: 'Menghubungkan...',
-        toastMsg: null,
-
-        // --- INIT & SINKRONISASI ---
-        init() {
-          // Atasi Race Condition: Jika modul Firebase siap sebelum init dijalankan
-          if (window.fbMethods) {
-            this.setupInitialState();
-          } else {
-            window.addEventListener('firebase-ready', () => {
-              this.setupInitialState();
-            });
-          }
-        },
-
-        setupInitialState() {
-          this.isMock = !!window.isMockFirebase;
-          if (this.isMock) {
-            this.networkStatus = 'Mode Simulasi Lokal';
-          } else {
-            this.networkStatus = 'Cloud Online (Aktif)';
-          }
-          this.setupAuthListener();
-        },
-
-        triggerToast(msg) {
-          this.toastMsg = msg;
-          setTimeout(() => { this.toastMsg = null; }, 4000);
-        },
-
-        setupAuthListener() {
-          const auth = window.auth;
-          const { onAuthStateChanged } = window.fbMethods;
-
-          onAuthStateChanged(auth, async (currentUser) => {
-            if (currentUser && !currentUser.isAnonymous) {
-              this.user = currentUser;
-              await this.syncProfile(currentUser);
-              this.startRealtimeSubscriptions();
-            } else {
-              this.user = null;
-              this.userData = null;
-              this.authLoading = false;
-            }
-          });
-        },
-
-        async syncProfile(currentUser) {
-          const { doc, getDoc, setDoc } = window.fbMethods;
-          const userDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', currentUser.uid);
-          
-          try {
-            const userSnap = await getDoc(userDocRef);
-            if (userSnap.exists()) {
-              this.userData = userSnap.data();
-            } else {
-              const defaultProfile = {
-                uid: currentUser.uid,
-                username: currentUser.email ? currentUser.email.split('@')[0] : 'user_' + currentUser.uid.substring(0, 5),
-                fullName: 'Anggota Baru',
-                avatar: this.AVATARS[0],
-                bio: 'Halo! Saya baru saja mendaftar di PlengerGram.',
-                following: [],
-                followers: [],
-                isOnline: true,
-                lastActive: new Date().toISOString()
-              };
-              await setDoc(userDocRef, defaultProfile);
-              this.userData = defaultProfile;
-            }
-          } catch (e) {
-            console.error("Gagal sinkron profil:", e);
-          }
-        },
-
-        startRealtimeSubscriptions() {
-          const { collection, onSnapshot, doc, updateDoc } = window.fbMethods;
-          const db = window.db;
-
-          // A. Subscribe Users List
-          onSnapshot(collection(db, 'artifacts', window.appId, 'public', 'data', 'users'), (snapshot) => {
-            const list = [];
-            snapshot.forEach((doc) => list.push(doc.data()));
-            this.usersList = list;
-
-            // Pastikan data profil milik sendiri juga sinkron
-            const me = list.find(u => u.uid === this.user?.uid);
-            if (me) this.userData = me;
-          });
-
-          // B. Subscribe Momen
-          onSnapshot(collection(db, 'artifacts', window.appId, 'public', 'data', 'moments'), (snapshot) => {
-            const list = [];
-            snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
-            list.sort((a, b) => new Date(b.date) - new Date(a.date));
-            this.moments = list;
-          });
-
-          // C. Subscribe Chats
-          onSnapshot(collection(db, 'artifacts', window.appId, 'public', 'data', 'chats'), (snapshot) => {
-            const list = [];
-            snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
-            list.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            this.chatMessages = list;
-
-            this.scrollToChatBottom();
-          });
-
-          // Set online status jika berada di lingkungan cloud asli
-          if (!this.isMock) {
-            const myDocRef = doc(db, 'artifacts', window.appId, 'public', 'data', 'users', this.user.uid);
-            updateDoc(myDocRef, { isOnline: true, lastActive: new Date().toISOString() }).catch(() => {});
-          } else {
-            const list = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
-            if (list[this.user.uid]) {
-              list[this.user.uid].isOnline = true;
-              localStorage.setItem('plenger_db_users', JSON.stringify(list));
-            }
-          }
-
-          this.authLoading = false;
-        },
-
-        // --- AUTH ACTIONS ---
-        async handleAuthSubmit() {
-          this.authError = '';
-          this.authSuccessMsg = '';
-          const { createUserWithEmailAndPassword, signInWithEmailAndPassword, doc, setDoc } = window.fbMethods;
-
-          if (this.authMode === 'register') {
-            if (!this.usernameInput.trim() || !this.emailInput.trim() || !this.passwordInput || !this.fullNameInput.trim()) {
-              this.authError = 'Harap isi semua kolom pendaftaran.';
-              return;
-            }
-
-            const cleanUser = this.usernameInput.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-            if (cleanUser.length < 3) {
-              this.authError = 'Nama pengguna minimal 3 karakter.';
-              return;
-            }
-
-            const isTaken = this.usersList.some(u => u.username === cleanUser);
-            if (isTaken) {
-              this.authError = 'Nama pengguna sudah terdaftar.';
-              return;
-            }
-
-            try {
-              this.authLoading = true;
-              const credential = await createUserWithEmailAndPassword(window.auth, this.emailInput.trim(), this.passwordInput);
-              const newUser = credential.user;
-
-              const cleanProfile = {
-                uid: newUser.uid,
-                username: cleanUser,
-                fullName: this.fullNameInput.trim(),
-                avatar: this.AVATARS[Math.floor(Math.random() * this.AVATARS.length)],
-                bio: 'Halo! Saya baru saja mendaftar di PlengerGram.',
-                following: [],
-                followers: [],
-                isOnline: true,
-                lastActive: new Date().toISOString()
-              };
-
-              await setDoc(doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', newUser.uid), cleanProfile);
-              this.authSuccessMsg = 'Pendaftaran sukses! Selamat datang.';
-              this.triggerToast(`Selamat datang @${cleanUser}`);
-              
-              this.usernameInput = '';
-              this.emailInput = '';
-              this.passwordInput = '';
-              this.fullNameInput = '';
-            } catch (err) {
-              this.authLoading = false;
-              this.authError = err.message || 'Pendaftaran gagal.';
-            }
-          } else {
-            // Login
-            if (!this.emailInput.trim() || !this.passwordInput) {
-              this.authError = 'Silakan isi email dan kata sandi Anda.';
-              return;
-            }
-
-            try {
-              this.authLoading = true;
-              await signInWithEmailAndPassword(window.auth, this.emailInput.trim(), this.passwordInput);
-              this.triggerToast('Selamat datang kembali!');
-            } catch (err) {
-              this.authLoading = false;
-              this.authError = 'Kombinasi email & sandi tidak sesuai.';
-            }
-          }
-        },
-
-        async handleLogout() {
-          const { signOut, doc, updateDoc } = window.fbMethods;
-          if (this.user) {
-            if (!this.isMock) {
-              const userDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', this.user.uid);
-              await updateDoc(userDocRef, { isOnline: false }).catch(() => {});
-            } else {
-              const list = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
-              if (list[this.user.uid]) {
-                list[this.user.uid].isOnline = false;
-                localStorage.setItem('plenger_db_users', JSON.stringify(list));
-              }
-            }
-          }
-          await signOut(window.auth);
-          this.user = null;
-          this.userData = null;
-          this.triggerToast('Sampai jumpa kembali!');
-        },
-
-        // --- MOMEN ACTIONS ---
-        async handleAddMoment() {
-          if (!this.momentTitle.trim() || !this.momentDesc.trim()) {
-            this.triggerToast('Harap lengkapi judul dan deskripsi.');
-            return;
-          }
-
-          const { collection, addDoc } = window.fbMethods;
-          try {
-            const newMoment = {
-              title: this.momentTitle.trim(),
-              description: this.momentDesc.trim(),
-              mediaUrl: this.momentMediaUrl.trim(),
-              mediaType: this.momentMediaType,
-              date: this.momentDate,
-              createdAt: new Date().toISOString(),
-              authorUid: this.user.uid,
-              authorName: this.userData?.fullName || 'Anonim',
-              authorUsername: this.userData?.username || 'user',
-              authorAvatar: this.userData?.avatar || this.AVATARS[0],
-              likes: []
-            };
-
-            await addDoc(collection(window.db, 'artifacts', window.appId, 'public', 'data', 'moments'), newMoment);
-            this.momentTitle = '';
-            this.momentDesc = '';
-            this.momentMediaUrl = '';
-            this.triggerToast('Kenangan indah baru berhasil dibagikan!');
-          } catch (e) {
-            this.triggerToast('Gagal membagikan momen: ' + e.message);
-          }
-        },
-
-        async handleLikeMoment(momentId, likesArray) {
-          if (!this.user) return;
-          const { doc, updateDoc, arrayRemove, arrayUnion } = window.fbMethods;
-          const isLiked = likesArray.includes(this.user.uid);
-          const momentDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'moments', momentId);
-
-          try {
-            if (isLiked) {
-              await updateDoc(momentDocRef, { likes: arrayRemove(this.user.uid) });
-            } else {
-              await updateDoc(momentDocRef, { likes: arrayUnion(this.user.uid) });
-            }
-          } catch (e) {
-            console.error("Gagal menyukai:", e);
-          }
-        },
-
-        async handleDeleteMoment(momentId) {
-          if (confirm("Apakah Anda yakin ingin menghapus momen ini?")) {
-            const { doc, deleteDoc } = window.fbMethods;
-            try {
-              await deleteDoc(doc(window.db, 'artifacts', window.appId, 'public', 'data', 'moments', momentId));
-              this.triggerToast('Momen berhasil dihapus.');
-            } catch (e) {
-              this.triggerToast('Gagal menghapus momen.');
-            }
-          }
-        },
-
-        // --- CALENDAR HELPERS ---
-        selectCalendarDay(day) {
-          const dateString = `2026-06-${day < 10 ? '0' + day : day}`;
-          this.selectedDate = new Date(2026, 5, day);
-          this.momentDate = dateString;
-          this.triggerToast(`Melihat tanggal ${day} Juni 2026`);
-        },
-
-        isDaySelected(day) {
-          return this.selectedDate.getDate() === day && this.selectedDate.getMonth() === 5;
-        },
-
-        hasMomentOnDay(day) {
-          const dateString = `2026-06-${day < 10 ? '0' + day : day}`;
-          return this.moments.some(m => m.date === dateString);
-        },
-
-        // --- DIRECT MESSAGE (DM) ACTIONS & ENGINE ---
-        async handleSendMessage() {
-          if (!this.messageInput.trim()) return;
-          const { collection, addDoc } = window.fbMethods;
-
-          try {
-            const newMessage = {
-              text: this.messageInput.trim(),
-              senderUid: this.user.uid,
-              senderName: this.userData?.fullName || 'Anonim',
-              senderUsername: this.userData?.username || 'user',
-              senderAvatar: this.userData?.avatar || this.AVATARS[0],
-              timestamp: new Date().toISOString(),
-              chatRoomId: this.activeChatId
-            };
-
-            await addDoc(collection(window.db, 'artifacts', window.appId, 'public', 'data', 'chats'), newMessage);
-            this.messageInput = '';
-            this.scrollToChatBottom();
-          } catch (e) {
-            console.error("Gagal mengirim pesan:", e);
-          }
-        },
-
-        async handleClearDM() {
-          if (confirm("Apakah Anda yakin ingin menghapus obrolan ini secara permanen?")) {
-            const { doc, deleteDoc } = window.fbMethods;
-            const msgs = this.getFilteredMessages();
-            try {
-              for (let m of msgs) {
-                await deleteDoc(doc(window.db, 'artifacts', window.appId, 'public', 'data', 'chats', m.id));
-              }
-              this.triggerToast('Obrolan dikosongkan.');
-            } catch (e) {
-              this.triggerToast('Gagal mengosongkan obrolan.');
-            }
-          }
-        },
-
-        startPrivateChat(partnerUid) {
-          const sortedIds = [this.user.uid, partnerUid].sort();
-          this.activeChatId = `${sortedIds[0]}_${sortedIds[1]}`;
-          this.activeTab = 'pesan';
-          this.scrollToChatBottom();
-        },
-
-        getFilteredMessages() {
-          if (this.activeChatId === 'public_group') {
-            return this.chatMessages.filter(m => m.chatRoomId === 'public_group');
-          } else {
-            return this.chatMessages.filter(m => m.chatRoomId === this.activeChatId);
-          }
-        },
-
-        getFilteredUsers() {
-          return this.usersList
-            .filter(u => u.uid !== this.user?.uid)
-            .filter(u => u.username.toLowerCase().includes(this.searchUserQuery.toLowerCase()) || u.fullName.toLowerCase().includes(this.searchUserQuery.toLowerCase()));
-        },
-
-        getActiveChatPartner() {
-          if (this.activeChatId === 'public_group') return null;
-          const partnerId = this.activeChatId.split('_').find(id => id !== this.user?.uid);
-          return this.usersList.find(u => u.uid === partnerId);
-        },
-
-        isChatSelected(partnerUid) {
-          const sortedIds = [this.user?.uid, partnerUid].sort();
-          return this.activeChatId === `${sortedIds[0]}_${sortedIds[1]}`;
-        },
-
-        getOnlineCount() {
-          return this.usersList.filter(u => u.isOnline && u.uid !== this.user?.uid).length;
-        },
-
-        scrollToChatBottom() {
-          setTimeout(() => {
-            const chatEnd = document.getElementById('chatEnd');
-            if (chatEnd) chatEnd.scrollIntoView({ behavior: 'smooth' });
-          }, 150);
-        },
-
-        formatTime(timestamp) {
-          if (!timestamp) return '';
-          return new Date(timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        },
-
-        // --- PROFIL ACTIONS ---
-        openProfileEditor() {
-          this.editFullName = this.userData?.fullName || '';
-          this.editBio = this.userData?.bio || '';
-          this.editAvatar = this.userData?.avatar || this.AVATARS[0];
-          this.isEditingProfile = true;
-        },
-
-        async handleUpdateProfile() {
-          if (!this.editFullName.trim()) return;
-          const { doc, updateDoc } = window.fbMethods;
-          
-          try {
-            const userDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', this.user.uid);
-            await updateDoc(userDocRef, {
-              fullName: this.editFullName.trim(),
-              bio: this.editBio.trim(),
-              avatar: this.editAvatar
-            });
-            this.isEditingProfile = false;
-            this.triggerToast('Profil berhasil diperbarui!');
-          } catch (e) {
-            this.triggerToast('Gagal memperbarui profil.');
-          }
-        },
-
-        async handleFollowToggle(targetUser) {
-          const { doc, updateDoc, arrayRemove, arrayUnion } = window.fbMethods;
-          const isFollowing = this.userData?.following?.includes(targetUser.uid);
-          const myDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', this.user.uid);
-          const targetDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', targetUser.uid);
-
-          try {
-            if (isFollowing) {
-              await updateDoc(myDocRef, { following: arrayRemove(targetUser.uid) });
-              await updateDoc(targetDocRef, { followers: arrayRemove(this.user.uid) });
-              this.triggerToast(`Batal mengikuti @${targetUser.username}`);
-            } else {
-              await updateDoc(myDocRef, { following: arrayUnion(targetUser.uid) });
-              await updateDoc(targetDocRef, { followers: arrayUnion(this.user.uid) });
-              this.triggerToast(`Mengikuti @${targetUser.username}`);
-            }
-          } catch (e) {
-            console.error(e);
-          }
-        },
-
-        isFollowingUser(uid) {
-          return this.userData?.following?.includes(uid);
-        },
-
-        getMyMomentsCount() {
-          return this.moments.filter(m => m.authorUid === this.user?.uid).length;
-        },
-
-        formatDriveLink(url) {
-          if (!url) return '';
-          if (url.includes('drive.google.com/file/d/')) {
-            const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)\//);
-            if (match && match[1]) {
-              return `https://lh3.googleusercontent.com/d/${match[1]}=s800`;
-            }
-          }
-          if (url.includes('youtube.com/watch') || url.includes('youtu.be')) {
-            let videoId = '';
-            if (url.includes('youtu.be/')) {
-              videoId = url.split('youtu.be/')[1].split(/[?#]/)[0];
-            } else {
-              const match = url.match(/[?&]v=([^&#]+)/);
-              videoId = match ? match[1] : '';
-            }
-            return `https://www.youtube.com/embed/${videoId}`;
-          }
-          return url;
-        }
-
-      }));
-    });
-  </script>
-
-  <!-- Alpine.js (Di-load secara aman setelah komponen terdaftar) -->
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
-<body class="text-gray-100 min-h-screen selection:bg-brand selection:text-black" x-data="plengerApp">
-
-  <!-- Toast Notifikasi Global -->
-  <div x-show="toastMsg" 
-       x-transition:enter="transition ease-out duration-300"
-       x-transition:enter-start="opacity-0 translate-y-4"
-       x-transition:enter-end="opacity-100 translate-y-0"
-       x-transition:leave="transition ease-in duration-200"
-       x-transition:leave-start="opacity-100 translate-y-0"
-       x-transition:leave-end="opacity-0 translate-y-4"
-       class="fixed bottom-6 right-6 z-50 bg-sky-500 text-white px-6 py-3.5 rounded-xl shadow-2xl flex items-center gap-3"
-       style="display: none;">
-    <svg class="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-    <span class="font-semibold text-sm" x-text="toastMsg"></span>
-  </div>
-
-  <!-- LOADING STATE UTAMA -->
-  <div x-show="authLoading" class="min-h-screen bg-black flex flex-col items-center justify-center">
-    <div class="w-14 h-14 border-4 border-brand border-t-transparent rounded-full animate-spin mb-4"></div>
-    <p class="text-gray-400 font-medium">Memuat PlengerGram...</p>
-  </div>
-
-  <!-- SCREEN 1: LOGIN & REGISTER (TAMPIL JIKA BELUM LOGIN) -->
-  <div x-show="!authLoading && !user" class="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden" style="display: none;">
-    <div class="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-sky-950/20 rounded-full blur-[120px] pointer-events-none"></div>
-    <div class="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-cyan-950/20 rounded-full blur-[120px] pointer-events-none"></div>
-
-    <div class="w-full max-w-md bg-zinc-900 border border-zinc-800/80 rounded-2xl p-8 shadow-2xl z-10">
-      <div class="text-center mb-6">
-        <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-gray-200 to-sky-400 bg-clip-text text-transparent mb-1">
-          PlengerGram
-        </h1>
-        <p class="text-xs text-gray-400 tracking-wider uppercase" x-text="authMode === 'login' ? 'Masuk ke Akun Anda' : 'Buat Akun PlengerGram Baru'"></p>
-      </div>
-
-      <!-- Error / Success Alert -->
-      <div x-show="authError" class="bg-red-950/60 border border-red-800/80 text-red-300 text-xs p-3 rounded-lg mb-4 text-center" style="display: none;" x-text="'⚠️ ' + authError"></div>
-      <div x-show="authSuccessMsg" class="bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 text-xs p-3 rounded-lg mb-4 text-center" style="display: none;" x-text="'🎉 ' + authSuccessMsg"></div>
-
-      <!-- Form Auth -->
-      <form @submit.prevent="handleAuthSubmit()" class="space-y-4">
-        <template x-if="authMode === 'register'">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 tracking-wider">Nama Lengkap</label>
-              <input type="text" placeholder="Contoh: Whana Plenger" x-model="fullNameInput" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-brand" required>
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 tracking-wider">Nama Pengguna (Username)</label>
-              <input type="text" placeholder="Contoh: whana_ (Hanya huruf, angka, underscore)" x-model="usernameInput" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-brand" required>
-            </div>
-          </div>
-        </template>
-
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 tracking-wider">Alamat Email</label>
-          <input type="email" placeholder="Masukkan email terdaftar" x-model="emailInput" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-brand" required>
-        </div>
-
-        <div>
-          <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 tracking-wider">Kata Sandi</label>
-          <input type="password" placeholder="Masukkan kata sandi" x-model="passwordInput" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-brand" required>
-        </div>
-
-        <button type="submit" class="w-full bg-brand hover:bg-sky-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-lg active:scale-[0.99] transition text-xs mt-2" x-text="authMode === 'login' ? 'Masuk Akun' : 'Daftar Sekarang'"></button>
-      </form>
-
-      <!-- Pengalih Mode -->
-      <div class="mt-5 text-center text-xs text-gray-400">
-        <p x-show="authMode === 'login'">
-          Belum punya akun PlengerGram? 
-          <button @click="authMode = 'register'; authError = ''; authSuccessMsg = '';" class="text-brand hover:underline font-semibold">Daftar Akun Baru</button>
-        </p>
-        <p x-show="authMode === 'register'" style="display: none;">
-          Sudah punya akun terdaftar? 
-          <button @click="authMode = 'login'; authError = ''; authSuccessMsg = '';" class="text-brand hover:underline font-semibold">Silakan Masuk</button>
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- SCREEN 2: SOCIAL MEDIA DASHBOARD (TAMPIL JIKA LOGIN BERHASIL) -->
-  <div x-show="!authLoading && user" class="min-h-screen flex flex-col md:flex-row" style="display: none;">
-    
-    <!-- SIDEBAR KIRI -->
-    <aside class="w-full md:w-64 bg-[#080808] border-r border-zinc-900 flex flex-col justify-between p-6 flex-shrink-0">
-      <div>
-        <!-- Logo -->
-        <div class="mb-10 mt-2">
-          <h2 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <span class="bg-brand text-black w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-lg">P</span>
-            PlengerGram
-          </h2>
-        </div>
-
-        <!-- Navigasi Menu -->
-        <nav class="space-y-2">
-          <button @click="activeTab = 'momen'" 
-                  :class="activeTab === 'momen' ? 'bg-zinc-900 text-sky-400' : 'text-gray-400 hover:bg-zinc-950 hover:text-white'"
-                  class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-semibold transition duration-150">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" strokeLinejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Momen Bersama
-          </button>
-
-          <button @click="activeTab = 'pesan'; activeChatId = 'public_group'" 
-                  :class="activeTab === 'pesan' ? 'bg-zinc-900 text-sky-400' : 'text-gray-400 hover:bg-zinc-950 hover:text-white'"
-                  class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-semibold transition duration-150">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-            Pesan & Teman
-          </button>
-
-          <button @click="activeTab = 'profil'" 
-                  :class="activeTab === 'profil' ? 'bg-zinc-900 text-sky-400' : 'text-gray-400 hover:bg-zinc-950 hover:text-white'"
-                  class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-semibold transition duration-150">
-            <img :src="userData?.avatar || AVATARS[0]" alt="Profil" class="w-5 h-5 rounded-full object-cover">
-            Profil Akun
-          </button>
-        </nav>
-      </div>
-
-      <!-- Footer Sidebar -->
-      <div class="mt-8 border-t border-zinc-900 pt-6 space-y-4">
-        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Status Jaringan:</div>
-        
-        <!-- Tombol Toast Status Jaringan -->
-        <button @click="triggerToast(isMock ? 'Kamu di Mode Simulasi Lokal. Buka tab baru/incognito di BROWSER YANG SAMA untuk menguji.' : 'Koneksi database cloud online aktif!')" class="w-full flex items-center justify-between bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 rounded-lg px-3 py-2 text-xs font-medium transition">
-          <span class="flex items-center gap-1.5">
-            <span :class="isMock ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'" class="w-2 h-2 rounded-full"></span>
-            <span x-text="networkStatus" :class="isMock ? 'text-amber-400' : 'text-brand'"></span>
-          </span>
-        </button>
-
-        <!-- Akun Sedang Aktif -->
-        <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-900 flex items-center gap-3">
-          <img :src="userData?.avatar || AVATARS[0]" alt="Avatar" class="w-8 h-8 rounded-full bg-zinc-800" />
-          <div class="overflow-hidden">
-            <div class="text-xs font-bold text-white truncate" x-text="'@' + (userData?.username || '')"></div>
-            <div class="text-[10px] text-gray-500 truncate" x-text="userData?.fullName || ''"></div>
-          </div>
-        </div>
-
-        <button @click="handleLogout()" class="w-full flex items-center gap-2.5 px-3 py-2 text-red-500 hover:bg-red-950/20 rounded-lg text-xs font-bold transition">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          Keluar Akun
-        </button>
-      </div>
-    </aside>
-
-    <!-- KONTEN UTAMA SECARA TAB -->
-    <main class="flex-1 bg-[#0c0c0c] flex flex-col min-w-0">
-      
-      <!-- TAB 1: MOMEN BERSAMA -->
-      <template x-if="activeTab === 'momen'">
-        <div class="flex-1 p-4 md:p-8 grid grid-cols-1 xl:grid-cols-12 gap-8 overflow-y-auto font-sans">
-          <!-- Kolom Kiri -->
-          <div class="xl:col-span-5 space-y-6">
-            
-            <div class="bg-zinc-900/60 border border-zinc-900 p-5 rounded-2xl flex items-center justify-between">
-              <div class="flex items-center gap-4">
-                <img :src="userData?.avatar || AVATARS[0]" alt="Avatar" class="w-12 h-12 rounded-full border border-zinc-800 bg-zinc-950" />
-                <div>
-                  <p class="text-xs text-gray-400 font-medium">Selamat datang,</p>
-                  <h3 class="text-lg font-bold text-white" x-text="'@' + (userData?.username || '')"></h3>
-                </div>
-              </div>
-              <span class="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-900/50 px-2.5 py-1.5 rounded-full uppercase tracking-wider">Realtime Tanggap</span>
-            </div>
-
-            <!-- Online List -->
-            <div class="bg-zinc-900/60 border border-zinc-900 p-5 rounded-2xl">
-              <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4" x-text="'Teman yang sedang online (' + getOnlineCount() + ')'"></h4>
-              <div class="flex flex-wrap gap-3" x-show="getOnlineCount() > 0">
-                <template x-for="friend in usersList.filter(u => u.isOnline && u.uid !== user?.uid)" :key="friend.uid">
-                  <button @click="startPrivateChat(friend.uid)" class="flex items-center gap-2 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800/80 px-3 py-1.5 rounded-xl text-xs transition duration-150">
-                    <div class="relative">
-                      <img :src="friend.avatar" class="w-5 h-5 rounded-full" />
-                      <span class="absolute bottom-0 right-0 w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                    </div>
-                    <span class="font-semibold text-gray-300" x-text="'@' + friend.username"></span>
-                  </button>
-                </template>
-              </div>
-              <p x-show="getOnlineCount() === 0" class="text-xs text-gray-500 italic py-2">Tidak ada pengguna lain yang aktif saat ini.</p>
-            </div>
-
-            <!-- Kalender Juni 2026 -->
-            <div class="bg-[#0e0e0e] border border-zinc-900 p-5 rounded-2xl">
-              <div class="flex items-center justify-between mb-4">
-                <button class="text-gray-400 hover:text-white p-1"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" /></svg></button>
-                <h4 class="text-sm font-bold text-gray-200 uppercase tracking-wider">Juni 2026</h4>
-                <button class="text-gray-400 hover:text-white p-1"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg></button>
-              </div>
-              <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-500 uppercase mb-2">
-                <div>M</div><div>S</div><div>S</div><div>R</div><div>K</div><div>J</div><div>S</div>
-              </div>
-              <div class="grid grid-cols-7 gap-1.5">
-                <!-- 1 Juni 2026 adalah hari Senin, buat offset 1 hari kosong -->
-                <div class="text-gray-600 text-center py-2 text-sm">-</div>
-                <template x-for="day in 30" :key="day">
-                  <button @click="selectCalendarDay(day)"
-                          :class="isDaySelected(day) ? 'bg-brand text-white shadow-md' : 'text-gray-200 bg-zinc-850/40 hover:bg-zinc-800'"
-                          class="relative rounded-lg text-center py-2 text-sm font-semibold transition flex flex-col items-center justify-center">
-                    <span x-text="day"></span>
-                    <span x-show="hasMomentOnDay(day)" class="absolute bottom-1 w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></span>
-                  </button>
-                </template>
-              </div>
-              <div class="mt-4 text-[11px] text-gray-500 flex items-center gap-2 bg-zinc-950 p-2.5 rounded-lg border border-zinc-900">
-                <span class="w-2.5 h-2.5 bg-cyan-400 rounded-full inline-block"></span>
-                <span>Tanggal biru bersinar menandakan momen yang diupload kawan-kawan.</span>
-              </div>
-            </div>
-
-            <!-- Form Upload Momen -->
-            <div class="bg-zinc-900/60 border border-zinc-900 p-5 rounded-2xl">
-              <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-2">🧩 Tambah Kenangan Baru</h4>
-              <p class="text-xs text-gray-400 mb-4 leading-relaxed">Bagikan keseruan Anda ke linimasa PlengerGram bersama teman lainnya.</p>
-              <form @submit.prevent="handleAddMoment()" class="space-y-4">
-                <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">Judul Momen</label>
-                  <input type="text" placeholder="Masukkan judul..." x-model="momentTitle" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-brand" required>
-                </div>
-                <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">Deskripsi Kenangan</label>
-                  <textarea placeholder="Tuliskan cerita singkat..." rows="3" x-model="momentDesc" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-brand resize-none" required></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">Tanggal Kenangan</label>
-                    <input type="date" x-model="momentDate" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-gray-200 focus:outline-none" required>
-                  </div>
-                  <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">Tipe Media</label>
-                    <select x-model="momentMediaType" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-xs text-gray-200 focus:outline-none">
-                      <option value="image">Gambar / Foto</option>
-                      <option value="video">Video / YouTube</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">Link Media (Google Drive / Direct URL)</label>
-                  <input type="url" placeholder="https://drive.google.com/..." x-model="momentMediaUrl" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3.5 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-brand">
-                </div>
-                <button type="submit" class="w-full bg-brand hover:bg-sky-600 text-white font-semibold py-2.5 px-4 rounded-lg text-xs transition shadow-md">Kirim Momen Kenangan</button>
-              </form>
-            </div>
-
-          </div>
-
-          <!-- Kolom Kanan: Timeline Bersama -->
-          <div class="xl:col-span-7 flex flex-col space-y-6">
-            <div class="flex items-center justify-between border-b border-zinc-900 pb-4">
-              <h3 class="text-lg font-bold text-white flex items-center gap-2">⏳ Timeline Plengeran Bersama</h3>
-              <span class="text-xs font-semibold bg-zinc-900 text-gray-400 px-3 py-1 rounded-full border border-zinc-800" x-text="moments.length + ' Kenangan'"></span>
-            </div>
-
-            <div class="space-y-6 overflow-y-auto pr-1 max-h-[85vh] no-scrollbar">
-              <template x-for="moment in moments" :key="moment.id">
-                <div class="bg-[#0e0e0e] border border-zinc-900 rounded-2xl overflow-hidden shadow-lg transition hover:border-zinc-850">
-                  <!-- Header -->
-                  <div class="p-4 flex items-center justify-between border-b border-zinc-950">
-                    <div class="flex items-center gap-3">
-                      <img :src="moment.authorAvatar || AVATARS[0]" class="w-10 h-10 rounded-full bg-zinc-900" />
-                      <div>
-                        <div class="text-sm font-bold text-gray-200">
-                          <span x-text="moment.authorName"></span>
-                          <span class="text-xs text-gray-500 font-normal ml-1.5" x-text="'@' + moment.authorUsername"></span>
-                        </div>
-                        <div class="text-[10px] text-gray-400 flex items-center gap-1.5 mt-0.5">
-                          <span class="bg-sky-950 text-sky-400 px-1.5 py-0.5 rounded font-mono text-[9px] border border-sky-900/30" x-text="'📅 ' + moment.date"></span>
-                          <span>•</span>
-                          <span class="text-gray-500" x-text="'Dibuat: ' + new Date(moment.createdAt).toLocaleDateString('id-ID')"></span>
-                        </div>
-                      </div>
-                    </div>
-                    <!-- Delete Button -->
-                    <template x-if="moment.authorUid === user?.uid">
-                      <button @click="handleDeleteMoment(moment.id)" class="text-gray-500 hover:text-red-400 p-1.5 hover:bg-red-950/20 rounded-lg transition">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </template>
-                  </div>
-
-                  <!-- Media Content -->
-                  <div x-show="moment.mediaUrl" class="bg-black/40 border-b border-zinc-950 flex items-center justify-center max-h-[450px] overflow-hidden relative">
-                    <template x-if="moment.mediaType === 'video'">
-                      <iframe :src="formatDriveLink(moment.mediaUrl)" class="w-full aspect-video max-h-[450px]" frameBorder="0" allowFullScreen></iframe>
-                    </template>
-                    <template x-if="moment.mediaType === 'image'">
-                      <img :src="formatDriveLink(moment.mediaUrl)" class="w-full object-contain max-h-[450px]" @error="$event.target.src='https://images.unsplash.com/photo-1516259762381-22954d7d3ad2?q=80&w=800&auto=format&fit=crop'" />
-                    </template>
-                  </div>
-
-                  <!-- Body -->
-                  <div class="p-5 space-y-3">
-                    <h4 class="text-base font-bold text-white tracking-wide" x-text="moment.title"></h4>
-                    <p class="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap" x-text="moment.description"></p>
-                    <div class="pt-3 border-t border-zinc-900 flex items-center gap-4">
-                      <!-- Suka -->
-                      <button @click="handleLikeMoment(moment.id, moment.likes || [])"
-                              :class="moment.likes?.includes(user?.uid) ? 'bg-rose-950/40 text-rose-500 border border-rose-900/50' : 'bg-zinc-950 text-gray-400 border border-zinc-900'"
-                              class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full transition">
-                        <svg class="w-4 h-4" :fill="moment.likes?.includes(user?.uid) ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                        <span x-text="(moment.likes?.length || 0) + ' Suka'"></span>
-                      </button>
-                      <!-- Kirim Pesan -->
-                      <button x-show="moment.authorUid !== user?.uid" @click="startPrivateChat(moment.authorUid)" class="bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 text-gray-400 hover:text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition">💬 Kirim Pesan</button>
-                    </div>
-                  </div>
-                </div>
-              </template>
-
-              <div x-show="moments.length === 0" class="flex flex-col items-center justify-center p-10 border-2 border-dashed border-zinc-900 rounded-2xl text-center">
-                <h4 class="text-base font-bold text-gray-300 mb-1">Belum ada kenangan bersama</h4>
-                <p class="text-xs text-gray-500 max-w-sm">Jadilah yang pertama untuk mendaftarkan akun baru Anda dan membagikan kenangan indah di sini!</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </template>
-
-      <!-- TAB 2: PESAN & RUANG OBROLAN -->
-      <template x-if="activeTab === 'pesan'">
-        <div class="flex-1 flex flex-col md:flex-row h-screen overflow-hidden">
-          <!-- Sidebar Chat -->
-          <div class="w-full md:w-80 bg-[#080808] border-r border-zinc-900 flex flex-col h-full">
-            <div class="p-4 border-b border-zinc-900 flex items-center justify-between">
-              <h3 class="text-base font-bold text-white flex items-center gap-2">📬 Ruang Obrolan</h3>
-              <button x-show="activeChatId !== 'public_group'" @click="handleClearDM()" class="text-[10px] bg-red-950/40 text-red-400 hover:bg-red-900 hover:text-white px-2 py-1 rounded border border-red-900/50 transition font-bold">Bersihkan Obrolan</button>
-            </div>
-
-            <!-- Search -->
-            <div class="p-4 border-b border-zinc-900/60">
-              <div class="relative">
-                <input type="text" placeholder="Cari pengguna terdaftar..." x-model="searchUserQuery" class="w-full bg-zinc-950 border border-zinc-900 rounded-lg pl-9 pr-4 py-2 text-xs text-gray-300 focus:outline-none focus:border-brand" />
-                <span class="absolute left-3 top-2.5 text-gray-500">🔍</span>
-              </div>
-            </div>
-
-            <!-- List Teman Obrolan -->
-            <div class="flex-1 overflow-y-auto p-2 space-y-1">
-              <button @click="activeChatId = 'public_group'" :class="activeChatId === 'public_group' ? 'bg-zinc-900/80 border-zinc-850' : 'border-transparent hover:bg-zinc-950'" class="w-full flex items-center gap-3 p-3 rounded-xl transition text-left border">
-                <div class="w-10 h-10 rounded-full bg-[#111] border border-zinc-800 flex items-center justify-center text-lg">🌍</div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-white truncate">Grup Umum Plengeran</span>
-                    <span class="text-[9px] bg-sky-500 text-black px-1.5 py-0.5 rounded-full font-bold uppercase">GRUP</span>
-                  </div>
-                  <p class="text-[10px] text-gray-400 truncate">Semua orang berkumpul di sini!</p>
-                </div>
-              </button>
-
-              <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-3 pt-4 pb-2">Pesan Pribadi (DM)</div>
-
-              <!-- Daftar Semua Pengguna -->
-              <template x-for="item in getFilteredUsers()" :key="item.uid">
-                <button @click="startPrivateChat(item.uid)" :class="isChatSelected(item.uid) ? 'bg-zinc-900/80 border-zinc-850' : 'border-transparent hover:bg-zinc-950'" class="w-full flex items-center gap-3 p-3 rounded-xl transition text-left border">
-                  <div class="relative">
-                    <img :src="item.avatar" class="w-10 h-10 rounded-full bg-zinc-900" />
-                    <span :class="item.isOnline ? 'bg-emerald-500' : 'bg-zinc-600'" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-black"></span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold text-gray-200 truncate" x-text="item.fullName"></span>
-                      <span class="text-[9px] text-gray-500" x-text="item.isOnline ? 'Aktif' : 'Offline'"></span>
-                    </div>
-                    <p class="text-[10px] text-gray-500 truncate" x-text="'@' + item.username"></p>
-                  </div>
-                </button>
-              </template>
-            </div>
-          </div>
-
-          <!-- Chat Window -->
-          <div class="flex-1 bg-[#0c0c0c] flex flex-col h-full relative">
-            <div class="p-4 bg-[#0a0a0a] border-b border-zinc-900 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <template x-if="activeChatId === 'public_group'">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-sky-900/50 flex items-center justify-center text-lg">🌎</div>
-                    <div>
-                      <h4 class="text-sm font-bold text-white">Grup Publik Bersama</h4>
-                      <p class="text-[10px] text-sky-400 font-semibold">Tanya jawab dan ngobrol santai bersama semua orang</p>
-                    </div>
-                  </div>
-                </template>
-                <template x-if="activeChatId !== 'public_group' && getActiveChatPartner()">
-                  <div class="flex items-center gap-3">
-                    <img :src="getActiveChatPartner().avatar" class="w-10 h-10 rounded-full bg-zinc-900" />
-                    <div>
-                      <h4 class="text-sm font-bold text-white" x-text="getActiveChatPartner().fullName"></h4>
-                      <p class="text-[10px] text-gray-400 flex items-center gap-1.5">
-                        <span :class="getActiveChatPartner().isOnline ? 'bg-emerald-500' : 'bg-zinc-600'" class="w-1.5 h-1.5 rounded-full"></span>
-                        <span x-text="'@' + getActiveChatPartner().username"></span>
-                        <span x-text="'• ' + (getActiveChatPartner().isOnline ? 'Sedang Aktif' : 'Offline')"></span>
-                      </p>
-                    </div>
-                  </div>
-                </template>
-              </div>
-            </div>
-
-            <!-- Messages Stream -->
-            <div class="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar" id="messagesStream">
-              <template x-for="msg in getFilteredMessages()" :key="msg.id">
-                <div :class="msg.senderUid === user?.uid ? 'ml-auto flex-row-reverse' : ''" class="flex gap-3 max-w-[80%]">
-                  <img :src="msg.senderAvatar" class="w-8 h-8 rounded-full bg-zinc-800 self-end" />
-                  <div class="space-y-1">
-                    <div :class="msg.senderUid === user?.uid ? 'text-right' : ''" class="text-[9px] text-gray-500">
-                      <span x-text="msg.senderName"></span>
-                      <span class="font-mono" x-text="'@' + msg.senderUsername"></span>
-                    </div>
-                    <div :class="msg.senderUid === user?.uid ? 'bg-brand text-white rounded-br-none' : 'bg-zinc-900 text-gray-200 rounded-bl-none border border-zinc-850'" class="px-4 py-2.5 rounded-2xl text-xs break-words leading-relaxed" x-text="msg.text"></div>
-                    <div :class="msg.senderUid === user?.uid ? 'text-right' : ''" class="text-[8px] text-gray-500 font-mono" x-text="formatTime(msg.timestamp)"></div>
-                  </div>
-                </div>
-              </template>
-              <div x-show="getFilteredMessages().length === 0" class="h-full flex flex-col items-center justify-center text-center p-10 text-gray-500">
-                <p class="text-xs">Mulai percakapan aman di sini! Selalu jaga kesopanan bersama kawan baru.</p>
-              </div>
-              <div id="chatEnd"></div>
-            </div>
-
-            <!-- Input Box -->
-            <form @submit.prevent="handleSendMessage()" class="p-4 bg-[#0a0a0a] border-t border-zinc-900 flex items-center gap-3">
-              <input type="text" placeholder="Ketik pesan yang ramah di sini..." x-model="messageInput" class="flex-1 bg-zinc-950 border border-zinc-850 rounded-xl px-4 py-3 text-xs text-gray-200 focus:outline-none focus:border-brand" required />
-              <button type="submit" class="bg-brand hover:bg-sky-600 text-white px-5 py-3 rounded-xl text-xs font-bold transition">Kirim</button>
-            </form>
-          </div>
-        </div>
-      </template>
-
-      <!-- TAB 3: PROFIL AKUN ANDA -->
-      <template x-if="activeTab === 'profil'">
-        <div class="flex-1 p-4 md:p-8 overflow-y-auto max-w-4xl mx-auto w-full space-y-6">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2 border-b border-zinc-900 pb-4">👤 Profil Akun Anda</h3>
-
-          <div class="bg-[#0e0e0e] border border-zinc-900 p-8 rounded-2xl shadow-xl space-y-6 text-center relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-brand"></div>
-            <div class="flex flex-col items-center">
-              <div class="relative">
-                <img :src="userData?.avatar || AVATARS[0]" class="w-24 h-24 rounded-full border-4 border-zinc-800 bg-zinc-950 mb-4" />
-                <span class="absolute bottom-4 right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-zinc-900"></span>
-              </div>
-              <h2 class="text-xl font-bold text-white mb-1" x-text="userData?.fullName"></h2>
-              <p class="text-sm text-sky-400 font-semibold mb-2" x-text="'@' + userData?.username"></p>
-              <span class="bg-zinc-950 text-gray-400 px-3 py-1 rounded-full text-xs font-bold border border-zinc-900">🟢 Online</span>
-            </div>
-
-            <!-- Stats -->
-            <div class="grid grid-cols-3 gap-4 border-t border-b border-zinc-900 py-6 my-4 max-w-md mx-auto">
-              <div>
-                <div class="text-lg font-extrabold text-white" x-text="getMyMomentsCount()"></div>
-                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Momen Anda</div>
-              </div>
-              <div>
-                <div class="text-lg font-extrabold text-white" x-text="userData?.followers?.length || 0"></div>
-                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Pengikut</div>
-              </div>
-              <div>
-                <div class="text-lg font-extrabold text-white" x-text="userData?.following?.length || 0"></div>
-                <div class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Diikuti</div>
-              </div>
-            </div>
-
-            <!-- Bio -->
-            <div class="max-w-md mx-auto bg-zinc-950 border border-zinc-900 rounded-xl p-4 text-left">
-              <span class="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest block mb-1">🌿 Biografi</span>
-              <p class="text-xs text-gray-300 leading-relaxed italic" x-text="userData?.bio || 'Belum ada biografi yang diisi.'"></p>
-            </div>
-
-            <button x-show="!isEditingProfile" @click="openProfileEditor()" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-gray-200 text-xs px-6 py-2.5 rounded-lg font-bold transition flex items-center gap-2 mx-auto">📝 Edit Profil & Bio Anda</button>
-          </div>
-
-          <!-- Profile Editor -->
-          <form x-show="isEditingProfile" @submit.prevent="handleUpdateProfile()" class="bg-[#0e0e0e] border border-zinc-900 p-6 rounded-2xl space-y-4" style="display: none;">
-            <h4 class="text-sm font-bold text-white border-b border-zinc-900 pb-3">Perbarui Informasi Diri</h4>
-            <div>
-              <label class="block text-xs text-gray-400 font-bold mb-1.5 uppercase tracking-wider">Nama Lengkap</label>
-              <input type="text" x-model="editFullName" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3.5 py-2 text-xs text-gray-200 focus:outline-none focus:border-brand" required>
-            </div>
-            <div>
-              <label class="block text-xs text-gray-400 font-bold mb-1.5 uppercase tracking-wider">Tentang Saya / Bio</label>
-              <textarea rows="3" x-model="editBio" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3.5 py-2 text-xs text-gray-200 focus:outline-none focus:border-brand resize-none"></textarea>
-            </div>
-            <div>
-              <label class="block text-xs text-gray-400 font-bold mb-3 uppercase tracking-wider">Ganti Gambar Karakter (Avatar)</label>
-              <div class="grid grid-cols-6 gap-3">
-                <template x-for="avatar in AVATARS">
-                  <button type="button" @click="editAvatar = avatar" :class="editAvatar === avatar ? 'border-brand ring-2 ring-brand/20' : 'border-zinc-900 hover:border-zinc-800'" class="p-1 rounded-xl bg-zinc-950 border transition duration-150">
-                    <img :src="avatar" class="w-full h-12 object-contain" />
-                  </button>
-                </template>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 pt-3">
-              <button type="submit" class="bg-brand hover:bg-sky-600 text-white font-bold py-2.5 px-5 rounded-lg text-xs transition">Simpan Profil</button>
-              <button type="button" @click="isEditingProfile = false" class="bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 text-gray-400 hover:text-white font-semibold py-2.5 px-5 rounded-lg text-xs transition">Batal</button>
-            </div>
-          </form>
-
-          <!-- Temukan Teman Baru -->
-          <div class="bg-[#0e0e0e] border border-zinc-900 p-6 rounded-2xl space-y-4">
-            <h4 class="text-sm font-bold text-white flex items-center gap-2 border-b border-zinc-900 pb-3">👥 Kenalan & Temukan Teman Baru</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <template x-for="item in usersList.filter(u => u.uid !== user?.uid)" :key="item.uid">
-                <div class="bg-zinc-950 border border-zinc-900 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-zinc-850 transition">
-                  <div class="flex items-center gap-3">
-                    <img :src="item.avatar" class="w-10 h-10 rounded-full bg-zinc-900" />
-                    <div>
-                      <div class="text-xs font-bold text-gray-200" x-text="item.fullName"></div>
-                      <div class="text-[10px] text-gray-500" x-text="'@' + item.username"></div>
-                    </div>
-                  </div>
-                  <button @click="handleFollowToggle(item)"
-                          :class="isFollowingUser(item.uid) ? 'bg-zinc-900 text-gray-400 border-zinc-800 hover:bg-red-950/20' : 'bg-brand text-black border-transparent hover:bg-sky-600 font-bold'"
-                          class="text-[10px] font-extrabold px-3 py-1.5 rounded-lg border transition"
-                          x-text="isFollowingUser(item.uid) ? 'Batal Ikuti' : 'Ikuti'"></button>
-                </div>
-              </template>
-            </div>
-            <p x-show="usersList.filter(u => u.uid !== user?.uid).length === 0" class="text-xs text-gray-500 italic">Belum ada pengguna lain yang mendaftar. Bagikan aplikasi ini kepada teman Anda!</p>
-          </div>
-        </div>
-      </template>
-
-    </main>
-  </div>
-
-  <!-- FIREBASE INTEGRATION ENGINE & FALLBACK SIMULATOR -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js';
-    import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js';
-    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js';
-
-    let app, auth, db;
-    let appId = 'plengergram-app-v2';
-    let isMock = false;
-
-    // --- FIREBASE INITIALIZATION SAFE GUARD ---
-    try {
-      // Periksa keberadaan konfigurasi Firebase bawaan sistem
-      if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-        let firebaseConfig;
-        // Tangani format tipe Object atau String dari sistem cloud
-        if (typeof __firebase_config === 'object') {
-          firebaseConfig = __firebase_config;
-        } else {
-          firebaseConfig = JSON.parse(__firebase_config);
-        }
-
-        if (firebaseConfig && firebaseConfig.apiKey) {
-          app = initializeApp(firebaseConfig);
-          auth = getAuth(app);
-          db = getFirestore(app);
-          appId = typeof __app_id !== 'undefined' ? __app_id : 'plengergram-app-v2';
-        } else {
-          throw new Error("Konfigurasi Firebase tidak lengkap.");
-        }
-      } else {
-        throw new Error("Sistem konfigurasi Firebase tidak ditemukan.");
-      }
-    } catch (e) {
-      console.warn("Firebase Cloud tidak terdeteksi. Beralih ke Mode Simulasi Lokal (Offline Mode) dengan mulus!", e);
-      isMock = true;
-      setupMockFirebase();
-    }
-
-    // --- SINKRONISASI GLOBAL METHODS ---
-    if (!isMock) {
-      window.db = db;
-      window.auth = auth;
-      window.appId = appId;
-      window.fbMethods = {
-        doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove,
-        createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInAnonymously, onAuthStateChanged
-      };
-    }
-
-    // Trigger agar sistem UI (Alpine) tahu semua dependensi Firebase/Lokal telah terpasang sempurna
-    window.dispatchEvent(new CustomEvent('firebase-ready'));
-
-    // --- MOCK DATABASE ENGINE (Fallback jika Firebase Cloud Offline / Bermasalah) ---
-    function setupMockFirebase() {
-      window.isMockFirebase = true;
-      window.auth = { currentUser: null };
-      window.db = {};
-      window.appId = 'local';
-      
-      const authListeners = [];
-      const firestoreListeners = {};
-
-      const mockAuth = {
-        currentUser: null,
-      };
-
-      window.fbMethods = {
-        onAuthStateChanged: (auth, callback) => {
-          authListeners.push(callback);
-          const localUser = JSON.parse(localStorage.getItem('plenger_local_user') || 'null');
-          if (localUser) {
-            mockAuth.currentUser = localUser;
-            callback(localUser);
-          } else {
-            callback(null);
-          }
-          return () => {};
-        },
-        createUserWithEmailAndPassword: async (auth, email, password) => {
-          const users = JSON.parse(localStorage.getItem('plenger_local_users') || '[]');
-          if (users.some(u => u.email === email)) {
-            throw new Error("Email sudah terdaftar!");
-          }
-          const uid = 'local_' + Math.random().toString(36).substr(2, 9);
-          const newUser = { uid, email };
-          users.push(newUser);
-          localStorage.setItem('plenger_local_users', JSON.stringify(users));
-          
-          mockAuth.currentUser = newUser;
-          localStorage.setItem('plenger_local_user', JSON.stringify(newUser));
-          authListeners.forEach(cb => cb(newUser));
-          return { user: newUser };
-        },
-        signInWithEmailAndPassword: async (auth, email, password) => {
-          const users = JSON.parse(localStorage.getItem('plenger_local_users') || '[]');
-          const user = users.find(u => u.email === email);
-          if (!user) {
-            throw new Error("Pengguna tidak ditemukan.");
-          }
-          mockAuth.currentUser = user;
-          localStorage.setItem('plenger_local_user', JSON.stringify(user));
-          authListeners.forEach(cb => cb(user));
-          return { user };
-        },
-        signOut: async (auth) => {
-          mockAuth.currentUser = null;
-          localStorage.removeItem('plenger_local_user');
-          authListeners.forEach(cb => cb(null));
-        },
-        signInAnonymously: async (auth) => {
-          return { user: null };
-        },
-        doc: (db, ...paths) => {
-          return { path: paths.join('/') };
-        },
-        setDoc: async (docRef, data) => {
-          const parts = docRef.path.split('/');
-          const collectionName = parts[parts.length - 2];
-          const docId = parts[parts.length - 1];
-          
-          if (collectionName === 'users') {
-            const users = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
-            users[docId] = data;
-            localStorage.setItem('plenger_db_users', JSON.stringify(users));
-            triggerLocalSnapshot('users');
-          }
-        },
-        getDoc: async (docRef) => {
-          const parts = docRef.path.split('/');
-          const collectionName = parts[parts.length - 2];
-          const docId = parts[parts.length - 1];
-          if (collectionName === 'users') {
-            const users = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
-            const data = users[docId];
-            return {
-              exists: () => !!data,
-              data: () => data
-            };
-          }
-          return { exists: () => false };
-        },
-        collection: (db, ...paths) => {
-          return { path: paths.join('/') };
-        },
-        onSnapshot: (collRef, callback) => {
-          const parts = collRef.path.split('/');
-          const collectionName = parts[parts.length - 1];
-          
-          if (!firestoreListeners[collectionName]) {
-            firestoreListeners[collectionName] = [];
-          }
-          firestoreListeners[collectionName].push(callback);
-
-          // Tarik data awal
-          sendLocalData(collectionName, callback);
-
-          return () => {
-            firestoreListeners[collectionName] = firestoreListeners[collectionName].filter(cb => cb !== callback);
-          };
-        },
-        addDoc: async (collRef, data) => {
-          const parts = collRef.path.split('/');
-          const collectionName = parts[parts.length - 1];
-          const id = 'doc_' + Math.random().toString(36).substr(2, 9);
-          
-          if (collectionName === 'moments') {
-            const list = JSON.parse(localStorage.getItem('plenger_db_moments') || '[]');
-            list.push({ id, ...data });
-            localStorage.setItem('plenger_db_moments', JSON.stringify(list));
-          } else if (collectionName === 'chats') {
-            const list = JSON.parse(localStorage.getItem('plenger_db_chats') || '[]');
-            list.push({ id, ...data });
-            localStorage.setItem('plenger_db_chats', JSON.stringify(list));
-          }
-          
-          triggerLocalSnapshot(collectionName);
-          return { id };
-        },
-        updateDoc: async (docRef, data) => {
-          const parts = docRef.path.split('/');
-          const collectionName = parts[parts.length - 2];
-          const docId = parts[parts.length - 1];
-          
-          if (collectionName === 'users') {
-            const users = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
-            if (users[docId]) {
-              for (let key in data) {
-                const val = data[key];
-                if (val && typeof val === 'object' && val.type === 'union') {
-                  const arr = users[docId][key] || [];
-                  if (!arr.includes(val.value)) arr.push(val.value);
-                  users[docId][key] = arr;
-                } else if (val && typeof val === 'object' && val.type === 'remove') {
-                  const arr = users[docId][key] || [];
-                  users[docId][key] = arr.filter(item => item !== val.value);
-                } else {
-                  users[docId][key] = val;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlengerGram - Kalender & Timeline Bersama</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#09090b',
+                        cardBg: '#121214',
+                        borderBg: '#1c1c1f',
+                        accentBlue: '#0095f6',
+                        accentGreen: '#22c55e',
+                    }
                 }
-              }
-              localStorage.setItem('plenger_db_users', JSON.stringify(users));
-              triggerLocalSnapshot('users');
             }
-          }
-        },
-        deleteDoc: async (docRef) => {
-          const parts = docRef.path.split('/');
-          const collectionName = parts[parts.length - 2];
-          const docId = parts[parts.length - 1];
-          
-          if (collectionName === 'moments') {
-            let list = JSON.parse(localStorage.getItem('plenger_db_moments') || '[]');
-            list = list.filter(item => item.id !== docId);
-            localStorage.setItem('plenger_db_moments', JSON.stringify(list));
-            triggerLocalSnapshot('moments');
-          } else if (collectionName === 'chats') {
-            let list = JSON.parse(localStorage.getItem('plenger_db_chats') || '[]');
-            list = list.filter(item => item.id !== docId);
-            localStorage.setItem('plenger_db_chats', JSON.stringify(list));
-            triggerLocalSnapshot('chats');
-          }
-        },
-        arrayUnion: (val) => {
-          return { type: 'union', value: val };
-        },
-        arrayRemove: (val) => {
-          return { type: 'remove', value: val };
         }
-      };
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #09090b;
+            color: #f4f4f5;
+        }
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+    </style>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- React and ReactDOM UMD -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel for JSX Compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-      function sendLocalData(collectionName, callback) {
-        let docs = [];
-        if (collectionName === 'users') {
-          const users = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
-          docs = Object.values(users).map(u => ({ data: () => u }));
-        } else if (collectionName === 'moments') {
-          const list = JSON.parse(localStorage.getItem('plenger_db_moments') || '[]');
-          docs = list.map(item => ({ id: item.id, data: () => item }));
-        } else if (collectionName === 'chats') {
-          const list = JSON.parse(localStorage.getItem('plenger_db_chats') || '[]');
-          docs = list.map(item => ({ id: item.id, data: () => item }));
-        }
+    <!-- Configure Custom Babel Preset to Force Classic JSX Runtime -->
+    <script>
+        Babel.registerPreset('custom-react-preset', {
+            presets: [
+                [Babel.availablePresets['env'], { modules: false }],
+                [Babel.availablePresets['react'], { runtime: 'classic' }]
+            ]
+        });
+    </script>
+
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="overflow-hidden h-screen w-screen">
+
+    <div id="root" class="h-full w-full"></div>
+
+    <script type="text/babel" data-presets="custom-react-preset">
+        /** @jsx React.createElement */
+        /** @jsxFrag React.Fragment */
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'plengergram-prod';
         
-        callback({
-          forEach: (cb) => {
-            docs.forEach(doc => cb(doc));
-          }
-        });
-      }
+        // Safe Fallback Firebase Config
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "mock-api-key",
+                authDomain: "mock-auth-domain",
+                projectId: "mock-project",
+                storageBucket: "mock-storage",
+                messagingSenderId: "mock-sender",
+                appId: "mock-app"
+            };
 
-      function triggerLocalSnapshot(collectionName) {
-        const listeners = firestoreListeners[collectionName] || [];
-        listeners.forEach(callback => {
-          sendLocalData(collectionName, callback);
-        });
-      }
-    }
-  </script>
+        // Check if we should force local storage demo mode
+        const isMockConfig = !firebaseConfig || firebaseConfig.apiKey === "mock-api-key" || firebaseConfig.projectId.includes("mock");
+
+        // Presets for gorgeous user avatars
+        const AVATARS = [
+            "https://placehold.co/150x150/ff4b4b/ffffff?text=👧", // Ayyaa avatar
+            "https://placehold.co/150x150/4b93ff/ffffff?text=👦", // Ikii avatar
+            "https://placehold.co/150x150/4bff6a/ffffff?text=🦊",
+            "https://placehold.co/150x150/ffd84b/ffffff?text=🦁",
+            "https://placehold.co/150x150/d24bff/ffffff?text=🐱",
+            "https://placehold.co/150x150/4bffeb/ffffff?text=🐼"
+        ];
+
+        // Dua akun tetap wajib (ayyaa_ & ikii_)
+        const SEED_USERS = [
+            {
+                id: "fixed-user-ayyaa",
+                username: "ayyaa_",
+                fullName: "Ayyaa",
+                password: "123456",
+                avatar: AVATARS[0],
+                bio: "Let's capture our beautiful moments together ✨",
+                isOnline: false,
+                lastActive: Date.now(),
+                createdAt: Date.now()
+            },
+            {
+                id: "fixed-user-ikii",
+                username: "ikii_",
+                fullName: "Ikii",
+                password: "123456",
+                avatar: AVATARS[1],
+                bio: "Always here to share and remember 💫",
+                isOnline: false,
+                lastActive: Date.now(),
+                createdAt: Date.now()
+            }
+        ];
+
+        // Hubungan saling mengikuti bawaan agar langsung bisa DM-an
+        const SEED_CONNECTIONS = [
+            {
+                id: "fixed-user-ayyaa_fixed-user-ikii",
+                from: "fixed-user-ayyaa",
+                to: "fixed-user-ikii",
+                timestamp: Date.now(),
+                removed: false
+            },
+            {
+                id: "fixed-user-ikii_fixed-user-ayyaa",
+                from: "fixed-user-ikii",
+                to: "fixed-user-ayyaa",
+                timestamp: Date.now(),
+                removed: false
+            }
+        ];
+
+        const getLocalStorageData = (key, defaultValue) => {
+            try {
+                const val = localStorage.getItem(key);
+                return val ? JSON.parse(val) : defaultValue;
+            } catch (e) {
+                return defaultValue;
+            }
+        };
+
+        const saveLocalStorageData = (key, data) => {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {}
+        };
+
+        // Initialize Firebase services outside App
+        let firestoreDb = null;
+        let authInstance = null;
+        let isFirebaseActive = false;
+
+        try {
+            const fb = window.firebase;
+            if (fb && !isMockConfig) {
+                let app;
+                if (fb.apps.length === 0) {
+                    app = fb.initializeApp(firebaseConfig);
+                } else {
+                    app = fb.app();
+                }
+                firestoreDb = app.firestore();
+                authInstance = app.auth();
+                isFirebaseActive = true;
+            }
+        } catch (err) {
+            console.warn("Firebase was not initialized, operating in local-sync mode:", err);
+            isFirebaseActive = false;
+        }
+
+        function App() {
+            const [screen, setScreen] = useState('auth');
+            const [activeTab, setActiveTab] = useState('momen');
+            const [authLoading, setAuthLoading] = useState(isFirebaseActive);
+
+            // Login Form Fields
+            const [loginUsername, setLoginUsername] = useState('');
+            const [loginPassword, setLoginPassword] = useState('');
+
+            // Safe States directly initialized with guarantees
+            const [currentUser, setCurrentUser] = useState(() => getLocalStorageData('plengergram_current_user', null)); 
+            
+            const [users, setUsers] = useState(() => {
+                const localUsers = getLocalStorageData('plengergram_users', []);
+                // Pastikan akun wajib selalu ada di local storage jika kosong
+                if (localUsers.length === 0) {
+                    return SEED_USERS;
+                }
+                // Memastikan ayyaa_ dan ikii_ tidak terhapus secara tidak sengaja
+                const merged = [...localUsers];
+                SEED_USERS.forEach(seed => {
+                    if (!merged.some(u => u.username === seed.username)) {
+                        merged.push(seed);
+                    }
+                });
+                return merged;
+            });
+
+            const [connections, setConnections] = useState(() => {
+                const localConns = getLocalStorageData('plengergram_connections', []);
+                if (localConns.length === 0) {
+                    return SEED_CONNECTIONS;
+                }
+                return localConns;
+            }); 
+
+            const [timeline, setTimeline] = useState(() => getLocalStorageData('plengergram_timeline', [
+                {
+                    id: 'seed-1',
+                    authorId: 'system',
+                    authorName: 'Sistem PlengerGram',
+                    authorUsername: 'system',
+                    authorAvatar: 'https://placehold.co/150x150/0095f6/ffffff?text=📢',
+                    dateStr: '2026-06-17',
+                    title: 'Selamat Datang di PlengerGram!',
+                    content: 'Aplikasi kalender memori terpadu ini telah siap digunakan. Silakan masuk menggunakan akun tetap Anda untuk mulai mengabadikan momen!',
+                    timestamp: Date.now() - 3600000
+                }
+            ])); 
+
+            const [messages, setMessages] = useState(() => getLocalStorageData('plengergram_messages', [])); 
+            
+            const [activeChat, setActiveChat] = useState({ id: 'group', type: 'group' }); 
+            const [chatSearchText, setChatSearchText] = useState('');
+            const [userSearchText, setUserSearchText] = useState('');
+            const [toastMessage, setToastMessage] = useState('');
+
+            // Calendar Navigation State (Current date set to today in 2026)
+            const [currentDate, setCurrentDate] = useState(new Date(2026, 5, 17)); 
+            const [selectedDateStr, setSelectedDateStr] = useState('2026-06-17');
+
+            // Messages & Posting Inputs
+            const [messageInput, setMessageInput] = useState('');
+            const [newMemoryTitle, setNewMemoryTitle] = useState('');
+            const [newMemoryContent, setNewMemoryContent] = useState('');
+
+            // Profile Editor states
+            const [isEditingProfile, setIsEditingProfile] = useState(false);
+            const [editFullName, setEditFullName] = useState('');
+            const [editBio, setEditBio] = useState('');
+            const [editAvatar, setEditAvatar] = useState('');
+
+            const [showStatusModal, setShowStatusModal] = useState(false);
+            const chatEndRef = useRef(null);
+
+            // Firebase authentication state
+            const [fbUser, setFbUser] = useState(null);
+
+            useEffect(() => {
+                // Autoredirect to main page if user is logged in
+                if (currentUser) {
+                    setScreen('app');
+                }
+
+                if (!isFirebaseActive || !authInstance) {
+                    setAuthLoading(false);
+                    return;
+                }
+
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await authInstance.signInWithCustomToken(__initial_auth_token);
+                        } else {
+                            await authInstance.signInAnonymously();
+                        }
+                    } catch (err) {
+                        console.error("Anonym auth error:", err);
+                    } finally {
+                        setAuthLoading(false);
+                    }
+                };
+                initAuth();
+
+                const unsubscribeAuth = authInstance.onAuthStateChanged((user) => {
+                    if (user) {
+                        setFbUser(user);
+                    }
+                });
+
+                return () => unsubscribeAuth();
+            }, []);
+
+            // Handle Cloud Firestore Live sync listeners (Rule 1 Compliant)
+            useEffect(() => {
+                if (!isFirebaseActive || !firestoreDb || !fbUser) return;
+
+                // Live user list updates
+                const unsubscribeUsers = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').onSnapshot((snapshot) => {
+                    const loadedUsers = [];
+                    snapshot.forEach(doc => {
+                        loadedUsers.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Jamin akun wajib selalu ada di database cloud jika belum dibuat
+                    if (loadedUsers.length > 0) {
+                        const merged = [...loadedUsers];
+                        SEED_USERS.forEach(seed => {
+                            if (!merged.some(u => u.username === seed.username)) {
+                                merged.push(seed);
+                                // Daftarkan langsung ke cloud
+                                firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(seed.id).set(seed);
+                            }
+                        });
+                        setUsers(merged);
+                    } else {
+                        // Jika cloud masih kosong, inisialisasi dengan seed
+                        SEED_USERS.forEach(seed => {
+                            firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(seed.id).set(seed);
+                        });
+                        setUsers(SEED_USERS);
+                    }
+
+                    if (currentUser) {
+                        const updatedSelf = loadedUsers.find(u => u.id === currentUser.id);
+                        if (updatedSelf) {
+                            setCurrentUser(updatedSelf);
+                        }
+                    }
+                }, (error) => {
+                    console.error("Live Users error:", error);
+                });
+
+                // Live follow relationship updates
+                const unsubscribeConn = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').onSnapshot((snapshot) => {
+                    const loadedConns = [];
+                    snapshot.forEach(doc => {
+                        loadedConns.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    if (loadedConns.length > 0) {
+                        setConnections(loadedConns);
+                    } else {
+                        // Inisialisasi koneksi default di cloud
+                        SEED_CONNECTIONS.forEach(conn => {
+                            firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').doc(conn.id).set(conn);
+                        });
+                        setConnections(SEED_CONNECTIONS);
+                    }
+                }, (error) => {
+                    console.error("Live Connections error:", error);
+                });
+
+                // Live Shared Memories (Calendar timeline)
+                const unsubscribeTimeline = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('timeline').onSnapshot((snapshot) => {
+                    const loadedMemories = [];
+                    snapshot.forEach(doc => {
+                        loadedMemories.push({ id: doc.id, ...doc.data() });
+                    });
+                    const merged = [
+                        {
+                            id: 'seed-1',
+                            authorId: 'system',
+                            authorName: 'Sistem PlengerGram',
+                            authorUsername: 'system',
+                            authorAvatar: 'https://placehold.co/150x150/0095f6/ffffff?text=📢',
+                            dateStr: '2026-06-17',
+                            title: 'Selamat Datang di PlengerGram!',
+                            content: 'Aplikasi kalender memori terpadu ini telah siap digunakan. Silakan masuk menggunakan akun tetap Anda untuk mulai mengabadikan momen!',
+                            timestamp: Date.now() - 3600000
+                        },
+                        ...loadedMemories
+                    ];
+                    const unique = merged.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+                    unique.sort((a, b) => b.timestamp - a.timestamp);
+                    setTimeline(unique);
+                }, (error) => {
+                    console.error("Live Timeline error:", error);
+                });
+
+                // Live messaging
+                const unsubscribeMessages = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').onSnapshot((snapshot) => {
+                    const loadedMsgs = [];
+                    snapshot.forEach(doc => {
+                        loadedMsgs.push({ id: doc.id, ...doc.data() });
+                    });
+                    loadedMsgs.sort((a, b) => a.timestamp - b.timestamp);
+                    setMessages(loadedMsgs);
+                }, (error) => {
+                    console.error("Live Messages error:", error);
+                });
+
+                return () => {
+                    unsubscribeUsers();
+                    unsubscribeConn();
+                    unsubscribeTimeline();
+                    unsubscribeMessages();
+                };
+            }, [fbUser]);
+
+            // Save state modifications locally when operating in fallback sync mode
+            useEffect(() => {
+                if (!isFirebaseActive) {
+                    saveLocalStorageData('plengergram_users', users);
+                }
+            }, [users]);
+
+            useEffect(() => {
+                if (!isFirebaseActive) {
+                    saveLocalStorageData('plengergram_connections', connections);
+                }
+            }, [connections]);
+
+            useEffect(() => {
+                if (!isFirebaseActive) {
+                    saveLocalStorageData('plengergram_timeline', timeline);
+                }
+            }, [timeline]);
+
+            useEffect(() => {
+                if (!isFirebaseActive) {
+                    saveLocalStorageData('plengergram_messages', messages);
+                }
+            }, [messages]);
+
+            useEffect(() => {
+                if (currentUser) {
+                    saveLocalStorageData('plengergram_current_user', currentUser);
+                } else {
+                    localStorage.removeItem('plengergram_current_user');
+                }
+            }, [currentUser]);
+
+            // Multi-tab synchronization listener
+            useEffect(() => {
+                const handleStorageChange = (e) => {
+                    if (isFirebaseActive) return;
+                    try {
+                        if (e.key === 'plengergram_users' && e.newValue) {
+                            setUsers(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_connections' && e.newValue) {
+                            setConnections(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_timeline' && e.newValue) {
+                            setTimeline(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_messages' && e.newValue) {
+                            setMessages(JSON.parse(e.newValue));
+                        }
+                        if (e.key === 'plengergram_current_user') {
+                            setCurrentUser(e.newValue ? JSON.parse(e.newValue) : null);
+                        }
+                    } catch (err) {}
+                };
+                window.addEventListener('storage', handleStorageChange);
+                return () => window.removeEventListener('storage', handleStorageChange);
+            }, []);
+
+            // Toast helper
+            const showToast = (msg) => {
+                setToastMessage(msg);
+                setTimeout(() => setToastMessage(''), 3500);
+            };
+
+            // Scroll to end of DM pane
+            useEffect(() => {
+                if (chatEndRef.current) {
+                    chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, [messages, activeChat]);
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                if (!loginUsername || !loginPassword) {
+                    showToast("Harap masukkan nama pengguna dan kata sandi!");
+                    return;
+                }
+                const cleanUsername = loginUsername.toLowerCase().trim();
+                const matchedUser = users.find(u => u.username === cleanUsername);
+
+                if (!matchedUser) {
+                    showToast("Nama Pengguna tidak terdaftar!");
+                    return;
+                }
+
+                if (matchedUser.password !== loginPassword) {
+                    showToast("Kata Sandi tidak cocok!");
+                    return;
+                }
+
+                // Update online status
+                const updatedUser = { ...matchedUser, isOnline: true, lastActive: Date.now() };
+                setCurrentUser(updatedUser);
+                
+                if (isFirebaseActive && firestoreDb) {
+                    await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(updatedUser.id).set(updatedUser);
+                } else {
+                    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+                }
+
+                showToast(`Selamat datang kembali, @${updatedUser.username}!`);
+                setScreen('app');
+                setActiveTab('momen');
+            };
+
+            const handleLogout = async () => {
+                if (currentUser) {
+                    const offlineUser = { ...currentUser, isOnline: false, lastActive: Date.now() };
+                    if (isFirebaseActive && firestoreDb) {
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(currentUser.id).set(offlineUser);
+                    } else {
+                        setUsers(prev => prev.map(u => u.id === currentUser.id ? offlineUser : u));
+                    }
+                }
+                setCurrentUser(null);
+                setScreen('auth');
+                showToast("Anda telah keluar akun.");
+            };
+
+            const handleFollow = async (targetUserId) => {
+                if (!currentUser) return;
+                
+                // Mencegah perubahan relasi pada akun wajib ayyaa_ dan ikii_ agar selalu tersambung
+                if ((currentUser.id === 'fixed-user-ayyaa' && targetUserId === 'fixed-user-ikii') ||
+                    (currentUser.id === 'fixed-user-ikii' && targetUserId === 'fixed-user-ayyaa')) {
+                    showToast("Koneksi ini bersifat permanen dan tidak dapat diubah.");
+                    return;
+                }
+
+                const connectionId = `${currentUser.id}_${targetUserId}`;
+                const alreadyFollowing = connections.some(c => c.from === currentUser.id && c.to === targetUserId && !c.removed);
+
+                try {
+                    if (isFirebaseActive && firestoreDb) {
+                        const connRef = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').doc(connectionId);
+                        if (alreadyFollowing) {
+                            await connRef.set({ id: connectionId, from: currentUser.id, to: targetUserId, removed: true });
+                            showToast("Berhenti mengikuti.");
+                        } else {
+                            await connRef.set({
+                                id: connectionId,
+                                from: currentUser.id,
+                                to: targetUserId,
+                                timestamp: Date.now(),
+                                removed: false
+                            });
+                            showToast("Berhasil mengikuti!");
+                        }
+                    } else {
+                        let updated;
+                        if (alreadyFollowing) {
+                            updated = connections.map(c => c.id === connectionId ? { ...c, removed: true } : c);
+                            showToast("Berhenti mengikuti.");
+                        } else {
+                            const newConn = { id: connectionId, from: currentUser.id, to: targetUserId, removed: false, timestamp: Date.now() };
+                            updated = [...connections.filter(c => c.id !== connectionId), newConn];
+                            showToast("Berhasil mengikuti!");
+                        }
+                        setConnections(updated);
+                        saveLocalStorageData('plengergram_connections', updated);
+                    }
+                } catch (err) {
+                    console.error("Connection follow error:", err);
+                }
+            };
+
+            const isFollowing = (fromId, toId) => {
+                return connections.some(c => c.from === fromId && c.to === toId && !c.removed);
+            };
+
+            const isMutual = (userId1, userId2) => {
+                return isFollowing(userId1, userId2) && isFollowing(userId2, userId1);
+            };
+
+            const getFollowersCount = (userId) => {
+                return connections.filter(c => c.to === userId && !c.removed).length;
+            };
+
+            const getFollowingCount = (userId) => {
+                return connections.filter(c => c.from === userId && !c.removed).length;
+            };
+
+            const getMomentsContributionCount = (userId) => {
+                return timeline.filter(m => m.authorId === userId).length;
+            };
+
+            const getDaysInMonth = (year, month) => {
+                return new Date(year, month + 1, 0).getDate();
+            };
+
+            const generateCalendarDays = () => {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                const totalDays = getDaysInMonth(year, month);
+                const firstDayIndex = new Date(year, month, 1).getDay();
+                
+                const days = [];
+                for (let i = 0; i < firstDayIndex; i++) {
+                    days.push({ day: null, dateStr: null });
+                }
+
+                for (let d = 1; d <= totalDays; d++) {
+                    const dayStr = String(d).padStart(2, '0');
+                    const monthStr = String(month + 1).padStart(2, '0');
+                    const dateStr = `${year}-${monthStr}-${dayStr}`;
+                    days.push({ day: d, dateStr });
+                }
+
+                return days;
+            };
+
+            const handlePrevMonth = () => {
+                setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+            };
+
+            const handleNextMonth = () => {
+                setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+            };
+
+            const getMonthNameIndonesian = (monthIndex) => {
+                const months = [
+                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+                ];
+                return months[monthIndex];
+            };
+
+            const handleAddMemory = async (e) => {
+                e.preventDefault();
+                if (!newMemoryTitle || !newMemoryContent) {
+                    showToast("Harap isi judul dan konten kenangan Anda!");
+                    return;
+                }
+
+                try {
+                    const memoryData = {
+                        authorId: currentUser?.id,
+                        authorName: currentUser?.fullName,
+                        authorUsername: currentUser?.username,
+                        authorAvatar: currentUser?.avatar,
+                        dateStr: selectedDateStr,
+                        title: newMemoryTitle,
+                        content: newMemoryContent,
+                        timestamp: Date.now()
+                    };
+
+                    if (isFirebaseActive && firestoreDb) {
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('timeline').add(memoryData);
+                    } else {
+                        const updated = [ { id: `local-${Date.now()}`, ...memoryData }, ...timeline ];
+                        setTimeline(updated);
+                        saveLocalStorageData('plengergram_timeline', updated);
+                    }
+
+                    setNewMemoryTitle('');
+                    setNewMemoryContent('');
+                    showToast("Kenangan indah Anda berhasil dibagikan!");
+                } catch (err) {
+                    console.error("Memory upload error:", err);
+                    showToast("Gagal menyimpan kenangan.");
+                }
+            };
+
+            const handleSendMessage = async (e) => {
+                e.preventDefault();
+                if (!messageInput.trim()) return;
+
+                const textToSend = messageInput.trim();
+                setMessageInput('');
+
+                try {
+                    const msgPayload = {
+                        id: `msg-${Date.now()}`,
+                        senderId: currentUser?.id,
+                        senderName: currentUser?.fullName,
+                        senderUsername: currentUser?.username,
+                        senderAvatar: currentUser?.avatar,
+                        text: textToSend,
+                        timestamp: Date.now(),
+                        isGroup: activeChat.type === 'group',
+                        receiverId: activeChat.type === 'dm' ? activeChat.id : 'group'
+                    };
+
+                    if (isFirebaseActive && firestoreDb) {
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').add(msgPayload);
+                    } else {
+                        const updated = [...messages, msgPayload];
+                        setMessages(updated);
+                        saveLocalStorageData('plengergram_messages', updated);
+                    }
+
+                } catch (err) {
+                    console.error("Message send failed:", err);
+                }
+            };
+
+            const filteredMessages = useMemo(() => {
+                if (activeChat.type === 'group') {
+                    return messages.filter(m => m.isGroup);
+                } else {
+                    return messages.filter(m => !m.isGroup && (
+                        (m.senderId === currentUser?.id && m.receiverId === activeChat.id) ||
+                        (m.senderId === activeChat.id && m.receiverId === currentUser?.id)
+                    ));
+                }
+            }, [messages, activeChat, currentUser?.id]);
+
+            const handleClearDM = () => {
+                if (isFirebaseActive && firestoreDb) {
+                    showToast("Pembersihan chat global dinonaktifkan dalam sistem cloud.");
+                    return;
+                }
+                setMessages([]);
+                saveLocalStorageData('plengergram_messages', []);
+                showToast("Tampilan pesan dibersihkan.");
+            };
+
+            const handleSaveProfile = async (e) => {
+                e.preventDefault();
+                if (!editFullName) {
+                    showToast("Nama tidak boleh kosong!");
+                    return;
+                }
+
+                try {
+                    const updatedFields = {
+                        fullName: editFullName,
+                        bio: editBio,
+                        avatar: editAvatar
+                    };
+
+                    if (isFirebaseActive && firestoreDb) {
+                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(currentUser?.id).update(updatedFields);
+                    }
+
+                    const updatedUser = { ...currentUser, ...updatedFields };
+                    setCurrentUser(updatedUser);
+                    setUsers(prev => prev.map(u => u.id === currentUser?.id ? { ...u, ...updatedFields } : u));
+                    setIsEditingProfile(false);
+                    showToast("Profil berhasil diperbarui!");
+                } catch (err) {
+                    console.error("Profile modification failed:", err);
+                }
+            };
+
+            const startEditProfile = () => {
+                setEditFullName(currentUser?.fullName || '');
+                setEditBio(currentUser?.bio || '');
+                setEditAvatar(currentUser?.avatar || AVATARS[0]);
+                setIsEditingProfile(true);
+            };
+
+            const filteredUsersToChat = useMemo(() => {
+                return users.filter(u => u.id !== currentUser?.id && 
+                    (u.fullName.toLowerCase().includes(chatSearchText.toLowerCase()) || 
+                     u.username.toLowerCase().includes(chatSearchText.toLowerCase()))
+                );
+            }, [users, chatSearchText, currentUser?.id]);
+
+            const filteredUsersToFollow = useMemo(() => {
+                return users.filter(u => u.id !== currentUser?.id && 
+                    (u.fullName.toLowerCase().includes(userSearchText.toLowerCase()) || 
+                     u.username.toLowerCase().includes(userSearchText.toLowerCase()))
+                );
+            }, [users, userSearchText, currentUser?.id]);
+
+            const selectedDateMoments = useMemo(() => {
+                return timeline.filter(m => m.dateStr === selectedDateStr);
+            }, [timeline, selectedDateStr]);
+
+            const onlineFriends = useMemo(() => {
+                return users.filter(u => u.id !== currentUser?.id && u.isOnline);
+            }, [users, currentUser?.id]);
+
+            if (screen === 'auth' || !currentUser) {
+                return (
+                    <div className="h-full w-full flex items-center justify-center bg-[#09090b] px-4 relative overflow-hidden">
+                        
+                        <div className="w-full max-w-md bg-[#121214] rounded-2xl border border-zinc-800 p-8 shadow-2xl relative overflow-hidden">
+                            <div className="text-center mb-8">
+                                <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">PlengerGram</h1>
+                                <p className="text-zinc-500 text-sm">Masuk ke Kalender & Timeline Bersama</p>
+                            </div>
+
+                            {authLoading ? (
+                                <div className="text-center py-10 space-y-4">
+                                    <div className="w-10 h-10 border-4 border-t-accentBlue border-zinc-800 rounded-full animate-spin mx-auto"></div>
+                                    <p className="text-zinc-400 text-xs">Menghubungkan jaringan cloud aman...</p>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleLogin} className="space-y-5">
+                                    <div>
+                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Nama Pengguna (Username)</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="Masukkan username Anda (ayyaa_ atau ikii_)" 
+                                            value={loginUsername}
+                                            onChange={(e) => setLoginUsername(e.target.value)}
+                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Kata Sandi (Password)</label>
+                                        <input 
+                                            type="password" 
+                                            placeholder="Masukkan password Anda (bawaan: 123456)" 
+                                            value={loginPassword}
+                                            onChange={(e) => setLoginPassword(e.target.value)}
+                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
+                                        />
+                                    </div>
+
+                                    <button 
+                                        type="submit"
+                                        className="w-full bg-accentBlue hover:bg-blue-600 text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-lg active:scale-[0.98] mt-2 text-sm"
+                                    >
+                                        Masuk Akun
+                                    </button>
+                                </form>
+                            )}
+                        </div>
+                        
+                        {toastMessage && (
+                            <div className="absolute bottom-6 right-6 bg-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-medium tracking-wide transition-all animate-bounce flex items-center gap-2 z-50">
+                                <i className="fa-solid fa-circle-info"></i>
+                                {toastMessage}
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+
+            return (
+                <div className="h-screen w-screen bg-darkBg flex overflow-hidden">
+                    
+                    {/* LEFT SIDEBAR PANEL */}
+                    <aside className="w-64 border-r border-zinc-900 bg-black flex flex-col justify-between shrink-0 select-none">
+                        <div className="p-6">
+                            {/* Logo */}
+                            <div className="mb-8">
+                                <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                                    <span>PlengerGram</span>
+                                </h2>
+                            </div>
+
+                            {/* Nav Menu */}
+                            <nav className="space-y-2">
+                                <button 
+                                    onClick={() => setActiveTab('momen')}
+                                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+                                        activeTab === 'momen' 
+                                            ? 'bg-cardBg text-[#0095f6] shadow-sm' 
+                                            : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
+                                    }`}
+                                >
+                                    <i className="fa-solid fa-calendar-days text-base"></i>
+                                    <span>Momen Bersama</span>
+                                </button>
+
+                                <button 
+                                    onClick={() => setActiveTab('pesan')}
+                                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+                                        activeTab === 'pesan' 
+                                            ? 'bg-cardBg text-[#0095f6] shadow-sm' 
+                                            : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
+                                    }`}
+                                >
+                                    <i className="fa-solid fa-paper-plane text-base"></i>
+                                    <span>Pesan & Teman</span>
+                                </button>
+
+                                <button 
+                                    onClick={() => setActiveTab('profil')}
+                                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+                                        activeTab === 'profil' 
+                                            ? 'bg-cardBg text-[#0095f6] shadow-sm' 
+                                            : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
+                                    }`}
+                                >
+                                    <img src={currentUser?.avatar} className="w-5 h-5 rounded-full object-cover inline-block" alt="nav" />
+                                    <span>Profil Akun</span>
+                                </button>
+                            </nav>
+                        </div>
+
+                        {/* Bottom Metadata Panel */}
+                        <div className="p-4 border-t border-zinc-900 space-y-4">
+                            <div>
+                                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block mb-1">Status Jaringan:</span>
+                                <button 
+                                    onClick={() => setShowStatusModal(true)}
+                                    className="w-full bg-[#121214] border border-zinc-800 text-[#0095f6] px-3 py-2 rounded-xl text-[11px] font-semibold text-left flex items-center gap-2 hover:bg-zinc-900/80 transition-all"
+                                >
+                                    <span className="w-2 h-2 rounded-full bg-accentGreen animate-pulse"></span>
+                                    <span>{isFirebaseActive ? 'Realtime Cloud Aktif' : 'Penyimpanan Lokal Aktif'}</span>
+                                </button>
+                            </div>
+
+                            {/* Timeline Shortcut */}
+                            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-3 cursor-pointer" onClick={() => setActiveTab('momen')}>
+                                <div className="flex justify-between items-center text-xs text-zinc-400 font-semibold mb-1">
+                                    <span>Pintasan Timeline</span>
+                                    <i className="fa-solid fa-chevron-up text-[10px]"></i>
+                                </div>
+                                <div className="text-[10px] text-zinc-600">Akses cepat ke kalender memori terpadu.</div>
+                            </div>
+
+                            {/* Active User Badge */}
+                            <div className="flex items-center gap-3 bg-[#121214]/50 p-2 rounded-xl border border-zinc-900">
+                                <div className="relative">
+                                    <img src={currentUser?.avatar} className="w-10 h-10 rounded-full object-cover" alt="badge" />
+                                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-accentGreen border-2 border-black rounded-full"></span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-xs font-bold text-white truncate">@{currentUser?.username}</div>
+                                    <div className="text-[10px] text-zinc-500 truncate">{currentUser?.fullName}</div>
+                                </div>
+                            </div>
+
+                            {/* Logout link */}
+                            <button 
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-3 px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                            >
+                                <i className="fa-solid fa-right-from-bracket"></i>
+                                <span>Keluar Akun</span>
+                            </button>
+                        </div>
+                    </aside>
+
+                    {/* MAIN CONTENT WORKSPACE VIEWPORT */}
+                    <main className="flex-1 flex overflow-hidden">
+                        
+                        {/* TAB 1: MOMEN BERSAMA */}
+                        {activeTab === 'momen' && (
+                            <div className="flex-1 flex overflow-hidden">
+                                
+                                {/* Middle Panel */}
+                                <div className="w-1/2 border-r border-zinc-900 p-6 flex flex-col gap-6 overflow-y-auto">
+                                    {/* Welcome greeting card */}
+                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 flex items-center justify-between shadow-xl">
+                                        <div className="flex items-center gap-4">
+                                            <div className="relative">
+                                                <img src={currentUser?.avatar} className="w-14 h-14 rounded-full border-2 border-accentBlue object-cover" alt="greet" />
+                                                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-accentGreen border-2 border-cardBg rounded-full"></span>
+                                            </div>
+                                            <div>
+                                                <p className="text-zinc-500 text-xs">Selamat datang,</p>
+                                                <h3 className="text-lg font-bold text-white">@{currentUser?.username}</h3>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => showToast("Koneksi tersambung secara optimal!")}
+                                            className="bg-[#0e2c4c] text-[#0095f6] hover:bg-blue-900/50 px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2"
+                                        >
+                                            <i className="fa-solid fa-cloud"></i>
+                                            Aktif Lancar
+                                        </button>
+                                    </div>
+
+                                    {/* Online list bar */}
+                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
+                                        <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase block mb-3">TEMAN YANG SEDANG ONLINE</span>
+                                        <div className="flex gap-4 overflow-x-auto pb-2">
+                                            {onlineFriends.length === 0 ? (
+                                                <span className="text-xs text-zinc-600">Tidak ada teman lain yang sedang online.</span>
+                                            ) : (
+                                                onlineFriends.map(friend => (
+                                                    <div key={friend.id} className="flex flex-col items-center shrink-0">
+                                                        <div className="relative">
+                                                            <img src={friend.avatar} className="w-12 h-12 rounded-full object-cover border-2 border-zinc-700" alt="online" />
+                                                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-accentGreen border-2 border-cardBg rounded-full"></span>
+                                                        </div>
+                                                        <span className="text-[10px] text-zinc-400 mt-1 max-w-[60px] truncate">@{friend.username}</span>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Calendar Widget panel */}
+                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <button onClick={handlePrevMonth} className="text-zinc-400 hover:text-white p-1.5"><i className="fa-solid fa-chevron-left"></i></button>
+                                            <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                                                {getMonthNameIndonesian(currentDate.getMonth())} {currentDate.getFullYear()}
+                                            </h4>
+                                            <button onClick={handleNextMonth} className="text-zinc-400 hover:text-white p-1.5"><i className="fa-solid fa-chevron-right"></i></button>
+                                        </div>
+
+                                        {/* Day labels */}
+                                        <div className="grid grid-cols-7 text-center text-[10px] font-bold text-zinc-500 tracking-wider mb-2">
+                                            <div>M</div>
+                                            <div>S</div>
+                                            <div>S</div>
+                                            <div>R</div>
+                                            <div>K</div>
+                                            <div>J</div>
+                                            <div>S</div>
+                                        </div>
+
+                                        {/* Calendar Grid */}
+                                        <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold">
+                                            {generateCalendarDays().map((dayObj, idx) => {
+                                                if (!dayObj.day) {
+                                                    return <div key={`empty-${idx}`} className="text-zinc-800 py-2">-</div>;
+                                                }
+                                                const hasMoment = timeline.some(m => m.dateStr === dayObj.dateStr);
+                                                const isSelected = selectedDateStr === dayObj.dateStr;
+
+                                                return (
+                                                    <button 
+                                                        key={`day-${dayObj.day}`}
+                                                        onClick={() => setSelectedDateStr(dayObj.dateStr)}
+                                                        className={`py-2 rounded-lg relative transition-all duration-150 ${
+                                                            isSelected 
+                                                                ? 'bg-accentBlue text-white shadow-lg' 
+                                                                : hasMoment 
+                                                                    ? 'bg-[#1b2b3a] text-accentBlue font-bold hover:bg-zinc-800' 
+                                                                    : 'text-zinc-400 hover:bg-zinc-800/50'
+                                                        }`}
+                                                    >
+                                                        {dayObj.day}
+                                                        {hasMoment && !isSelected && (
+                                                            <span className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-accentBlue rounded-full"></span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Add New Memory form */}
+                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <i className="fa-solid fa-circle-plus text-accentBlue text-sm"></i>
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-white">Tambah Kenangan Baru</h4>
+                                        </div>
+                                        <p className="text-[11px] text-zinc-500 mb-4">
+                                            Kenangan yang Anda tambahkan di bawah ini akan masuk ke timeline bersama dan dapat dilihat oleh semua teman Anda di tanggal <span className="text-white font-semibold underline">{selectedDateStr}</span>.
+                                        </p>
+
+                                        <form onSubmit={handleAddMemory} className="space-y-3">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Judul momen..." 
+                                                value={newMemoryTitle}
+                                                onChange={(e) => setNewMemoryTitle(e.target.value)}
+                                                className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-accentBlue/40 transition-all placeholder-zinc-700"
+                                            />
+                                            <textarea 
+                                                rows="3"
+                                                placeholder="Ceritakan momen indah hari ini..." 
+                                                value={newMemoryContent}
+                                                onChange={(e) => setNewMemoryContent(e.target.value)}
+                                                className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-accentBlue/40 transition-all placeholder-zinc-700 resize-none"
+                                            ></textarea>
+                                            
+                                            <button 
+                                                type="submit"
+                                                className="w-full bg-accentBlue hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all active:scale-[0.98]"
+                                            >
+                                                Bagikan Kenangan
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                </div>
+
+                                {/* Right Panel: Timeline Memory list */}
+                                <div className="w-1/2 p-6 flex flex-col gap-6 overflow-y-auto">
+                                    <div className="flex justify-between items-center pb-3 border-b border-zinc-900">
+                                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                            <i className="fa-solid fa-clock-rotate-left"></i>
+                                            Timeline Plengeran Bersama
+                                        </h3>
+                                        <span className="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
+                                            {selectedDateMoments.length} Momen
+                                        </span>
+                                    </div>
+
+                                    {selectedDateMoments.length === 0 ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-cardBg border border-zinc-900 rounded-2xl py-16">
+                                            <i className="fa-solid fa-folder-open text-4xl text-zinc-700 mb-4"></i>
+                                            <h4 className="text-sm font-bold text-zinc-400 mb-1">Belum ada kenangan bersama</h4>
+                                            <p className="text-xs text-zinc-600 max-w-sm">
+                                                Ayo jadilah yang pertama membagikan kenangan indah Anda di kalender bersama ini pada tanggal {selectedDateStr}!
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {selectedDateMoments.map(moment => (
+                                                <div key={moment.id} className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl hover:border-zinc-700 transition-all">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <img src={moment.authorAvatar} className="w-9 h-9 rounded-full object-cover border border-zinc-700" alt="avatar" />
+                                                            <div>
+                                                                <h5 className="text-xs font-bold text-white">{moment.authorName}</h5>
+                                                                <span className="text-[10px] text-zinc-500">@{moment.authorUsername}</span>
+                                                            </div>
+                                                        </div>
+                                                        <span className="bg-[#1b2b3a] text-accentBlue text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
+                                                            {moment.dateStr}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="text-sm font-bold text-white mb-2">{moment.title}</h4>
+                                                    <p className="text-xs text-zinc-400 leading-relaxed whitespace-pre-line">{moment.content}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                            </div>
+                        )}
+
+                        {/* TAB 2: PESAN & TEMAN */}
+                        {activeTab === 'pesan' && (
+                            <div className="flex-1 flex overflow-hidden">
+                                
+                                {/* Middle Panel: Active Chats Directory & Search */}
+                                <div className="w-80 border-r border-zinc-900 flex flex-col overflow-hidden bg-black/40">
+                                    <div className="p-4 border-b border-zinc-900 space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                                <i className="fa-solid fa-paper-plane text-accentBlue"></i>
+                                                Ruang Obrolan
+                                            </h3>
+                                            <button 
+                                                onClick={handleClearDM}
+                                                className="text-[10px] font-bold text-red-500 bg-red-500/10 hover:bg-red-500/20 px-2.5 py-1 rounded-lg transition-all"
+                                            >
+                                                Bersihkan
+                                            </button>
+                                        </div>
+                                        
+                                        {/* Search Input bar */}
+                                        <div className="relative">
+                                            <i className="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-zinc-500"></i>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Cari nama pengguna..." 
+                                                value={chatSearchText}
+                                                onChange={(e) => setChatSearchText(e.target.value)}
+                                                className="w-full bg-[#121214] text-white border border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Chat Directory Lists */}
+                                    <div className="flex-1 overflow-y-auto p-2.5 space-y-3">
+                                        {/* Group Chat Header Entry */}
+                                        <button 
+                                            onClick={() => setActiveChat({ id: 'group', type: 'group' })}
+                                            className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
+                                                activeChat.id === 'group' 
+                                                    ? 'bg-[#1b2b3a]/50 border-accentBlue/40 text-white' 
+                                                    : 'bg-[#121214] border-zinc-900 hover:border-zinc-800'
+                                            }`}
+                                        >
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accentBlue to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shrink-0">
+                                                <i className="fa-solid fa-earth-asia text-sm"></i>
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex justify-between items-center mb-0.5">
+                                                    <span className="text-xs font-bold">Grup Publik Bersama</span>
+                                                    <span className="bg-accentBlue text-[8px] font-extrabold px-1.5 py-0.5 rounded text-white tracking-widest uppercase">GRUP</span>
+                                                </div>
+                                                <p className="text-[10px] text-zinc-500 truncate">Kirim pesan ke semua teman di sini!</p>
+                                            </div>
+                                        </button>
+
+                                        {/* Separator */}
+                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block px-2.5 pt-2">Pesan Pribadi (DM)</span>
+
+                                        {/* Mutual Friends lists for private messaging */}
+                                        {filteredUsersToChat.length === 0 ? (
+                                            <p className="text-[11px] text-zinc-600 italic px-2.5">Belum ada pengguna lain terdaftar.</p>
+                                        ) : (
+                                            <div className="space-y-1">
+                                                {filteredUsersToChat.map(user => {
+                                                    const followed = isFollowing(currentUser?.id, user.id);
+                                                    const mutual = isMutual(currentUser?.id, user.id);
+                                                    const isOnline = user.isOnline;
+
+                                                    return (
+                                                        <button 
+                                                            key={user.id}
+                                                            onClick={() => setActiveChat({ id: user.id, type: 'dm', data: user })}
+                                                            className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
+                                                                activeChat.id === user.id 
+                                                                    ? 'bg-[#1b2b3a]/50 border-accentBlue/40 text-white' 
+                                                                    : 'bg-transparent border-transparent hover:bg-zinc-900/50'
+                                                            }`}
+                                                        >
+                                                            <div className="relative shrink-0">
+                                                                <img src={user.avatar} className="w-10 h-10 rounded-full object-cover border border-zinc-800" alt="avatar" />
+                                                                <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-black rounded-full ${
+                                                                    isOnline ? 'bg-accentGreen' : 'bg-zinc-600'
+                                                                }`}></span>
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className="flex justify-between items-center mb-0.5">
+                                                                    <span className="text-xs font-bold text-white truncate">@{user.username}</span>
+                                                                    <span className="text-[9px] text-zinc-600">Aktif</span>
+                                                                </div>
+                                                                <p className="text-[10px] text-zinc-500 truncate">{user.fullName}</p>
+                                                                <div className="flex gap-1.5 mt-1">
+                                                                    {followed && (
+                                                                        <span className="bg-[#1b2b3a] text-[#0095f6] text-[8px] font-bold px-1.5 py-0.5 rounded">Diikuti</span>
+                                                                    )}
+                                                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${isOnline ? 'bg-green-950/40 text-accentGreen' : 'bg-zinc-900 text-zinc-500'}`}>
+                                                                        {isOnline ? 'Online' : 'Offline'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Right Panel: Message Exchange Space */}
+                                <div className="flex-1 flex flex-col overflow-hidden bg-black">
+                                    {/* Chat Header */}
+                                    <div className="p-4 border-b border-zinc-900 flex justify-between items-center bg-[#121214]">
+                                        <div className="flex items-center gap-3">
+                                            {activeChat.type === 'group' ? (
+                                                <React.Fragment>
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accentBlue to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
+                                                        <i className="fa-solid fa-earth-asia"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-sm font-bold text-white">Grup Publik Plengeran</h4>
+                                                        <p className="text-[10px] text-zinc-500 flex items-center gap-1.5">
+                                                            <span className="w-1.5 h-1.5 bg-accentGreen rounded-full"></span>
+                                                            Seluruh pengguna tersambung di sini
+                                                        </p>
+                                                    </div>
+                                                </React.Fragment>
+                                            ) : (
+                                                <React.Fragment>
+                                                    <img src={activeChat.data?.avatar} className="w-10 h-10 rounded-full object-cover border border-zinc-800" alt="avatar" />
+                                                    <div>
+                                                        <h4 className="text-sm font-bold text-white">@{activeChat.data?.username}</h4>
+                                                        <p className="text-[10px] text-zinc-500">{activeChat.data?.fullName}</p>
+                                                    </div>
+                                                </React.Fragment>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Chat logs */}
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                        {filteredMessages.length === 0 ? (
+                                            <div className="h-full flex flex-col items-center justify-center text-center text-zinc-600">
+                                                <i className="fa-solid fa-comments text-4xl mb-3"></i>
+                                                <p className="text-xs mb-2">Kirim pesan pertama untuk memulai obrolan!</p>
+                                                {activeChat.type === 'dm' && (
+                                                    <p className="text-[10px] text-zinc-500 max-w-xs">Pesan Anda akan langsung masuk secara privat dan real-time.</p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            filteredMessages.map((msg, index) => {
+                                                const isSelf = msg.senderId === currentUser?.id;
+                                                return (
+                                                    <div key={msg.id || index} className={`flex gap-3 max-w-[80%] ${isSelf ? 'ml-auto flex-row-reverse' : ''}`}>
+                                                        {!isSelf && (
+                                                            <img src={msg.senderAvatar} className="w-8 h-8 rounded-full object-cover self-end" alt="avatar" />
+                                                        )}
+                                                        <div>
+                                                            {!isSelf && activeChat.type === 'group' && (
+                                                                <span className="text-[9px] text-zinc-500 block mb-1">@{msg.senderUsername}</span>
+                                                            )}
+                                                            <div className={`p-3 rounded-2xl text-xs leading-relaxed whitespace-pre-line ${
+                                                                isSelf 
+                                                                    ? 'bg-accentBlue text-white rounded-br-none' 
+                                                                    : 'bg-[#121214] text-zinc-100 rounded-bl-none border border-zinc-900'
+                                                            }`}>
+                                                                {msg.text}
+                                                            </div>
+                                                            <span className="text-[8px] text-zinc-600 block mt-1 text-right">
+                                                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                        <div ref={chatEndRef}></div>
+                                    </div>
+
+                                    {/* Chat Message Box Inputs */}
+                                    <form onSubmit={handleSendMessage} className="p-4 bg-[#121214] border-t border-zinc-900 flex gap-3">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Ketik pesan..." 
+                                            value={messageInput}
+                                            onChange={(e) => setMessageInput(e.target.value)}
+                                            className="flex-1 bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
+                                        />
+                                        <button 
+                                            type="submit"
+                                            className="bg-accentBlue hover:bg-blue-600 text-white font-bold text-xs px-5 py-3 rounded-xl transition-all"
+                                        >
+                                            Kirim
+                                        </button>
+                                    </form>
+                                </div>
+
+                            </div>
+                        )}
+
+                        {/* TAB 3: PROFIL AKUN */}
+                        {activeTab === 'profil' && (
+                            <div className="flex-1 p-6 overflow-y-auto">
+                                
+                                <div className="max-w-xl mx-auto space-y-6">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2 pb-3 border-b border-zinc-900">
+                                        <i className="fa-solid fa-user-gear text-accentBlue"></i>
+                                        Profil Akun Anda
+                                    </h3>
+
+                                    {/* User Profil card */}
+                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                                        <div className="flex flex-col items-center text-center">
+                                            <div className="relative mb-4">
+                                                <img src={currentUser?.avatar} className="w-24 h-24 rounded-full object-cover border-4 border-zinc-800" alt="profile" />
+                                                <span className="absolute bottom-1 right-1 w-5 h-5 bg-accentGreen border-4 border-cardBg rounded-full"></span>
+                                            </div>
+
+                                            <h4 className="text-lg font-extrabold text-white mb-0.5">{currentUser?.fullName}</h4>
+                                            <p className="text-accentBlue text-xs font-semibold mb-2">@{currentUser?.username}</p>
+                                            
+                                            <div className="flex items-center gap-1 text-[11px] text-zinc-500 mb-5">
+                                                <span className="w-2 h-2 rounded-full bg-accentGreen animate-pulse"></span>
+                                                <span>Online</span>
+                                            </div>
+
+                                            {/* Count Statistics row */}
+                                            <div className="grid grid-cols-3 gap-6 w-full py-4 border-t border-b border-zinc-900 text-center">
+                                                <div>
+                                                    <span className="text-sm font-extrabold text-white block">{getMomentsContributionCount(currentUser?.id)}</span>
+                                                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Kontribusi Momen</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-sm font-extrabold text-white block">{getFollowersCount(currentUser?.id)}</span>
+                                                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Pengikut</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-sm font-extrabold text-white block">{getFollowingCount(currentUser?.id)}</span>
+                                                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Diikuti</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Biografi Box */}
+                                            <div className="w-full text-left bg-[#09090b] p-4 rounded-xl border border-zinc-900 mt-5 space-y-1">
+                                                <span className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block"><i className="fa-solid fa-feather mr-1.5 text-accentBlue"></i>Biografi</span>
+                                                <p className="text-xs text-zinc-400 italic leading-relaxed">{currentUser?.bio || "Tidak ada biografi ditulis."}</p>
+                                            </div>
+
+                                            {/* Edit Profil Button trigger */}
+                                            {!isEditingProfile ? (
+                                                <button 
+                                                    onClick={startEditProfile}
+                                                    className="w-full bg-[#1c1c1f] hover:bg-zinc-800 text-zinc-300 font-bold text-xs py-3 px-4 rounded-xl transition-all border border-zinc-800 mt-5"
+                                                >
+                                                    <i className="fa-solid fa-pen-to-square mr-2"></i>
+                                                    Edit Profil & Bio Anda
+                                                </button>
+                                            ) : (
+                                                <form onSubmit={handleSaveProfile} className="w-full mt-5 space-y-4 text-left border-t border-zinc-900 pt-5">
+                                                    <div>
+                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Nama Lengkap</label>
+                                                        <input 
+                                                            type="text" 
+                                                            value={editFullName}
+                                                            onChange={(e) => setEditFullName(e.target.value)}
+                                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Biografi (Bio)</label>
+                                                        <textarea 
+                                                            value={editBio}
+                                                            onChange={(e) => setEditBio(e.target.value)}
+                                                            rows="2"
+                                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue resize-none"
+                                                        ></textarea>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-2">Pilih Avatar Profil</label>
+                                                        <div className="flex justify-between bg-[#09090b] p-2 rounded-xl border border-zinc-900">
+                                                            {AVATARS.map((av, idx) => (
+                                                                <button
+                                                                    key={idx}
+                                                                    type="button"
+                                                                    onClick={() => setEditAvatar(av)}
+                                                                    className={`w-10 h-10 rounded-full overflow-hidden border-2 ${
+                                                                        editAvatar === av ? 'border-accentBlue scale-105' : 'border-transparent opacity-60'
+                                                                    }`}
+                                                                >
+                                                                    <img src={av} alt="avatar option" className="w-full h-full object-cover" />
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex gap-2">
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setIsEditingProfile(false)}
+                                                            className="flex-1 bg-zinc-900 text-zinc-400 font-bold text-xs py-2.5 px-4 rounded-xl border border-zinc-800"
+                                                        >
+                                                            Batal
+                                                        </button>
+                                                        <button 
+                                                            type="submit"
+                                                            className="flex-1 bg-accentBlue text-white font-bold text-xs py-2.5 px-4 rounded-xl"
+                                                        >
+                                                            Simpan
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Discover Users list */}
+                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h4 className="text-xs font-bold uppercase text-white tracking-wider flex items-center gap-2">
+                                                <i className="fa-solid fa-users text-accentBlue"></i>
+                                                Temukan Pengguna Lain
+                                            </h4>
+                                            
+                                            {/* Minimalistic search in profile directory */}
+                                            <input 
+                                                type="text" 
+                                                placeholder="Cari teman..." 
+                                                value={userSearchText}
+                                                onChange={(e) => setUserSearchText(e.target.value)}
+                                                className="bg-[#09090b] text-white border border-zinc-800 rounded-lg px-2.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-accentBlue w-36"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-3.5">
+                                            {filteredUsersToFollow.length === 0 ? (
+                                                <p className="text-xs text-zinc-600 italic">Belum ada pengguna lain terdaftar.</p>
+                                            ) : (
+                                                filteredUsersToFollow.map(user => {
+                                                    const following = isFollowing(currentUser?.id, user.id);
+                                                    const follower = isFollowing(user.id, currentUser?.id);
+                                                    const isOnline = user.isOnline;
+
+                                                    return (
+                                                        <div key={user.id} className="flex items-center justify-between p-3 bg-black/30 border border-zinc-900 rounded-xl hover:border-zinc-800 transition-all">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="relative">
+                                                                    <img src={user.avatar} className="w-10 h-10 rounded-full object-cover border border-zinc-800" alt="avatar" />
+                                                                    <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-black rounded-full ${
+                                                                        isOnline ? 'bg-accentGreen' : 'bg-zinc-600'
+                                                                    }`}></span>
+                                                                </div>
+                                                                <div>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-xs font-bold text-white">@{user.username}</span>
+                                                                        {follower && (
+                                                                            <span className="bg-zinc-800 text-zinc-500 text-[8px] font-bold px-1.5 py-0.2 rounded">Mengikuti Anda</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-[10px] text-zinc-500">{user.fullName}</p>
+                                                                </div>
+                                                            </div>
+
+                                                            <button 
+                                                                onClick={() => handleFollow(user.id)}
+                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                                    following 
+                                                                        ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300' 
+                                                                        : 'bg-accentBlue hover:bg-blue-600 text-white'
+                                                                }`}
+                                                            >
+                                                                {following ? 'Batal Ikuti' : 'Ikuti'}
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        )}
+
+                    </main>
+
+                    {/* STATUS DETAILS MODAL */}
+                    {showStatusModal && (
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in">
+                            <div className="bg-cardBg border border-zinc-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+                                <div className="text-center">
+                                    <div className="w-12 h-12 rounded-full bg-[#1b2b3a] text-accentBlue flex items-center justify-center text-xl mx-auto mb-3">
+                                        <i className="fa-solid fa-wifi"></i>
+                                    </div>
+                                    <h4 className="text-sm font-bold text-white mb-1">Status Sinkronisasi Jaringan</h4>
+                                    <p className="text-[11px] text-zinc-500">
+                                        Aplikasi ini berjalan dalam sinkronisasi optimal. Anda dapat berkirim pesan dan melihat status real-time secara instan.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2.5 bg-[#09090b] p-3 rounded-xl border border-zinc-900 text-[11px]">
+                                    <div className="flex justify-between">
+                                        <span className="text-zinc-500">Status Layanan:</span>
+                                        <span className="text-accentGreen font-bold flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 bg-accentGreen rounded-full"></span> Aktif Berjalan
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-zinc-500">Penyimpanan:</span>
+                                        <span className="text-zinc-400 font-mono">LocalStorage Sync / Cloud</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-zinc-500">Modus Enkripsi:</span>
+                                        <span className="text-zinc-400">Anonim Terverifikasi</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-zinc-900">
+                                    <button 
+                                        onClick={() => setShowStatusModal(false)}
+                                        className="w-full bg-accentBlue hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs transition-all"
+                                    >
+                                        Selesai & Tutup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Toast Notification */}
+                    {toastMessage && (
+                        <div className="fixed bottom-6 right-6 bg-[#1b2b3a] border border-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold tracking-wide transition-all z-50 flex items-center gap-2">
+                            <i className="fa-solid fa-circle-info text-accentBlue"></i>
+                            {toastMessage}
+                        </div>
+                    )}
+
+                </div>
+            );
+        }
+
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
 </body>
 </html>
