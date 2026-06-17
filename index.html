@@ -94,25 +94,30 @@
         editAvatar: '',
 
         // Feedback
-        networkStatus: 'Realtime Aktif',
+        isMock: false,
+        networkStatus: 'Menghubungkan...',
         toastMsg: null,
 
         // --- INIT & SINKRONISASI ---
         init() {
-          if (window.isMockFirebase) {
-            this.networkStatus = 'Mode Simulasi Lokal';
-          }
           // Atasi Race Condition: Jika modul Firebase siap sebelum init dijalankan
           if (window.fbMethods) {
-            this.setupAuthListener();
+            this.setupInitialState();
           } else {
             window.addEventListener('firebase-ready', () => {
-              if (window.isMockFirebase) {
-                this.networkStatus = 'Mode Simulasi Lokal';
-              }
-              this.setupAuthListener();
+              this.setupInitialState();
             });
           }
+        },
+
+        setupInitialState() {
+          this.isMock = !!window.isMockFirebase;
+          if (this.isMock) {
+            this.networkStatus = 'Mode Simulasi Lokal';
+          } else {
+            this.networkStatus = 'Cloud Online (Aktif)';
+          }
+          this.setupAuthListener();
         },
 
         triggerToast(msg) {
@@ -199,7 +204,7 @@
           });
 
           // Set online status jika berada di lingkungan cloud asli
-          if (!window.isMockFirebase) {
+          if (!this.isMock) {
             const myDocRef = doc(db, 'artifacts', window.appId, 'public', 'data', 'users', this.user.uid);
             updateDoc(myDocRef, { isOnline: true, lastActive: new Date().toISOString() }).catch(() => {});
           } else {
@@ -287,7 +292,7 @@
         async handleLogout() {
           const { signOut, doc, updateDoc } = window.fbMethods;
           if (this.user) {
-            if (!window.isMockFirebase) {
+            if (!this.isMock) {
               const userDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', this.user.uid);
               await updateDoc(userDocRef, { isOnline: false }).catch(() => {});
             } else {
@@ -683,10 +688,11 @@
       <div class="mt-8 border-t border-zinc-900 pt-6 space-y-4">
         <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Status Jaringan:</div>
         
-        <button @click="triggerToast('Koneksi database sinkron!')" class="w-full flex items-center justify-between bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 rounded-lg px-3 py-2 text-xs text-sky-400 font-medium transition">
+        <!-- Tombol Toast Status Jaringan -->
+        <button @click="triggerToast(isMock ? 'Kamu di Mode Simulasi Lokal. Buka tab baru/incognito di BROWSER YANG SAMA untuk menguji.' : 'Koneksi database cloud online aktif!')" class="w-full flex items-center justify-between bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 rounded-lg px-3 py-2 text-xs font-medium transition">
           <span class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span x-text="networkStatus"></span>
+            <span :class="isMock ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'" class="w-2 h-2 rounded-full"></span>
+            <span x-text="networkStatus" :class="isMock ? 'text-amber-400' : 'text-brand'"></span>
           </span>
         </button>
 
@@ -713,7 +719,7 @@
       
       <!-- TAB 1: MOMEN BERSAMA -->
       <template x-if="activeTab === 'momen'">
-        <div class="flex-1 p-4 md:p-8 grid grid-cols-1 xl:grid-cols-12 gap-8 overflow-y-auto">
+        <div class="flex-1 p-4 md:p-8 grid grid-cols-1 xl:grid-cols-12 gap-8 overflow-y-auto font-sans">
           <!-- Kolom Kiri -->
           <div class="xl:col-span-5 space-y-6">
             
@@ -1106,8 +1112,15 @@
     // --- FIREBASE INITIALIZATION SAFE GUARD ---
     try {
       // Periksa keberadaan konfigurasi Firebase bawaan sistem
-      if (typeof __firebase_config !== 'undefined' && __firebase_config && __firebase_config.trim() !== "") {
-        const firebaseConfig = JSON.parse(__firebase_config);
+      if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+        let firebaseConfig;
+        // Tangani format tipe Object atau String dari sistem cloud
+        if (typeof __firebase_config === 'object') {
+          firebaseConfig = __firebase_config;
+        } else {
+          firebaseConfig = JSON.parse(__firebase_config);
+        }
+
         if (firebaseConfig && firebaseConfig.apiKey) {
           app = initializeApp(firebaseConfig);
           auth = getAuth(app);
