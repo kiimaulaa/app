@@ -99,11 +99,17 @@
 
         // --- INIT & SINKRONISASI ---
         init() {
+          if (window.isMockFirebase) {
+            this.networkStatus = 'Mode Simulasi Lokal';
+          }
           // Atasi Race Condition: Jika modul Firebase siap sebelum init dijalankan
           if (window.fbMethods) {
             this.setupAuthListener();
           } else {
             window.addEventListener('firebase-ready', () => {
+              if (window.isMockFirebase) {
+                this.networkStatus = 'Mode Simulasi Lokal';
+              }
               this.setupAuthListener();
             });
           }
@@ -192,9 +198,17 @@
             this.scrollToChatBottom();
           });
 
-          // Set online status
-          const myDocRef = doc(db, 'artifacts', window.appId, 'public', 'data', 'users', this.user.uid);
-          updateDoc(myDocRef, { isOnline: true, lastActive: new Date().toISOString() }).catch(() => {});
+          // Set online status jika berada di lingkungan cloud asli
+          if (!window.isMockFirebase) {
+            const myDocRef = doc(db, 'artifacts', window.appId, 'public', 'data', 'users', this.user.uid);
+            updateDoc(myDocRef, { isOnline: true, lastActive: new Date().toISOString() }).catch(() => {});
+          } else {
+            const list = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
+            if (list[this.user.uid]) {
+              list[this.user.uid].isOnline = true;
+              localStorage.setItem('plenger_db_users', JSON.stringify(list));
+            }
+          }
 
           this.authLoading = false;
         },
@@ -273,8 +287,16 @@
         async handleLogout() {
           const { signOut, doc, updateDoc } = window.fbMethods;
           if (this.user) {
-            const userDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', this.user.uid);
-            await updateDoc(userDocRef, { isOnline: false }).catch(() => {});
+            if (!window.isMockFirebase) {
+              const userDocRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'users', this.user.uid);
+              await updateDoc(userDocRef, { isOnline: false }).catch(() => {});
+            } else {
+              const list = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
+              if (list[this.user.uid]) {
+                list[this.user.uid].isOnline = false;
+                localStorage.setItem('plenger_db_users', JSON.stringify(list));
+              }
+            }
           }
           await signOut(window.auth);
           this.user = null;
@@ -661,7 +683,7 @@
       <div class="mt-8 border-t border-zinc-900 pt-6 space-y-4">
         <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Status Jaringan:</div>
         
-        <button @click="triggerToast('Koneksi Firebase Cloud sinkron dan aktif!')" class="w-full flex items-center justify-between bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 rounded-lg px-3 py-2 text-xs text-sky-400 font-medium transition">
+        <button @click="triggerToast('Koneksi database sinkron!')" class="w-full flex items-center justify-between bg-zinc-950 hover:bg-zinc-900 border border-zinc-900 rounded-lg px-3 py-2 text-xs text-sky-400 font-medium transition">
           <span class="flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span x-text="networkStatus"></span>
@@ -1071,30 +1093,256 @@
     </main>
   </div>
 
-  <!-- FIREBASE INTEGRATION ENGINE -->
+  <!-- FIREBASE INTEGRATION ENGINE & FALLBACK SIMULATOR -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js';
     import { getAuth, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-auth.js';
     import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove } from 'https://www.gstatic.com/firebasejs/11.3.0/firebase-firestore.js';
 
-    // Ambil konfigurasi global sistem dari environment
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'plengergram-app-v2';
+    let app, auth, db;
+    let appId = 'plengergram-app-v2';
+    let isMock = false;
 
-    // Bagikan variabel penting ke Object global window agar Alpine.js bisa menggunakannya
-    window.db = db;
-    window.auth = auth;
-    window.appId = appId;
-    window.fbMethods = {
-      doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove,
-      createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInAnonymously, onAuthStateChanged
-    };
+    // --- FIREBASE INITIALIZATION SAFE GUARD ---
+    try {
+      // Periksa keberadaan konfigurasi Firebase bawaan sistem
+      if (typeof __firebase_config !== 'undefined' && __firebase_config && __firebase_config.trim() !== "") {
+        const firebaseConfig = JSON.parse(__firebase_config);
+        if (firebaseConfig && firebaseConfig.apiKey) {
+          app = initializeApp(firebaseConfig);
+          auth = getAuth(app);
+          db = getFirestore(app);
+          appId = typeof __app_id !== 'undefined' ? __app_id : 'plengergram-app-v2';
+        } else {
+          throw new Error("Konfigurasi Firebase tidak lengkap.");
+        }
+      } else {
+        throw new Error("Sistem konfigurasi Firebase tidak ditemukan.");
+      }
+    } catch (e) {
+      console.warn("Firebase Cloud tidak terdeteksi. Beralih ke Mode Simulasi Lokal (Offline Mode) dengan mulus!", e);
+      isMock = true;
+      setupMockFirebase();
+    }
 
-    // Trigger agar Alpine tahu Firebase sudah siap di-load
+    // --- SINKRONISASI GLOBAL METHODS ---
+    if (!isMock) {
+      window.db = db;
+      window.auth = auth;
+      window.appId = appId;
+      window.fbMethods = {
+        doc, setDoc, getDoc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove,
+        createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, signInAnonymously, onAuthStateChanged
+      };
+    }
+
+    // Trigger agar sistem UI (Alpine) tahu semua dependensi Firebase/Lokal telah terpasang sempurna
     window.dispatchEvent(new CustomEvent('firebase-ready'));
+
+    // --- MOCK DATABASE ENGINE (Fallback jika Firebase Cloud Offline / Bermasalah) ---
+    function setupMockFirebase() {
+      window.isMockFirebase = true;
+      window.auth = { currentUser: null };
+      window.db = {};
+      window.appId = 'local';
+      
+      const authListeners = [];
+      const firestoreListeners = {};
+
+      const mockAuth = {
+        currentUser: null,
+      };
+
+      window.fbMethods = {
+        onAuthStateChanged: (auth, callback) => {
+          authListeners.push(callback);
+          const localUser = JSON.parse(localStorage.getItem('plenger_local_user') || 'null');
+          if (localUser) {
+            mockAuth.currentUser = localUser;
+            callback(localUser);
+          } else {
+            callback(null);
+          }
+          return () => {};
+        },
+        createUserWithEmailAndPassword: async (auth, email, password) => {
+          const users = JSON.parse(localStorage.getItem('plenger_local_users') || '[]');
+          if (users.some(u => u.email === email)) {
+            throw new Error("Email sudah terdaftar!");
+          }
+          const uid = 'local_' + Math.random().toString(36).substr(2, 9);
+          const newUser = { uid, email };
+          users.push(newUser);
+          localStorage.setItem('plenger_local_users', JSON.stringify(users));
+          
+          mockAuth.currentUser = newUser;
+          localStorage.setItem('plenger_local_user', JSON.stringify(newUser));
+          authListeners.forEach(cb => cb(newUser));
+          return { user: newUser };
+        },
+        signInWithEmailAndPassword: async (auth, email, password) => {
+          const users = JSON.parse(localStorage.getItem('plenger_local_users') || '[]');
+          const user = users.find(u => u.email === email);
+          if (!user) {
+            throw new Error("Pengguna tidak ditemukan.");
+          }
+          mockAuth.currentUser = user;
+          localStorage.setItem('plenger_local_user', JSON.stringify(user));
+          authListeners.forEach(cb => cb(user));
+          return { user };
+        },
+        signOut: async (auth) => {
+          mockAuth.currentUser = null;
+          localStorage.removeItem('plenger_local_user');
+          authListeners.forEach(cb => cb(null));
+        },
+        signInAnonymously: async (auth) => {
+          return { user: null };
+        },
+        doc: (db, ...paths) => {
+          return { path: paths.join('/') };
+        },
+        setDoc: async (docRef, data) => {
+          const parts = docRef.path.split('/');
+          const collectionName = parts[parts.length - 2];
+          const docId = parts[parts.length - 1];
+          
+          if (collectionName === 'users') {
+            const users = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
+            users[docId] = data;
+            localStorage.setItem('plenger_db_users', JSON.stringify(users));
+            triggerLocalSnapshot('users');
+          }
+        },
+        getDoc: async (docRef) => {
+          const parts = docRef.path.split('/');
+          const collectionName = parts[parts.length - 2];
+          const docId = parts[parts.length - 1];
+          if (collectionName === 'users') {
+            const users = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
+            const data = users[docId];
+            return {
+              exists: () => !!data,
+              data: () => data
+            };
+          }
+          return { exists: () => false };
+        },
+        collection: (db, ...paths) => {
+          return { path: paths.join('/') };
+        },
+        onSnapshot: (collRef, callback) => {
+          const parts = collRef.path.split('/');
+          const collectionName = parts[parts.length - 1];
+          
+          if (!firestoreListeners[collectionName]) {
+            firestoreListeners[collectionName] = [];
+          }
+          firestoreListeners[collectionName].push(callback);
+
+          // Tarik data awal
+          sendLocalData(collectionName, callback);
+
+          return () => {
+            firestoreListeners[collectionName] = firestoreListeners[collectionName].filter(cb => cb !== callback);
+          };
+        },
+        addDoc: async (collRef, data) => {
+          const parts = collRef.path.split('/');
+          const collectionName = parts[parts.length - 1];
+          const id = 'doc_' + Math.random().toString(36).substr(2, 9);
+          
+          if (collectionName === 'moments') {
+            const list = JSON.parse(localStorage.getItem('plenger_db_moments') || '[]');
+            list.push({ id, ...data });
+            localStorage.setItem('plenger_db_moments', JSON.stringify(list));
+          } else if (collectionName === 'chats') {
+            const list = JSON.parse(localStorage.getItem('plenger_db_chats') || '[]');
+            list.push({ id, ...data });
+            localStorage.setItem('plenger_db_chats', JSON.stringify(list));
+          }
+          
+          triggerLocalSnapshot(collectionName);
+          return { id };
+        },
+        updateDoc: async (docRef, data) => {
+          const parts = docRef.path.split('/');
+          const collectionName = parts[parts.length - 2];
+          const docId = parts[parts.length - 1];
+          
+          if (collectionName === 'users') {
+            const users = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
+            if (users[docId]) {
+              for (let key in data) {
+                const val = data[key];
+                if (val && typeof val === 'object' && val.type === 'union') {
+                  const arr = users[docId][key] || [];
+                  if (!arr.includes(val.value)) arr.push(val.value);
+                  users[docId][key] = arr;
+                } else if (val && typeof val === 'object' && val.type === 'remove') {
+                  const arr = users[docId][key] || [];
+                  users[docId][key] = arr.filter(item => item !== val.value);
+                } else {
+                  users[docId][key] = val;
+                }
+              }
+              localStorage.setItem('plenger_db_users', JSON.stringify(users));
+              triggerLocalSnapshot('users');
+            }
+          }
+        },
+        deleteDoc: async (docRef) => {
+          const parts = docRef.path.split('/');
+          const collectionName = parts[parts.length - 2];
+          const docId = parts[parts.length - 1];
+          
+          if (collectionName === 'moments') {
+            let list = JSON.parse(localStorage.getItem('plenger_db_moments') || '[]');
+            list = list.filter(item => item.id !== docId);
+            localStorage.setItem('plenger_db_moments', JSON.stringify(list));
+            triggerLocalSnapshot('moments');
+          } else if (collectionName === 'chats') {
+            let list = JSON.parse(localStorage.getItem('plenger_db_chats') || '[]');
+            list = list.filter(item => item.id !== docId);
+            localStorage.setItem('plenger_db_chats', JSON.stringify(list));
+            triggerLocalSnapshot('chats');
+          }
+        },
+        arrayUnion: (val) => {
+          return { type: 'union', value: val };
+        },
+        arrayRemove: (val) => {
+          return { type: 'remove', value: val };
+        }
+      };
+
+      function sendLocalData(collectionName, callback) {
+        let docs = [];
+        if (collectionName === 'users') {
+          const users = JSON.parse(localStorage.getItem('plenger_db_users') || '{}');
+          docs = Object.values(users).map(u => ({ data: () => u }));
+        } else if (collectionName === 'moments') {
+          const list = JSON.parse(localStorage.getItem('plenger_db_moments') || '[]');
+          docs = list.map(item => ({ id: item.id, data: () => item }));
+        } else if (collectionName === 'chats') {
+          const list = JSON.parse(localStorage.getItem('plenger_db_chats') || '[]');
+          docs = list.map(item => ({ id: item.id, data: () => item }));
+        }
+        
+        callback({
+          forEach: (cb) => {
+            docs.forEach(doc => cb(doc));
+          }
+        });
+      }
+
+      function triggerLocalSnapshot(collectionName) {
+        const listeners = firestoreListeners[collectionName] || [];
+        listeners.forEach(callback => {
+          sendLocalData(collectionName, callback);
+        });
+      }
+    }
   </script>
 </body>
 </html>
