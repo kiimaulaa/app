@@ -1,1576 +1,1004 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlengerGram - Kalender & Timeline Bersama</title>
+    <title>ayyaa & ikii</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#09090b',
-                        cardBg: '#121214',
-                        borderBg: '#1c1c1f',
-                        accentBlue: '#0095f6',
-                        accentGreen: '#22c55e',
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Playfair Display untuk judul, Plus Jakarta Sans untuk teks membaca -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #09090b;
-            color: #f4f4f5;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f7f3ed; /* Krem hangat sesuai gambar */
+            color: #4a3e3d;
         }
-        /* Custom scrollbar styling */
+        .font-serif-aesthetic {
+            font-family: 'Playfair Display', serif;
+        }
+        .font-handwritten {
+            font-family: 'Caveat', cursive;
+        }
+        /* Custom scrollbar estetik */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: #09090b;
+            background: #f7f3ed;
         }
         ::-webkit-scrollbar-thumb {
-            background: #27272a;
+            background: #e2d3c5;
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #3f3f46;
+            background: #d0beae;
+        }
+        /* Efek transisi halus */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Animasi getar untuk input password salah */
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
         }
     </style>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- React and ReactDOM UMD -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <!-- Babel for JSX Compilation -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- Configure Custom Babel Preset to Force Classic JSX Runtime -->
-    <script>
-        Babel.registerPreset('custom-react-preset', {
-            presets: [
-                [Babel.availablePresets['env'], { modules: false }],
-                [Babel.availablePresets['react'], { runtime: 'classic' }]
-            ]
-        });
-    </script>
-
-    <!-- Firebase Compat SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
-<body class="overflow-hidden h-screen w-screen">
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-[#e79e8c] selection:text-white pb-24">
 
-    <div id="root" class="h-full w-full"></div>
+    <!-- ================= PASWORD GATE / LANDING ================= -->
+    <div id="password-gate" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#f7f3ed] px-6">
+        <div id="password-card" class="max-w-md w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-8 shadow-sm text-center space-y-8 fade-in">
+            <!-- Dekorasi Notebook Ring di bagian atas gate -->
+            <div class="flex justify-center space-x-2 -mt-4 mb-2">
+                <span class="w-3 h-3 rounded-full bg-[#cbd5e1] inline-block shadow-inner"></span>
+                <span class="w-3 h-3 rounded-full bg-[#cbd5e1] inline-block shadow-inner"></span>
+                <span class="w-3 h-3 rounded-full bg-[#cbd5e1] inline-block shadow-inner"></span>
+            </div>
+            
+            <div class="space-y-3">
+                <h1 class="text-3xl font-serif-aesthetic text-[#bd7a6b] font-semibold tracking-wide">Couplegram</h1>
+                <p class="text-sm text-gray-500 font-light">Masukkin pin-nya sayangg..✨</p>
+            </div>
 
-    <script type="text/babel" data-presets="custom-react-preset">
-        /** @jsx React.createElement */
-        /** @jsxFrag React.Fragment */
-        const { useState, useEffect, useRef, useMemo } = React;
+            <div class="space-y-4">
+                <input type="password" id="password-input" placeholder="******" 
+                    class="w-full px-5 py-3 rounded-xl border border-[#e3d5c8] bg-[#fbf9f6] text-center tracking-widest focus:ring-2 focus:ring-[#e79e8c] focus:outline-none transition-all placeholder:tracking-normal placeholder:text-gray-300 text-lg">
+                <button onclick="checkPassword()" 
+                    class="w-full bg-[#e79e8c] text-white py-3 rounded-xl font-medium tracking-wide shadow-sm hover:bg-[#db8d7b] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+                    Buka Jurnal Kita <i data-lucide="heart" class="w-4 h-4 fill-current"></i>
+                </button>
+                <p id="password-error" class="text-xs text-red-400 font-light hidden">Kode salah sayang, coba diingat-ingat lagi.. 🥺</p>
+            </div>
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'plengergram-prod';
+            <div class="text-xs text-gray-400 pt-4 border-t border-[#f3eae1] font-light">
+                From Us to Us
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN WEBSITE CONTENT (HIDDEN UNTIL LOGIN) ================= -->
+    <div id="main-content" class="hidden min-h-screen flex flex-col">
         
-        // Safe Fallback Firebase Config
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "mock-api-key",
-                authDomain: "mock-auth-domain",
-                projectId: "mock-project",
-                storageBucket: "mock-storage",
-                messagingSenderId: "mock-sender",
-                appId: "mock-app"
-            };
+        <!-- HEADER / NAVIGATION (INSTAGRAM STYLE TOP BAR) -->
+        <header class="sticky top-0 z-40 bg-[#f7f3ed]/90 backdrop-blur-md border-b border-[#ebdcd0]">
+            <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl font-serif-aesthetic font-semibold text-[#bd7a6b] tracking-wider cursor-pointer" onclick="switchTab('home')">ayyaa & ikii</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-[#f1e4d8] text-[#8e766e] font-medium">journal</span>
+                </div>
+                <!-- Instagram Top Icons -->
+                <div class="flex items-center space-x-5 text-[#8e766e]">
+                    <button onclick="switchTab('profile')" class="hover:text-[#bd7a6b] transition-colors relative" title="Momen Spesial">
+                        <i data-lucide="heart" class="w-6 h-6"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-400"></span>
+                    </button>
+                    <button onclick="switchTab('chat')" class="hover:text-[#bd7a6b] transition-colors relative" title="Pesan Cinta">
+                        <i data-lucide="message-circle" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
 
-        // Check if we should force local storage demo mode
-        const isMockConfig = !firebaseConfig || firebaseConfig.apiKey === "mock-api-key" || firebaseConfig.projectId.includes("mock");
+        <!-- CONTAINER JURNAL -->
+        <main class="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 py-8">
 
-        // Presets for gorgeous user avatars
-        const AVATARS = [
-            "https://placehold.co/150x150/ff4b4b/ffffff?text=👧", // Ayyaa avatar
-            "https://placehold.co/150x150/4b93ff/ffffff?text=👦", // Ikii avatar
-            "https://placehold.co/150x150/4bff6a/ffffff?text=🦊",
-            "https://placehold.co/150x150/ffd84b/ffffff?text=🦁",
-            "https://placehold.co/150x150/d24bff/ffffff?text=🐱",
-            "https://placehold.co/150x150/4bffeb/ffffff?text=🐼"
-        ];
-
-        // Dua akun tetap wajib (ayyaa_ & ikii_)
-        const SEED_USERS = [
-            {
-                id: "fixed-user-ayyaa",
-                username: "ayyaa_",
-                fullName: "Ayyaa",
-                password: "123456",
-                avatar: AVATARS[0],
-                bio: "Let's capture our beautiful moments together ✨",
-                isOnline: false,
-                lastActive: Date.now(),
-                createdAt: Date.now()
-            },
-            {
-                id: "fixed-user-ikii",
-                username: "ikii_",
-                fullName: "Ikii",
-                password: "123456",
-                avatar: AVATARS[1],
-                bio: "Always here to share and remember 💫",
-                isOnline: false,
-                lastActive: Date.now(),
-                createdAt: Date.now()
-            }
-        ];
-
-        // Hubungan saling mengikuti bawaan agar langsung bisa DM-an
-        const SEED_CONNECTIONS = [
-            {
-                id: "fixed-user-ayyaa_fixed-user-ikii",
-                from: "fixed-user-ayyaa",
-                to: "fixed-user-ikii",
-                timestamp: Date.now(),
-                removed: false
-            },
-            {
-                id: "fixed-user-ikii_fixed-user-ayyaa",
-                from: "fixed-user-ikii",
-                to: "fixed-user-ayyaa",
-                timestamp: Date.now(),
-                removed: false
-            }
-        ];
-
-        const getLocalStorageData = (key, defaultValue) => {
-            try {
-                const val = localStorage.getItem(key);
-                return val ? JSON.parse(val) : defaultValue;
-            } catch (e) {
-                return defaultValue;
-            }
-        };
-
-        const saveLocalStorageData = (key, data) => {
-            try {
-                localStorage.setItem(key, JSON.stringify(data));
-            } catch (e) {}
-        };
-
-        // Initialize Firebase services outside App
-        let firestoreDb = null;
-        let authInstance = null;
-        let isFirebaseActive = false;
-
-        try {
-            const fb = window.firebase;
-            if (fb && !isMockConfig) {
-                let app;
-                if (fb.apps.length === 0) {
-                    app = fb.initializeApp(firebaseConfig);
-                } else {
-                    app = fb.app();
-                }
-                firestoreDb = app.firestore();
-                authInstance = app.auth();
-                isFirebaseActive = true;
-            }
-        } catch (err) {
-            console.warn("Firebase was not initialized, operating in local-sync mode:", err);
-            isFirebaseActive = false;
-        }
-
-        function App() {
-            const [screen, setScreen] = useState('auth');
-            const [activeTab, setActiveTab] = useState('momen');
-            const [authLoading, setAuthLoading] = useState(isFirebaseActive);
-
-            // Login Form Fields
-            const [loginUsername, setLoginUsername] = useState('');
-            const [loginPassword, setLoginPassword] = useState('');
-
-            // Safe States directly initialized with guarantees
-            const [currentUser, setCurrentUser] = useState(() => getLocalStorageData('plengergram_current_user', null)); 
-            
-            const [users, setUsers] = useState(() => {
-                const localUsers = getLocalStorageData('plengergram_users', []);
-                // Pastikan akun wajib selalu ada di local storage jika kosong
-                if (localUsers.length === 0) {
-                    return SEED_USERS;
-                }
-                // Memastikan ayyaa_ dan ikii_ tidak terhapus secara tidak sengaja
-                const merged = [...localUsers];
-                SEED_USERS.forEach(seed => {
-                    if (!merged.some(u => u.username === seed.username)) {
-                        merged.push(seed);
-                    }
-                });
-                return merged;
-            });
-
-            const [connections, setConnections] = useState(() => {
-                const localConns = getLocalStorageData('plengergram_connections', []);
-                if (localConns.length === 0) {
-                    return SEED_CONNECTIONS;
-                }
-                return localConns;
-            }); 
-
-            const [timeline, setTimeline] = useState(() => getLocalStorageData('plengergram_timeline', [
-                {
-                    id: 'seed-1',
-                    authorId: 'system',
-                    authorName: 'Sistem PlengerGram',
-                    authorUsername: 'system',
-                    authorAvatar: 'https://placehold.co/150x150/0095f6/ffffff?text=📢',
-                    dateStr: '2026-06-17',
-                    title: 'Selamat Datang di PlengerGram!',
-                    content: 'Aplikasi kalender memori terpadu ini telah siap digunakan. Silakan masuk menggunakan akun tetap Anda untuk mulai mengabadikan momen!',
-                    timestamp: Date.now() - 3600000
-                }
-            ])); 
-
-            const [messages, setMessages] = useState(() => getLocalStorageData('plengergram_messages', [])); 
-            
-            const [activeChat, setActiveChat] = useState({ id: 'group', type: 'group' }); 
-            const [chatSearchText, setChatSearchText] = useState('');
-            const [userSearchText, setUserSearchText] = useState('');
-            const [toastMessage, setToastMessage] = useState('');
-
-            // Calendar Navigation State (Current date set to today in 2026)
-            const [currentDate, setCurrentDate] = useState(new Date(2026, 5, 17)); 
-            const [selectedDateStr, setSelectedDateStr] = useState('2026-06-17');
-
-            // Messages & Posting Inputs
-            const [messageInput, setMessageInput] = useState('');
-            const [newMemoryTitle, setNewMemoryTitle] = useState('');
-            const [newMemoryContent, setNewMemoryContent] = useState('');
-
-            // Profile Editor states
-            const [isEditingProfile, setIsEditingProfile] = useState(false);
-            const [editFullName, setEditFullName] = useState('');
-            const [editBio, setEditBio] = useState('');
-            const [editAvatar, setEditAvatar] = useState('');
-
-            const [showStatusModal, setShowStatusModal] = useState(false);
-            const chatEndRef = useRef(null);
-
-            // Firebase authentication state
-            const [fbUser, setFbUser] = useState(null);
-
-            useEffect(() => {
-                // Autoredirect to main page if user is logged in
-                if (currentUser) {
-                    setScreen('app');
-                }
-
-                if (!isFirebaseActive || !authInstance) {
-                    setAuthLoading(false);
-                    return;
-                }
-
-                const initAuth = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await authInstance.signInWithCustomToken(__initial_auth_token);
-                        } else {
-                            await authInstance.signInAnonymously();
-                        }
-                    } catch (err) {
-                        console.error("Anonym auth error:", err);
-                    } finally {
-                        setAuthLoading(false);
-                    }
-                };
-                initAuth();
-
-                const unsubscribeAuth = authInstance.onAuthStateChanged((user) => {
-                    if (user) {
-                        setFbUser(user);
-                    }
-                });
-
-                return () => unsubscribeAuth();
-            }, []);
-
-            // Handle Cloud Firestore Live sync listeners (Rule 1 Compliant)
-            useEffect(() => {
-                if (!isFirebaseActive || !firestoreDb || !fbUser) return;
-
-                // Live user list updates
-                const unsubscribeUsers = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').onSnapshot((snapshot) => {
-                    const loadedUsers = [];
-                    snapshot.forEach(doc => {
-                        loadedUsers.push({ id: doc.id, ...doc.data() });
-                    });
+            <!-- ================= HOME SECTION (Notebook Style) ================= -->
+            <section id="home-sec" class="fade-in space-y-6">
+                <!-- Outer Binder Page Container -->
+                <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 sm:p-10 shadow-sm relative overflow-hidden">
                     
-                    // Jamin akun wajib selalu ada di database cloud jika belum dibuat
-                    if (loadedUsers.length > 0) {
-                        const merged = [...loadedUsers];
-                        SEED_USERS.forEach(seed => {
-                            if (!merged.some(u => u.username === seed.username)) {
-                                merged.push(seed);
-                                // Daftarkan langsung ke cloud
-                                firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(seed.id).set(seed);
-                            }
-                        });
-                        setUsers(merged);
-                    } else {
-                        // Jika cloud masih kosong, inisialisasi dengan seed
-                        SEED_USERS.forEach(seed => {
-                            firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(seed.id).set(seed);
-                        });
-                        setUsers(SEED_USERS);
-                    }
-
-                    if (currentUser) {
-                        const updatedSelf = loadedUsers.find(u => u.id === currentUser.id);
-                        if (updatedSelf) {
-                            setCurrentUser(updatedSelf);
-                        }
-                    }
-                }, (error) => {
-                    console.error("Live Users error:", error);
-                });
-
-                // Live follow relationship updates
-                const unsubscribeConn = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').onSnapshot((snapshot) => {
-                    const loadedConns = [];
-                    snapshot.forEach(doc => {
-                        loadedConns.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    if (loadedConns.length > 0) {
-                        setConnections(loadedConns);
-                    } else {
-                        // Inisialisasi koneksi default di cloud
-                        SEED_CONNECTIONS.forEach(conn => {
-                            firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').doc(conn.id).set(conn);
-                        });
-                        setConnections(SEED_CONNECTIONS);
-                    }
-                }, (error) => {
-                    console.error("Live Connections error:", error);
-                });
-
-                // Live Shared Memories (Calendar timeline)
-                const unsubscribeTimeline = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('timeline').onSnapshot((snapshot) => {
-                    const loadedMemories = [];
-                    snapshot.forEach(doc => {
-                        loadedMemories.push({ id: doc.id, ...doc.data() });
-                    });
-                    const merged = [
-                        {
-                            id: 'seed-1',
-                            authorId: 'system',
-                            authorName: 'Sistem PlengerGram',
-                            authorUsername: 'system',
-                            authorAvatar: 'https://placehold.co/150x150/0095f6/ffffff?text=📢',
-                            dateStr: '2026-06-17',
-                            title: 'Selamat Datang di PlengerGram!',
-                            content: 'Aplikasi kalender memori terpadu ini telah siap digunakan. Silakan masuk menggunakan akun tetap Anda untuk mulai mengabadikan momen!',
-                            timestamp: Date.now() - 3600000
-                        },
-                        ...loadedMemories
-                    ];
-                    const unique = merged.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-                    unique.sort((a, b) => b.timestamp - a.timestamp);
-                    setTimeline(unique);
-                }, (error) => {
-                    console.error("Live Timeline error:", error);
-                });
-
-                // Live messaging
-                const unsubscribeMessages = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').onSnapshot((snapshot) => {
-                    const loadedMsgs = [];
-                    snapshot.forEach(doc => {
-                        loadedMsgs.push({ id: doc.id, ...doc.data() });
-                    });
-                    loadedMsgs.sort((a, b) => a.timestamp - b.timestamp);
-                    setMessages(loadedMsgs);
-                }, (error) => {
-                    console.error("Live Messages error:", error);
-                });
-
-                return () => {
-                    unsubscribeUsers();
-                    unsubscribeConn();
-                    unsubscribeTimeline();
-                    unsubscribeMessages();
-                };
-            }, [fbUser]);
-
-            // Save state modifications locally when operating in fallback sync mode
-            useEffect(() => {
-                if (!isFirebaseActive) {
-                    saveLocalStorageData('plengergram_users', users);
-                }
-            }, [users]);
-
-            useEffect(() => {
-                if (!isFirebaseActive) {
-                    saveLocalStorageData('plengergram_connections', connections);
-                }
-            }, [connections]);
-
-            useEffect(() => {
-                if (!isFirebaseActive) {
-                    saveLocalStorageData('plengergram_timeline', timeline);
-                }
-            }, [timeline]);
-
-            useEffect(() => {
-                if (!isFirebaseActive) {
-                    saveLocalStorageData('plengergram_messages', messages);
-                }
-            }, [messages]);
-
-            useEffect(() => {
-                if (currentUser) {
-                    saveLocalStorageData('plengergram_current_user', currentUser);
-                } else {
-                    localStorage.removeItem('plengergram_current_user');
-                }
-            }, [currentUser]);
-
-            // Multi-tab synchronization listener
-            useEffect(() => {
-                const handleStorageChange = (e) => {
-                    if (isFirebaseActive) return;
-                    try {
-                        if (e.key === 'plengergram_users' && e.newValue) {
-                            setUsers(JSON.parse(e.newValue));
-                        }
-                        if (e.key === 'plengergram_connections' && e.newValue) {
-                            setConnections(JSON.parse(e.newValue));
-                        }
-                        if (e.key === 'plengergram_timeline' && e.newValue) {
-                            setTimeline(JSON.parse(e.newValue));
-                        }
-                        if (e.key === 'plengergram_messages' && e.newValue) {
-                            setMessages(JSON.parse(e.newValue));
-                        }
-                        if (e.key === 'plengergram_current_user') {
-                            setCurrentUser(e.newValue ? JSON.parse(e.newValue) : null);
-                        }
-                    } catch (err) {}
-                };
-                window.addEventListener('storage', handleStorageChange);
-                return () => window.removeEventListener('storage', handleStorageChange);
-            }, []);
-
-            // Toast helper
-            const showToast = (msg) => {
-                setToastMessage(msg);
-                setTimeout(() => setToastMessage(''), 3500);
-            };
-
-            // Scroll to end of DM pane
-            useEffect(() => {
-                if (chatEndRef.current) {
-                    chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-                }
-            }, [messages, activeChat]);
-
-            const handleLogin = async (e) => {
-                e.preventDefault();
-                if (!loginUsername || !loginPassword) {
-                    showToast("Harap masukkan nama pengguna dan kata sandi!");
-                    return;
-                }
-                const cleanUsername = loginUsername.toLowerCase().trim();
-                const matchedUser = users.find(u => u.username === cleanUsername);
-
-                if (!matchedUser) {
-                    showToast("Nama Pengguna tidak terdaftar!");
-                    return;
-                }
-
-                if (matchedUser.password !== loginPassword) {
-                    showToast("Kata Sandi tidak cocok!");
-                    return;
-                }
-
-                // Update online status
-                const updatedUser = { ...matchedUser, isOnline: true, lastActive: Date.now() };
-                setCurrentUser(updatedUser);
-                
-                if (isFirebaseActive && firestoreDb) {
-                    await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(updatedUser.id).set(updatedUser);
-                } else {
-                    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-                }
-
-                showToast(`Selamat datang kembali, @${updatedUser.username}!`);
-                setScreen('app');
-                setActiveTab('momen');
-            };
-
-            const handleLogout = async () => {
-                if (currentUser) {
-                    const offlineUser = { ...currentUser, isOnline: false, lastActive: Date.now() };
-                    if (isFirebaseActive && firestoreDb) {
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(currentUser.id).set(offlineUser);
-                    } else {
-                        setUsers(prev => prev.map(u => u.id === currentUser.id ? offlineUser : u));
-                    }
-                }
-                setCurrentUser(null);
-                setScreen('auth');
-                showToast("Anda telah keluar akun.");
-            };
-
-            const handleFollow = async (targetUserId) => {
-                if (!currentUser) return;
-                
-                // Mencegah perubahan relasi pada akun wajib ayyaa_ dan ikii_ agar selalu tersambung
-                if ((currentUser.id === 'fixed-user-ayyaa' && targetUserId === 'fixed-user-ikii') ||
-                    (currentUser.id === 'fixed-user-ikii' && targetUserId === 'fixed-user-ayyaa')) {
-                    showToast("Koneksi ini bersifat permanen dan tidak dapat diubah.");
-                    return;
-                }
-
-                const connectionId = `${currentUser.id}_${targetUserId}`;
-                const alreadyFollowing = connections.some(c => c.from === currentUser.id && c.to === targetUserId && !c.removed);
-
-                try {
-                    if (isFirebaseActive && firestoreDb) {
-                        const connRef = firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('connections').doc(connectionId);
-                        if (alreadyFollowing) {
-                            await connRef.set({ id: connectionId, from: currentUser.id, to: targetUserId, removed: true });
-                            showToast("Berhenti mengikuti.");
-                        } else {
-                            await connRef.set({
-                                id: connectionId,
-                                from: currentUser.id,
-                                to: targetUserId,
-                                timestamp: Date.now(),
-                                removed: false
-                            });
-                            showToast("Berhasil mengikuti!");
-                        }
-                    } else {
-                        let updated;
-                        if (alreadyFollowing) {
-                            updated = connections.map(c => c.id === connectionId ? { ...c, removed: true } : c);
-                            showToast("Berhenti mengikuti.");
-                        } else {
-                            const newConn = { id: connectionId, from: currentUser.id, to: targetUserId, removed: false, timestamp: Date.now() };
-                            updated = [...connections.filter(c => c.id !== connectionId), newConn];
-                            showToast("Berhasil mengikuti!");
-                        }
-                        setConnections(updated);
-                        saveLocalStorageData('plengergram_connections', updated);
-                    }
-                } catch (err) {
-                    console.error("Connection follow error:", err);
-                }
-            };
-
-            const isFollowing = (fromId, toId) => {
-                return connections.some(c => c.from === fromId && c.to === toId && !c.removed);
-            };
-
-            const isMutual = (userId1, userId2) => {
-                return isFollowing(userId1, userId2) && isFollowing(userId2, userId1);
-            };
-
-            const getFollowersCount = (userId) => {
-                return connections.filter(c => c.to === userId && !c.removed).length;
-            };
-
-            const getFollowingCount = (userId) => {
-                return connections.filter(c => c.from === userId && !c.removed).length;
-            };
-
-            const getMomentsContributionCount = (userId) => {
-                return timeline.filter(m => m.authorId === userId).length;
-            };
-
-            const getDaysInMonth = (year, month) => {
-                return new Date(year, month + 1, 0).getDate();
-            };
-
-            const generateCalendarDays = () => {
-                const year = currentDate.getFullYear();
-                const month = currentDate.getMonth();
-                const totalDays = getDaysInMonth(year, month);
-                const firstDayIndex = new Date(year, month, 1).getDay();
-                
-                const days = [];
-                for (let i = 0; i < firstDayIndex; i++) {
-                    days.push({ day: null, dateStr: null });
-                }
-
-                for (let d = 1; d <= totalDays; d++) {
-                    const dayStr = String(d).padStart(2, '0');
-                    const monthStr = String(month + 1).padStart(2, '0');
-                    const dateStr = `${year}-${monthStr}-${dayStr}`;
-                    days.push({ day: d, dateStr });
-                }
-
-                return days;
-            };
-
-            const handlePrevMonth = () => {
-                setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-            };
-
-            const handleNextMonth = () => {
-                setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-            };
-
-            const getMonthNameIndonesian = (monthIndex) => {
-                const months = [
-                    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-                ];
-                return months[monthIndex];
-            };
-
-            const handleAddMemory = async (e) => {
-                e.preventDefault();
-                if (!newMemoryTitle || !newMemoryContent) {
-                    showToast("Harap isi judul dan konten kenangan Anda!");
-                    return;
-                }
-
-                try {
-                    const memoryData = {
-                        authorId: currentUser?.id,
-                        authorName: currentUser?.fullName,
-                        authorUsername: currentUser?.username,
-                        authorAvatar: currentUser?.avatar,
-                        dateStr: selectedDateStr,
-                        title: newMemoryTitle,
-                        content: newMemoryContent,
-                        timestamp: Date.now()
-                    };
-
-                    if (isFirebaseActive && firestoreDb) {
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('timeline').add(memoryData);
-                    } else {
-                        const updated = [ { id: `local-${Date.now()}`, ...memoryData }, ...timeline ];
-                        setTimeline(updated);
-                        saveLocalStorageData('plengergram_timeline', updated);
-                    }
-
-                    setNewMemoryTitle('');
-                    setNewMemoryContent('');
-                    showToast("Kenangan indah Anda berhasil dibagikan!");
-                } catch (err) {
-                    console.error("Memory upload error:", err);
-                    showToast("Gagal menyimpan kenangan.");
-                }
-            };
-
-            const handleSendMessage = async (e) => {
-                e.preventDefault();
-                if (!messageInput.trim()) return;
-
-                const textToSend = messageInput.trim();
-                setMessageInput('');
-
-                try {
-                    const msgPayload = {
-                        id: `msg-${Date.now()}`,
-                        senderId: currentUser?.id,
-                        senderName: currentUser?.fullName,
-                        senderUsername: currentUser?.username,
-                        senderAvatar: currentUser?.avatar,
-                        text: textToSend,
-                        timestamp: Date.now(),
-                        isGroup: activeChat.type === 'group',
-                        receiverId: activeChat.type === 'dm' ? activeChat.id : 'group'
-                    };
-
-                    if (isFirebaseActive && firestoreDb) {
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('messages').add(msgPayload);
-                    } else {
-                        const updated = [...messages, msgPayload];
-                        setMessages(updated);
-                        saveLocalStorageData('plengergram_messages', updated);
-                    }
-
-                } catch (err) {
-                    console.error("Message send failed:", err);
-                }
-            };
-
-            const filteredMessages = useMemo(() => {
-                if (activeChat.type === 'group') {
-                    return messages.filter(m => m.isGroup);
-                } else {
-                    return messages.filter(m => !m.isGroup && (
-                        (m.senderId === currentUser?.id && m.receiverId === activeChat.id) ||
-                        (m.senderId === activeChat.id && m.receiverId === currentUser?.id)
-                    ));
-                }
-            }, [messages, activeChat, currentUser?.id]);
-
-            const handleClearDM = () => {
-                if (isFirebaseActive && firestoreDb) {
-                    showToast("Pembersihan chat global dinonaktifkan dalam sistem cloud.");
-                    return;
-                }
-                setMessages([]);
-                saveLocalStorageData('plengergram_messages', []);
-                showToast("Tampilan pesan dibersihkan.");
-            };
-
-            const handleSaveProfile = async (e) => {
-                e.preventDefault();
-                if (!editFullName) {
-                    showToast("Nama tidak boleh kosong!");
-                    return;
-                }
-
-                try {
-                    const updatedFields = {
-                        fullName: editFullName,
-                        bio: editBio,
-                        avatar: editAvatar
-                    };
-
-                    if (isFirebaseActive && firestoreDb) {
-                        await firestoreDb.collection('artifacts').doc(appId).collection('public').doc('data').collection('users').doc(currentUser?.id).update(updatedFields);
-                    }
-
-                    const updatedUser = { ...currentUser, ...updatedFields };
-                    setCurrentUser(updatedUser);
-                    setUsers(prev => prev.map(u => u.id === currentUser?.id ? { ...u, ...updatedFields } : u));
-                    setIsEditingProfile(false);
-                    showToast("Profil berhasil diperbarui!");
-                } catch (err) {
-                    console.error("Profile modification failed:", err);
-                }
-            };
-
-            const startEditProfile = () => {
-                setEditFullName(currentUser?.fullName || '');
-                setEditBio(currentUser?.bio || '');
-                setEditAvatar(currentUser?.avatar || AVATARS[0]);
-                setIsEditingProfile(true);
-            };
-
-            const filteredUsersToChat = useMemo(() => {
-                return users.filter(u => u.id !== currentUser?.id && 
-                    (u.fullName.toLowerCase().includes(chatSearchText.toLowerCase()) || 
-                     u.username.toLowerCase().includes(chatSearchText.toLowerCase()))
-                );
-            }, [users, chatSearchText, currentUser?.id]);
-
-            const filteredUsersToFollow = useMemo(() => {
-                return users.filter(u => u.id !== currentUser?.id && 
-                    (u.fullName.toLowerCase().includes(userSearchText.toLowerCase()) || 
-                     u.username.toLowerCase().includes(userSearchText.toLowerCase()))
-                );
-            }, [users, userSearchText, currentUser?.id]);
-
-            const selectedDateMoments = useMemo(() => {
-                return timeline.filter(m => m.dateStr === selectedDateStr);
-            }, [timeline, selectedDateStr]);
-
-            const onlineFriends = useMemo(() => {
-                return users.filter(u => u.id !== currentUser?.id && u.isOnline);
-            }, [users, currentUser?.id]);
-
-            if (screen === 'auth' || !currentUser) {
-                return (
-                    <div className="h-full w-full flex items-center justify-center bg-[#09090b] px-4 relative overflow-hidden">
-                        
-                        <div className="w-full max-w-md bg-[#121214] rounded-2xl border border-zinc-800 p-8 shadow-2xl relative overflow-hidden">
-                            <div className="text-center mb-8">
-                                <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2">PlengerGram</h1>
-                                <p className="text-zinc-500 text-sm">Masuk ke Kalender & Timeline Bersama</p>
-                            </div>
-
-                            {authLoading ? (
-                                <div className="text-center py-10 space-y-4">
-                                    <div className="w-10 h-10 border-4 border-t-accentBlue border-zinc-800 rounded-full animate-spin mx-auto"></div>
-                                    <p className="text-zinc-400 text-xs">Menghubungkan jaringan cloud aman...</p>
-                                </div>
-                            ) : (
-                                <form onSubmit={handleLogin} className="space-y-5">
-                                    <div>
-                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Nama Pengguna (Username)</label>
-                                        <input 
-                                            type="text" 
-                                            placeholder="Masukkan username Anda (ayyaa_ atau ikii_)" 
-                                            value={loginUsername}
-                                            onChange={(e) => setLoginUsername(e.target.value)}
-                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-2">Kata Sandi (Password)</label>
-                                        <input 
-                                            type="password" 
-                                            placeholder="Masukkan password Anda (bawaan: 123456)" 
-                                            value={loginPassword}
-                                            onChange={(e) => setLoginPassword(e.target.value)}
-                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-accentBlue/50 transition-all placeholder-zinc-600"
-                                        />
-                                    </div>
-
-                                    <button 
-                                        type="submit"
-                                        className="w-full bg-accentBlue hover:bg-blue-600 text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-lg active:scale-[0.98] mt-2 text-sm"
-                                    >
-                                        Masuk Akun
-                                    </button>
-                                </form>
-                            )}
-                        </div>
-                        
-                        {toastMessage && (
-                            <div className="absolute bottom-6 right-6 bg-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-medium tracking-wide transition-all animate-bounce flex items-center gap-2 z-50">
-                                <i className="fa-solid fa-circle-info"></i>
-                                {toastMessage}
-                            </div>
-                        )}
+                    <!-- Notebook Ring Bindings (Left Side Decorative) -->
+                    <div class="absolute left-2 sm:left-4 top-12 bottom-12 flex flex-col justify-between pointer-events-none z-10 w-4">
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner mb-4"></div>
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner mb-4"></div>
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner mb-4"></div>
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner mb-4"></div>
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner mb-4"></div>
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner"></div>
                     </div>
-                );
-            }
 
-            return (
-                <div className="h-screen w-screen bg-darkBg flex overflow-hidden">
-                    
-                    {/* LEFT SIDEBAR PANEL */}
-                    <aside className="w-64 border-r border-zinc-900 bg-black flex flex-col justify-between shrink-0 select-none">
-                        <div className="p-6">
-                            {/* Logo */}
-                            <div className="mb-8">
-                                <h2 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
-                                    <span>PlengerGram</span>
-                                </h2>
-                            </div>
+                    <!-- Inner Page with Lines -->
+                    <div class="pl-8 sm:pl-12 pr-2 sm:pr-4 space-y-8 relative">
+                        <!-- Tape Decoration -->
+                        <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 w-28 h-6 bg-[#f0e3d5]/70 border-dashed border-b border-[#ebdcd0] rotate-1 pointer-events-none"></div>
 
-                            {/* Nav Menu */}
-                            <nav className="space-y-2">
-                                <button 
-                                    onClick={() => setActiveTab('momen')}
-                                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
-                                        activeTab === 'momen' 
-                                            ? 'bg-cardBg text-[#0095f6] shadow-sm' 
-                                            : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
-                                    }`}
-                                >
-                                    <i className="fa-solid fa-calendar-days text-base"></i>
-                                    <span>Momen Bersama</span>
-                                </button>
-
-                                <button 
-                                    onClick={() => setActiveTab('pesan')}
-                                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
-                                        activeTab === 'pesan' 
-                                            ? 'bg-cardBg text-[#0095f6] shadow-sm' 
-                                            : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
-                                    }`}
-                                >
-                                    <i className="fa-solid fa-paper-plane text-base"></i>
-                                    <span>Pesan & Teman</span>
-                                </button>
-
-                                <button 
-                                    onClick={() => setActiveTab('profil')}
-                                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
-                                        activeTab === 'profil' 
-                                            ? 'bg-cardBg text-[#0095f6] shadow-sm' 
-                                            : 'text-zinc-400 hover:text-white hover:bg-zinc-900/50'
-                                    }`}
-                                >
-                                    <img src={currentUser?.avatar} className="w-5 h-5 rounded-full object-cover inline-block" alt="nav" />
-                                    <span>Profil Akun</span>
-                                </button>
-                            </nav>
+                        <!-- Date & Header -->
+                        <div class="flex justify-between items-center border-b border-[#ebdcd0] pb-3">
+                            <span class="font-handwritten text-[#bd7a6b] text-2xl font-bold">About Us..</span>
                         </div>
 
-                        {/* Bottom Metadata Panel */}
-                        <div className="p-4 border-t border-zinc-900 space-y-4">
-                            <div>
-                                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block mb-1">Status Jaringan:</span>
-                                <button 
-                                    onClick={() => setShowStatusModal(true)}
-                                    className="w-full bg-[#121214] border border-zinc-800 text-[#0095f6] px-3 py-2 rounded-xl text-[11px] font-semibold text-left flex items-center gap-2 hover:bg-zinc-900/80 transition-all"
-                                >
-                                    <span className="w-2 h-2 rounded-full bg-accentGreen animate-pulse"></span>
-                                    <span>{isFirebaseActive ? 'Realtime Cloud Aktif' : 'Penyimpanan Lokal Aktif'}</span>
-                                </button>
+                        <!-- Main Photo Box -->
+                        <div class="relative group rounded-2xl overflow-hidden border-4 border-white shadow-md rotate-[-1deg] transition-transform hover:rotate-0 duration-300 bg-white">
+                            <!-- Ganti src ini dengan path foto kalian berdua nanti -->
+                            <div class="aspect-[16/9] w-full bg-[#f5ebe0] flex flex-col items-center justify-center text-center p-6 relative">
+                                <!-- Ilustrasi SVG Lucu -->
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-20 h-20 text-[#dbbc9d] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                <p class="text-sm font-serif-aesthetic italic text-[#8e766e]">"Tempat ternyaman untuk pulang di setiap harinya."</p>
+                                <span class="absolute bottom-2 right-3 text-[10px] text-gray-400 font-mono">[Foto Utama Kita Di Sini]</span>
                             </div>
+                        </div>
 
-                            {/* Timeline Shortcut */}
-                            <div className="bg-[#121214] border border-zinc-800 rounded-xl p-3 cursor-pointer" onClick={() => setActiveTab('momen')}>
-                                <div className="flex justify-between items-center text-xs text-zinc-400 font-semibold mb-1">
-                                    <span>Pintasan Timeline</span>
-                                    <i className="fa-solid fa-chevron-up text-[10px]"></i>
-                                </div>
-                                <div className="text-[10px] text-zinc-600">Akses cepat ke kalender memori terpadu.</div>
-                            </div>
+                        <!-- Cute Note Text -->
+                        <div class="space-y-4 text-sm sm:text-base leading-relaxed text-[#5c4a47] font-light">
+                            <p class="indent-6">
+                                "Seperti 3726 mdpl, selalu butuh waktu yang lama untuk mendapatkan sesuatu yang indah." — 3726 MDPL
+                            </p>
+                            <p class="indent-6 font-handwritten text-2xl text-[#bd7a6b] pt-2">
+                                Love You Sayangg! 🤍
+                            </p>
+                        </div>
 
-                            {/* Active User Badge */}
-                            <div className="flex items-center gap-3 bg-[#121214]/50 p-2 rounded-xl border border-zinc-900">
-                                <div className="relative">
-                                    <img src={currentUser?.avatar} className="w-10 h-10 rounded-full object-cover" alt="badge" />
-                                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-accentGreen border-2 border-black rounded-full"></span>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="text-xs font-bold text-white truncate">@{currentUser?.username}</div>
-                                    <div className="text-[10px] text-zinc-500 truncate">{currentUser?.fullName}</div>
-                                </div>
-                            </div>
-
-                            {/* Logout link */}
-                            <button 
-                                onClick={handleLogout}
-                                className="w-full flex items-center gap-3 px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                            >
-                                <i className="fa-solid fa-right-from-bracket"></i>
-                                <span>Keluar Akun</span>
+                        <!-- Photo Button Trigger -->
+                        <div class="pt-4 text-center">
+                            <button onclick="scrollToSection('gallery-sec')" class="inline-flex items-center gap-2 bg-[#e79e8c] text-white px-8 py-3.5 rounded-full text-sm font-medium hover:bg-[#db8d7b] shadow-sm hover:shadow transition-all transform hover:-translate-y-0.5">
+                                foto kita ada disini!! <i data-lucide="arrow-right" class="w-4 h-4"></i>
                             </button>
                         </div>
-                    </aside>
-
-                    {/* MAIN CONTENT WORKSPACE VIEWPORT */}
-                    <main className="flex-1 flex overflow-hidden">
-                        
-                        {/* TAB 1: MOMEN BERSAMA */}
-                        {activeTab === 'momen' && (
-                            <div className="flex-1 flex overflow-hidden">
-                                
-                                {/* Middle Panel */}
-                                <div className="w-1/2 border-r border-zinc-900 p-6 flex flex-col gap-6 overflow-y-auto">
-                                    {/* Welcome greeting card */}
-                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 flex items-center justify-between shadow-xl">
-                                        <div className="flex items-center gap-4">
-                                            <div className="relative">
-                                                <img src={currentUser?.avatar} className="w-14 h-14 rounded-full border-2 border-accentBlue object-cover" alt="greet" />
-                                                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-accentGreen border-2 border-cardBg rounded-full"></span>
-                                            </div>
-                                            <div>
-                                                <p className="text-zinc-500 text-xs">Selamat datang,</p>
-                                                <h3 className="text-lg font-bold text-white">@{currentUser?.username}</h3>
-                                            </div>
-                                        </div>
-                                        <button 
-                                            onClick={() => showToast("Koneksi tersambung secara optimal!")}
-                                            className="bg-[#0e2c4c] text-[#0095f6] hover:bg-blue-900/50 px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2"
-                                        >
-                                            <i className="fa-solid fa-cloud"></i>
-                                            Aktif Lancar
-                                        </button>
-                                    </div>
-
-                                    {/* Online list bar */}
-                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
-                                        <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase block mb-3">TEMAN YANG SEDANG ONLINE</span>
-                                        <div className="flex gap-4 overflow-x-auto pb-2">
-                                            {onlineFriends.length === 0 ? (
-                                                <span className="text-xs text-zinc-600">Tidak ada teman lain yang sedang online.</span>
-                                            ) : (
-                                                onlineFriends.map(friend => (
-                                                    <div key={friend.id} className="flex flex-col items-center shrink-0">
-                                                        <div className="relative">
-                                                            <img src={friend.avatar} className="w-12 h-12 rounded-full object-cover border-2 border-zinc-700" alt="online" />
-                                                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-accentGreen border-2 border-cardBg rounded-full"></span>
-                                                        </div>
-                                                        <span className="text-[10px] text-zinc-400 mt-1 max-w-[60px] truncate">@{friend.username}</span>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Calendar Widget panel */}
-                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <button onClick={handlePrevMonth} className="text-zinc-400 hover:text-white p-1.5"><i className="fa-solid fa-chevron-left"></i></button>
-                                            <h4 className="text-sm font-bold text-white uppercase tracking-wider">
-                                                {getMonthNameIndonesian(currentDate.getMonth())} {currentDate.getFullYear()}
-                                            </h4>
-                                            <button onClick={handleNextMonth} className="text-zinc-400 hover:text-white p-1.5"><i className="fa-solid fa-chevron-right"></i></button>
-                                        </div>
-
-                                        {/* Day labels */}
-                                        <div className="grid grid-cols-7 text-center text-[10px] font-bold text-zinc-500 tracking-wider mb-2">
-                                            <div>M</div>
-                                            <div>S</div>
-                                            <div>S</div>
-                                            <div>R</div>
-                                            <div>K</div>
-                                            <div>J</div>
-                                            <div>S</div>
-                                        </div>
-
-                                        {/* Calendar Grid */}
-                                        <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold">
-                                            {generateCalendarDays().map((dayObj, idx) => {
-                                                if (!dayObj.day) {
-                                                    return <div key={`empty-${idx}`} className="text-zinc-800 py-2">-</div>;
-                                                }
-                                                const hasMoment = timeline.some(m => m.dateStr === dayObj.dateStr);
-                                                const isSelected = selectedDateStr === dayObj.dateStr;
-
-                                                return (
-                                                    <button 
-                                                        key={`day-${dayObj.day}`}
-                                                        onClick={() => setSelectedDateStr(dayObj.dateStr)}
-                                                        className={`py-2 rounded-lg relative transition-all duration-150 ${
-                                                            isSelected 
-                                                                ? 'bg-accentBlue text-white shadow-lg' 
-                                                                : hasMoment 
-                                                                    ? 'bg-[#1b2b3a] text-accentBlue font-bold hover:bg-zinc-800' 
-                                                                    : 'text-zinc-400 hover:bg-zinc-800/50'
-                                                        }`}
-                                                    >
-                                                        {dayObj.day}
-                                                        {hasMoment && !isSelected && (
-                                                            <span className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-accentBlue rounded-full"></span>
-                                                        )}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-
-                                    {/* Add New Memory form */}
-                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <i className="fa-solid fa-circle-plus text-accentBlue text-sm"></i>
-                                            <h4 className="text-xs font-bold uppercase tracking-wider text-white">Tambah Kenangan Baru</h4>
-                                        </div>
-                                        <p className="text-[11px] text-zinc-500 mb-4">
-                                            Kenangan yang Anda tambahkan di bawah ini akan masuk ke timeline bersama dan dapat dilihat oleh semua teman Anda di tanggal <span className="text-white font-semibold underline">{selectedDateStr}</span>.
-                                        </p>
-
-                                        <form onSubmit={handleAddMemory} className="space-y-3">
-                                            <input 
-                                                type="text" 
-                                                placeholder="Judul momen..." 
-                                                value={newMemoryTitle}
-                                                onChange={(e) => setNewMemoryTitle(e.target.value)}
-                                                className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-accentBlue/40 transition-all placeholder-zinc-700"
-                                            />
-                                            <textarea 
-                                                rows="3"
-                                                placeholder="Ceritakan momen indah hari ini..." 
-                                                value={newMemoryContent}
-                                                onChange={(e) => setNewMemoryContent(e.target.value)}
-                                                className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-accentBlue/40 transition-all placeholder-zinc-700 resize-none"
-                                            ></textarea>
-                                            
-                                            <button 
-                                                type="submit"
-                                                className="w-full bg-accentBlue hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all active:scale-[0.98]"
-                                            >
-                                                Bagikan Kenangan
-                                            </button>
-                                        </form>
-                                    </div>
-
-                                </div>
-
-                                {/* Right Panel: Timeline Memory list */}
-                                <div className="w-1/2 p-6 flex flex-col gap-6 overflow-y-auto">
-                                    <div className="flex justify-between items-center pb-3 border-b border-zinc-900">
-                                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                            <i className="fa-solid fa-clock-rotate-left"></i>
-                                            Timeline Plengeran Bersama
-                                        </h3>
-                                        <span className="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
-                                            {selectedDateMoments.length} Momen
-                                        </span>
-                                    </div>
-
-                                    {selectedDateMoments.length === 0 ? (
-                                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-cardBg border border-zinc-900 rounded-2xl py-16">
-                                            <i className="fa-solid fa-folder-open text-4xl text-zinc-700 mb-4"></i>
-                                            <h4 className="text-sm font-bold text-zinc-400 mb-1">Belum ada kenangan bersama</h4>
-                                            <p className="text-xs text-zinc-600 max-w-sm">
-                                                Ayo jadilah yang pertama membagikan kenangan indah Anda di kalender bersama ini pada tanggal {selectedDateStr}!
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {selectedDateMoments.map(moment => (
-                                                <div key={moment.id} className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl hover:border-zinc-700 transition-all">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <img src={moment.authorAvatar} className="w-9 h-9 rounded-full object-cover border border-zinc-700" alt="avatar" />
-                                                            <div>
-                                                                <h5 className="text-xs font-bold text-white">{moment.authorName}</h5>
-                                                                <span className="text-[10px] text-zinc-500">@{moment.authorUsername}</span>
-                                                            </div>
-                                                        </div>
-                                                        <span className="bg-[#1b2b3a] text-accentBlue text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
-                                                            {moment.dateStr}
-                                                        </span>
-                                                    </div>
-                                                    <h4 className="text-sm font-bold text-white mb-2">{moment.title}</h4>
-                                                    <p className="text-xs text-zinc-400 leading-relaxed whitespace-pre-line">{moment.content}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                            </div>
-                        )}
-
-                        {/* TAB 2: PESAN & TEMAN */}
-                        {activeTab === 'pesan' && (
-                            <div className="flex-1 flex overflow-hidden">
-                                
-                                {/* Middle Panel: Active Chats Directory & Search */}
-                                <div className="w-80 border-r border-zinc-900 flex flex-col overflow-hidden bg-black/40">
-                                    <div className="p-4 border-b border-zinc-900 space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <h3 className="text-base font-bold text-white flex items-center gap-2">
-                                                <i className="fa-solid fa-paper-plane text-accentBlue"></i>
-                                                Ruang Obrolan
-                                            </h3>
-                                            <button 
-                                                onClick={handleClearDM}
-                                                className="text-[10px] font-bold text-red-500 bg-red-500/10 hover:bg-red-500/20 px-2.5 py-1 rounded-lg transition-all"
-                                            >
-                                                Bersihkan
-                                            </button>
-                                        </div>
-                                        
-                                        {/* Search Input bar */}
-                                        <div className="relative">
-                                            <i className="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-zinc-500"></i>
-                                            <input 
-                                                type="text" 
-                                                placeholder="Cari nama pengguna..." 
-                                                value={chatSearchText}
-                                                onChange={(e) => setChatSearchText(e.target.value)}
-                                                className="w-full bg-[#121214] text-white border border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Chat Directory Lists */}
-                                    <div className="flex-1 overflow-y-auto p-2.5 space-y-3">
-                                        {/* Group Chat Header Entry */}
-                                        <button 
-                                            onClick={() => setActiveChat({ id: 'group', type: 'group' })}
-                                            className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
-                                                activeChat.id === 'group' 
-                                                    ? 'bg-[#1b2b3a]/50 border-accentBlue/40 text-white' 
-                                                    : 'bg-[#121214] border-zinc-900 hover:border-zinc-800'
-                                            }`}
-                                        >
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accentBlue to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shrink-0">
-                                                <i className="fa-solid fa-earth-asia text-sm"></i>
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex justify-between items-center mb-0.5">
-                                                    <span className="text-xs font-bold">Grup Publik Bersama</span>
-                                                    <span className="bg-accentBlue text-[8px] font-extrabold px-1.5 py-0.5 rounded text-white tracking-widest uppercase">GRUP</span>
-                                                </div>
-                                                <p className="text-[10px] text-zinc-500 truncate">Kirim pesan ke semua teman di sini!</p>
-                                            </div>
-                                        </button>
-
-                                        {/* Separator */}
-                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block px-2.5 pt-2">Pesan Pribadi (DM)</span>
-
-                                        {/* Mutual Friends lists for private messaging */}
-                                        {filteredUsersToChat.length === 0 ? (
-                                            <p className="text-[11px] text-zinc-600 italic px-2.5">Belum ada pengguna lain terdaftar.</p>
-                                        ) : (
-                                            <div className="space-y-1">
-                                                {filteredUsersToChat.map(user => {
-                                                    const followed = isFollowing(currentUser?.id, user.id);
-                                                    const mutual = isMutual(currentUser?.id, user.id);
-                                                    const isOnline = user.isOnline;
-
-                                                    return (
-                                                        <button 
-                                                            key={user.id}
-                                                            onClick={() => setActiveChat({ id: user.id, type: 'dm', data: user })}
-                                                            className={`w-full text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${
-                                                                activeChat.id === user.id 
-                                                                    ? 'bg-[#1b2b3a]/50 border-accentBlue/40 text-white' 
-                                                                    : 'bg-transparent border-transparent hover:bg-zinc-900/50'
-                                                            }`}
-                                                        >
-                                                            <div className="relative shrink-0">
-                                                                <img src={user.avatar} className="w-10 h-10 rounded-full object-cover border border-zinc-800" alt="avatar" />
-                                                                <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-black rounded-full ${
-                                                                    isOnline ? 'bg-accentGreen' : 'bg-zinc-600'
-                                                                }`}></span>
-                                                            </div>
-                                                            <div className="min-w-0 flex-1">
-                                                                <div className="flex justify-between items-center mb-0.5">
-                                                                    <span className="text-xs font-bold text-white truncate">@{user.username}</span>
-                                                                    <span className="text-[9px] text-zinc-600">Aktif</span>
-                                                                </div>
-                                                                <p className="text-[10px] text-zinc-500 truncate">{user.fullName}</p>
-                                                                <div className="flex gap-1.5 mt-1">
-                                                                    {followed && (
-                                                                        <span className="bg-[#1b2b3a] text-[#0095f6] text-[8px] font-bold px-1.5 py-0.5 rounded">Diikuti</span>
-                                                                    )}
-                                                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${isOnline ? 'bg-green-950/40 text-accentGreen' : 'bg-zinc-900 text-zinc-500'}`}>
-                                                                        {isOnline ? 'Online' : 'Offline'}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Right Panel: Message Exchange Space */}
-                                <div className="flex-1 flex flex-col overflow-hidden bg-black">
-                                    {/* Chat Header */}
-                                    <div className="p-4 border-b border-zinc-900 flex justify-between items-center bg-[#121214]">
-                                        <div className="flex items-center gap-3">
-                                            {activeChat.type === 'group' ? (
-                                                <React.Fragment>
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-accentBlue to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
-                                                        <i className="fa-solid fa-earth-asia"></i>
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-sm font-bold text-white">Grup Publik Plengeran</h4>
-                                                        <p className="text-[10px] text-zinc-500 flex items-center gap-1.5">
-                                                            <span className="w-1.5 h-1.5 bg-accentGreen rounded-full"></span>
-                                                            Seluruh pengguna tersambung di sini
-                                                        </p>
-                                                    </div>
-                                                </React.Fragment>
-                                            ) : (
-                                                <React.Fragment>
-                                                    <img src={activeChat.data?.avatar} className="w-10 h-10 rounded-full object-cover border border-zinc-800" alt="avatar" />
-                                                    <div>
-                                                        <h4 className="text-sm font-bold text-white">@{activeChat.data?.username}</h4>
-                                                        <p className="text-[10px] text-zinc-500">{activeChat.data?.fullName}</p>
-                                                    </div>
-                                                </React.Fragment>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Chat logs */}
-                                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                        {filteredMessages.length === 0 ? (
-                                            <div className="h-full flex flex-col items-center justify-center text-center text-zinc-600">
-                                                <i className="fa-solid fa-comments text-4xl mb-3"></i>
-                                                <p className="text-xs mb-2">Kirim pesan pertama untuk memulai obrolan!</p>
-                                                {activeChat.type === 'dm' && (
-                                                    <p className="text-[10px] text-zinc-500 max-w-xs">Pesan Anda akan langsung masuk secara privat dan real-time.</p>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            filteredMessages.map((msg, index) => {
-                                                const isSelf = msg.senderId === currentUser?.id;
-                                                return (
-                                                    <div key={msg.id || index} className={`flex gap-3 max-w-[80%] ${isSelf ? 'ml-auto flex-row-reverse' : ''}`}>
-                                                        {!isSelf && (
-                                                            <img src={msg.senderAvatar} className="w-8 h-8 rounded-full object-cover self-end" alt="avatar" />
-                                                        )}
-                                                        <div>
-                                                            {!isSelf && activeChat.type === 'group' && (
-                                                                <span className="text-[9px] text-zinc-500 block mb-1">@{msg.senderUsername}</span>
-                                                            )}
-                                                            <div className={`p-3 rounded-2xl text-xs leading-relaxed whitespace-pre-line ${
-                                                                isSelf 
-                                                                    ? 'bg-accentBlue text-white rounded-br-none' 
-                                                                    : 'bg-[#121214] text-zinc-100 rounded-bl-none border border-zinc-900'
-                                                            }`}>
-                                                                {msg.text}
-                                                            </div>
-                                                            <span className="text-[8px] text-zinc-600 block mt-1 text-right">
-                                                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })
-                                        )}
-                                        <div ref={chatEndRef}></div>
-                                    </div>
-
-                                    {/* Chat Message Box Inputs */}
-                                    <form onSubmit={handleSendMessage} className="p-4 bg-[#121214] border-t border-zinc-900 flex gap-3">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Ketik pesan..." 
-                                            value={messageInput}
-                                            onChange={(e) => setMessageInput(e.target.value)}
-                                            className="flex-1 bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-3 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
-                                        />
-                                        <button 
-                                            type="submit"
-                                            className="bg-accentBlue hover:bg-blue-600 text-white font-bold text-xs px-5 py-3 rounded-xl transition-all"
-                                        >
-                                            Kirim
-                                        </button>
-                                    </form>
-                                </div>
-
-                            </div>
-                        )}
-
-                        {/* TAB 3: PROFIL AKUN */}
-                        {activeTab === 'profil' && (
-                            <div className="flex-1 p-6 overflow-y-auto">
-                                
-                                <div className="max-w-xl mx-auto space-y-6">
-                                    <h3 className="text-lg font-bold text-white flex items-center gap-2 pb-3 border-b border-zinc-900">
-                                        <i className="fa-solid fa-user-gear text-accentBlue"></i>
-                                        Profil Akun Anda
-                                    </h3>
-
-                                    {/* User Profil card */}
-                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-                                        <div className="flex flex-col items-center text-center">
-                                            <div className="relative mb-4">
-                                                <img src={currentUser?.avatar} className="w-24 h-24 rounded-full object-cover border-4 border-zinc-800" alt="profile" />
-                                                <span className="absolute bottom-1 right-1 w-5 h-5 bg-accentGreen border-4 border-cardBg rounded-full"></span>
-                                            </div>
-
-                                            <h4 className="text-lg font-extrabold text-white mb-0.5">{currentUser?.fullName}</h4>
-                                            <p className="text-accentBlue text-xs font-semibold mb-2">@{currentUser?.username}</p>
-                                            
-                                            <div className="flex items-center gap-1 text-[11px] text-zinc-500 mb-5">
-                                                <span className="w-2 h-2 rounded-full bg-accentGreen animate-pulse"></span>
-                                                <span>Online</span>
-                                            </div>
-
-                                            {/* Count Statistics row */}
-                                            <div className="grid grid-cols-3 gap-6 w-full py-4 border-t border-b border-zinc-900 text-center">
-                                                <div>
-                                                    <span className="text-sm font-extrabold text-white block">{getMomentsContributionCount(currentUser?.id)}</span>
-                                                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Kontribusi Momen</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-extrabold text-white block">{getFollowersCount(currentUser?.id)}</span>
-                                                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Pengikut</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-extrabold text-white block">{getFollowingCount(currentUser?.id)}</span>
-                                                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Diikuti</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Biografi Box */}
-                                            <div className="w-full text-left bg-[#09090b] p-4 rounded-xl border border-zinc-900 mt-5 space-y-1">
-                                                <span className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block"><i className="fa-solid fa-feather mr-1.5 text-accentBlue"></i>Biografi</span>
-                                                <p className="text-xs text-zinc-400 italic leading-relaxed">{currentUser?.bio || "Tidak ada biografi ditulis."}</p>
-                                            </div>
-
-                                            {/* Edit Profil Button trigger */}
-                                            {!isEditingProfile ? (
-                                                <button 
-                                                    onClick={startEditProfile}
-                                                    className="w-full bg-[#1c1c1f] hover:bg-zinc-800 text-zinc-300 font-bold text-xs py-3 px-4 rounded-xl transition-all border border-zinc-800 mt-5"
-                                                >
-                                                    <i className="fa-solid fa-pen-to-square mr-2"></i>
-                                                    Edit Profil & Bio Anda
-                                                </button>
-                                            ) : (
-                                                <form onSubmit={handleSaveProfile} className="w-full mt-5 space-y-4 text-left border-t border-zinc-900 pt-5">
-                                                    <div>
-                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Nama Lengkap</label>
-                                                        <input 
-                                                            type="text" 
-                                                            value={editFullName}
-                                                            onChange={(e) => setEditFullName(e.target.value)}
-                                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue"
-                                                        />
-                                                    </div>
-
-                                                    <div>
-                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-1">Biografi (Bio)</label>
-                                                        <textarea 
-                                                            value={editBio}
-                                                            onChange={(e) => setEditBio(e.target.value)}
-                                                            rows="2"
-                                                            className="w-full bg-[#09090b] text-white border border-zinc-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-accentBlue resize-none"
-                                                        ></textarea>
-                                                    </div>
-
-                                                    <div>
-                                                        <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-2">Pilih Avatar Profil</label>
-                                                        <div className="flex justify-between bg-[#09090b] p-2 rounded-xl border border-zinc-900">
-                                                            {AVATARS.map((av, idx) => (
-                                                                <button
-                                                                    key={idx}
-                                                                    type="button"
-                                                                    onClick={() => setEditAvatar(av)}
-                                                                    className={`w-10 h-10 rounded-full overflow-hidden border-2 ${
-                                                                        editAvatar === av ? 'border-accentBlue scale-105' : 'border-transparent opacity-60'
-                                                                    }`}
-                                                                >
-                                                                    <img src={av} alt="avatar option" className="w-full h-full object-cover" />
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex gap-2">
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => setIsEditingProfile(false)}
-                                                            className="flex-1 bg-zinc-900 text-zinc-400 font-bold text-xs py-2.5 px-4 rounded-xl border border-zinc-800"
-                                                        >
-                                                            Batal
-                                                        </button>
-                                                        <button 
-                                                            type="submit"
-                                                            className="flex-1 bg-accentBlue text-white font-bold text-xs py-2.5 px-4 rounded-xl"
-                                                        >
-                                                            Simpan
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Discover Users list */}
-                                    <div className="bg-cardBg border border-zinc-800 rounded-2xl p-5 shadow-xl">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h4 className="text-xs font-bold uppercase text-white tracking-wider flex items-center gap-2">
-                                                <i className="fa-solid fa-users text-accentBlue"></i>
-                                                Temukan Pengguna Lain
-                                            </h4>
-                                            
-                                            {/* Minimalistic search in profile directory */}
-                                            <input 
-                                                type="text" 
-                                                placeholder="Cari teman..." 
-                                                value={userSearchText}
-                                                onChange={(e) => setUserSearchText(e.target.value)}
-                                                className="bg-[#09090b] text-white border border-zinc-800 rounded-lg px-2.5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-accentBlue w-36"
-                                            />
-                                        </div>
-
-                                        <div className="space-y-3.5">
-                                            {filteredUsersToFollow.length === 0 ? (
-                                                <p className="text-xs text-zinc-600 italic">Belum ada pengguna lain terdaftar.</p>
-                                            ) : (
-                                                filteredUsersToFollow.map(user => {
-                                                    const following = isFollowing(currentUser?.id, user.id);
-                                                    const follower = isFollowing(user.id, currentUser?.id);
-                                                    const isOnline = user.isOnline;
-
-                                                    return (
-                                                        <div key={user.id} className="flex items-center justify-between p-3 bg-black/30 border border-zinc-900 rounded-xl hover:border-zinc-800 transition-all">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="relative">
-                                                                    <img src={user.avatar} className="w-10 h-10 rounded-full object-cover border border-zinc-800" alt="avatar" />
-                                                                    <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-black rounded-full ${
-                                                                        isOnline ? 'bg-accentGreen' : 'bg-zinc-600'
-                                                                    }`}></span>
-                                                                </div>
-                                                                <div>
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <span className="text-xs font-bold text-white">@{user.username}</span>
-                                                                        {follower && (
-                                                                            <span className="bg-zinc-800 text-zinc-500 text-[8px] font-bold px-1.5 py-0.2 rounded">Mengikuti Anda</span>
-                                                                        )}
-                                                                    </div>
-                                                                    <p className="text-[10px] text-zinc-500">{user.fullName}</p>
-                                                                </div>
-                                                            </div>
-
-                                                            <button 
-                                                                onClick={() => handleFollow(user.id)}
-                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                                                    following 
-                                                                        ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300' 
-                                                                        : 'bg-accentBlue hover:bg-blue-600 text-white'
-                                                                }`}
-                                                            >
-                                                                {following ? 'Batal Ikuti' : 'Ikuti'}
-                                                            </button>
-                                                        </div>
-                                                    );
-                                                })
-                                            )}
-                                        </div>
-                                    </div>
-
-                                </div>
-
-                            </div>
-                        )}
-
-                    </main>
-
-                    {/* STATUS DETAILS MODAL */}
-                    {showStatusModal && (
-                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fade-in">
-                            <div className="bg-cardBg border border-zinc-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
-                                <div className="text-center">
-                                    <div className="w-12 h-12 rounded-full bg-[#1b2b3a] text-accentBlue flex items-center justify-center text-xl mx-auto mb-3">
-                                        <i className="fa-solid fa-wifi"></i>
-                                    </div>
-                                    <h4 className="text-sm font-bold text-white mb-1">Status Sinkronisasi Jaringan</h4>
-                                    <p className="text-[11px] text-zinc-500">
-                                        Aplikasi ini berjalan dalam sinkronisasi optimal. Anda dapat berkirim pesan dan melihat status real-time secara instan.
-                                    </p>
-                                </div>
-
-                                <div className="space-y-2.5 bg-[#09090b] p-3 rounded-xl border border-zinc-900 text-[11px]">
-                                    <div className="flex justify-between">
-                                        <span className="text-zinc-500">Status Layanan:</span>
-                                        <span className="text-accentGreen font-bold flex items-center gap-1.5">
-                                            <span className="w-1.5 h-1.5 bg-accentGreen rounded-full"></span> Aktif Berjalan
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-zinc-500">Penyimpanan:</span>
-                                        <span className="text-zinc-400 font-mono">LocalStorage Sync / Cloud</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-zinc-500">Modus Enkripsi:</span>
-                                        <span className="text-zinc-400">Anonim Terverifikasi</span>
-                                    </div>
-                                </div>
-
-                                <div className="pt-2 border-t border-zinc-900">
-                                    <button 
-                                        onClick={() => setShowStatusModal(false)}
-                                        className="w-full bg-accentBlue hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs transition-all"
-                                    >
-                                        Selesai & Tutup
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Toast Notification */}
-                    {toastMessage && (
-                        <div className="fixed bottom-6 right-6 bg-[#1b2b3a] border border-accentBlue text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold tracking-wide transition-all z-50 flex items-center gap-2">
-                            <i className="fa-solid fa-circle-info text-accentBlue"></i>
-                            {toastMessage}
-                        </div>
-                    )}
-
+                    </div>
                 </div>
+            </section>
+
+            <!-- ================= PLAYLIST SECTION ================= -->
+            <section id="playlist-sec" class="hidden space-y-6 fade-in">
+                <div class="text-center space-y-2">
+                    <h2 class="text-2xl font-serif-aesthetic font-semibold text-[#4a3e3d]">Playlist Timeline</h2>
+                    <p class="text-xs text-gray-500 max-w-sm mx-auto">Setiap lagu punya cerita pasti punya ceritaa.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Lagu 1 -->
+                        <div onclick="openMusicPopup('Semua Aku Dirayakan', '12 September 2024', 'Lagu ini selalu ngingetin aku saat pertama kali kita mutusin buat jalanin ini bareng-bareng. Kamu merayakan semua kurangku, dan aku mencintaimu tanpa syarat.', 'romantic_sunset', 'https://raw.githubusercontent.com/username/repository/main/semua-aku-dirayakan.mp3')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Semua Aku Dirayakan</h3>
+                                <p class="text-xs text-gray-400">Nadin Amizah</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- Lagu 2 -->
+                        <div onclick="openMusicPopup('Semua Aku Dirayakan', '12 September 2024', 'Lagu ini selalu ngingetin aku saat pertama kali kita mutusin buat jalanin ini bareng-bareng. Kamu merayakan semua kurangku, dan aku mencintaimu tanpa syarat.', 'romantic_sunset', 'https://raw.githubusercontent.com/username/repository/main/semua-aku-dirayakan.mp3')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Semua Aku Dirayakan</h3>
+                                <p class="text-xs text-gray-400">Nadin Amizah</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- Lagu 3 -->
+                        <div onclick="openMusicPopup('Semua Aku Dirayakan', '12 September 2024', 'Lagu ini selalu ngingetin aku saat pertama kali kita mutusin buat jalanin ini bareng-bareng. Kamu merayakan semua kurangku, dan aku mencintaimu tanpa syarat.', 'romantic_sunset', 'https://raw.githubusercontent.com/username/repository/main/semua-aku-dirayakan.mp3')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Semua Aku Dirayakan</h3>
+                                <p class="text-xs text-gray-400">Nadin Amizah</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- Lagu 4 -->
+                        <div onclick="openMusicPopup('Semua Aku Dirayakan', '12 September 2024', 'Lagu ini selalu ngingetin aku saat pertama kali kita mutusin buat jalanin ini bareng-bareng. Kamu merayakan semua kurangku, dan aku mencintaimu tanpa syarat.', 'romantic_sunset', 'https://raw.githubusercontent.com/username/repository/main/semua-aku-dirayakan.mp3')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Semua Aku Dirayakan</h3>
+                                <p class="text-xs text-gray-400">Nadin Amizah</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+            </section>
+
+            <!-- ================= GALLERY SECTION ================= -->
+            <section id="gallery-sec" class="hidden space-y-6 fade-in">
+                <div class="text-center space-y-2">
+                    <h2 class="text-2xl font-serif-aesthetic font-semibold text-[#4a3e3d]">Galeri Memori</h2>
+                    <p class="text-xs text-gray-500 max-w-sm mx-auto">Potongan cerita yang harus diabadikan.</p>
+                </div>
+
+                <!-- Input Khusus Google Drive Link -->
+                <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2 border-b border-[#ebdcd0] pb-2">
+                        <i data-lucide="link-2" class="w-5 h-5 text-[#bd7a6b]"></i>
+                        <h3 class="font-serif-aesthetic font-medium text-[#4a3e3d]">Tambah Foto/Video Baru</h3>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2.5">
+                        <input type="text" id="drive-link-input" placeholder="Tempel link Google Drive atau URL gambar/video di sini..." 
+                            class="flex-grow px-4 py-3 bg-[#f7f3ed] border border-[#eaddd0] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#e79e8c] text-[#4a3e3d]">
+                        <button onclick="addDriveItem()" 
+                            class="bg-[#e79e8c] text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-[#db8d7b] transition-all flex items-center justify-center gap-1.5">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Tambah
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-gray-400">Mendukung link Google Drive share umum serta direct link gambar/video.</p>
+                </div>
+
+                <!-- Grid Galeri Utama -->
+                <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Foto Item Bawaan 1 -->
+                    <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                        <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f7ebe0]">
+                            <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                            <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"First Date di Kedai Kopi"</span>
+                            <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto 1]</span>
+                        </div>
+                    </div>
+
+                    <!-- Foto Item Bawaan 2 -->
+                    <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                        <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f5ebe0]">
+                            <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                            <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"Jalan Sore di Taman Kota"</span>
+                            <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto 2]</span>
+                        </div>
+                    </div>
+
+                    <!-- Foto Item Bawaan 3 -->
+                    <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                        <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f2e2d2]">
+                            <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                            <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"Ngerayain Ultah Kamu"</span>
+                            <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto 3]</span>
+                        </div>
+                    </div>
+
+                    <!-- Foto Item Bawaan 4 -->
+                    <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                        <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#ebdcd0]">
+                            <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                            <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"Ketawa Gara-gara Receh"</span>
+                            <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto 4]</span>
+                        </div>
+                    </div>
+
+                    <!-- Foto Item Bawaan 5 -->
+                    <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                        <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f7ebe0]">
+                            <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                            <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"Senja Pertama Bareng"</span>
+                            <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto 5]</span>
+                        </div>
+                    </div>
+
+                    <!-- Foto Item Bawaan 6 -->
+                    <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                        <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f5ebe0]">
+                            <i data-lucide="video" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                            <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"Klip Video Random Lucu"</span>
+                            <span class="text-[10px] text-gray-400 mt-2 font-mono">[Video Placeholder]</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= MESSAGES CHAT SECTION ================= -->
+            <section id="chat-sec" class="hidden space-y-6 fade-in">
+                <div class="text-center space-y-2">
+                    <h2 class="text-2xl font-serif-aesthetic font-semibold text-[#4a3e3d]">Direct Messages</h2>
+                </div>
+
+                <!-- Chat Box Container -->
+                <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-sm flex flex-col h-[500px]">
+                    <!-- Header Chat: Switch Sender -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#ebdcd0]">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></span>
+                            <span class="text-sm font-medium text-gray-600">Sedang mengirim sebagai:</span>
+                        </div>
+                        
+                        <!-- Toggle Switch Sender -->
+                        <div class="inline-flex bg-[#f1e4d8] rounded-xl p-1 text-sm">
+                            <button id="sender-ayyaa" onclick="setSender('ayyaa')" 
+                                class="px-4 py-1.5 rounded-lg font-medium transition-all bg-[#e79e8c] text-white shadow-sm">
+                                🎀 ayyaa
+                            </button>
+                            <button id="sender-ikii" onclick="setSender('ikii')" 
+                                class="px-4 py-1.5 rounded-lg font-medium transition-all text-[#8e766e] hover:text-[#bd7a6b]">
+                                🧸 ikii
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chat Message Thread Area -->
+                    <div id="chat-thread" class="flex-grow overflow-y-auto py-4 space-y-4 pr-1">
+                        <!-- Chat default dihapus, sepenuhnya kosong dan siap digunakan -->
+                    </div>
+
+                    <!-- Chat Input Field -->
+                    <div class="pt-4 border-t border-[#ebdcd0] flex gap-2">
+                        <input type="text" id="chat-input" placeholder="Tulis pesan rahasiamu di sini..." 
+                            class="flex-grow px-4 py-3 bg-[#f7f3ed] border border-[#eaddd0] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#e79e8c] text-[#4a3e3d]">
+                        <button onclick="sendChatMessage()" 
+                            class="bg-[#e79e8c] text-white px-5 rounded-xl hover:bg-[#db8d7b] transition-all flex items-center justify-center">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= NEW PROFILE SECTION (INSTAGRAM STYLE) ================= -->
+            <section id="profile-sec" class="hidden space-y-6 fade-in">
+                <!-- Profile Header Card -->
+                <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                    <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-[#f3eae1]">
+                        <!-- Instagram Avatar Style -->
+                        <div class="relative flex-shrink-0">
+                            <!-- Dual Overlapping Circles for Couple Profile -->
+                            <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 to-[#bd7a6b] p-1 shadow-md">
+                                <div class="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden relative">
+                                    <span class="font-serif-aesthetic text-xl font-bold text-[#bd7a6b]">A & I</span>
+                                </div>
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 bg-red-400 text-white rounded-full p-1.5 border-2 border-white">
+                                <i data-lucide="heart" class="w-3.5 h-3.5 fill-current"></i>
+                            </div>
+                        </div>
+
+                        <!-- Stats & Bio -->
+                        <div class="flex-grow text-center sm:text-left space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <h2 class="text-xl font-bold text-[#4a3e3d]">ayyaa_ikii</h2>
+                                <span class="inline-flex items-center gap-1 bg-[#e79e8c]/20 text-[#bd7a6b] px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                    Official Couple <i data-lucide="badge-check" class="w-3.5 h-3.5 fill-current"></i>
+                                </span>
+                            </div>
+
+                            <!-- Followers / Following Stats -->
+                            <div class="flex justify-center sm:justify-start gap-6 text-sm">
+                                <div><strong class="text-[#4a3e3d]">6</strong> Kiriman</div>
+                                <div><strong class="text-[#4a3e3d]">1</strong> Pengikut</div>
+                                <div><strong class="text-[#4a3e3d]">1</strong> Mengikuti</div>
+                            </div>
+
+                            <!-- Instagram Bio Layout -->
+                            <div class="text-sm space-y-1 text-gray-600">
+                                <p class="font-semibold text-[#4a3e3d]">ayyaa & ikii</p>
+                                <p class="text-xs italic text-[#bd7a6b]">"Tempat ternyaman buat pulang."</p>
+                                <p class="flex items-center justify-center sm:justify-start gap-1 text-xs">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Lahir ayyaa: <span class="font-medium">12 September 2008</span>
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Lahir ikii: <span class="font-medium">19 September 2008</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Birthday Countdown Area -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Hitung Mundur Ayyaa -->
+                        <div class="bg-[#f7ebe0]/50 rounded-2xl p-5 text-center border border-[#ebdcd0] flex flex-col justify-center items-center">
+                            <p class="text-xs uppercase tracking-wider text-[#bd7a6b] font-semibold flex items-center gap-1">
+                                <i data-lucide="cake" class="w-3.5 h-3.5"></i> Ulang Tahun Ayyaa 🎀
+                            </p>
+                            <h3 id="ayyaa-birthday-countdown" class="text-lg font-serif-aesthetic font-semibold text-[#4a3e3d] mt-2">
+                                Menghitung waktu...
+                            </h3>
+                            <p class="text-[10px] text-gray-400 mt-1">12 September</p>
+                        </div>
+
+                        <!-- Hitung Mundur Ikii -->
+                        <div class="bg-[#f7ebe0]/50 rounded-2xl p-5 text-center border border-[#ebdcd0] flex flex-col justify-center items-center">
+                            <p class="text-xs uppercase tracking-wider text-[#bd7a6b] font-semibold flex items-center gap-1">
+                                <i data-lucide="cake" class="w-3.5 h-3.5"></i> Ulang Tahun Ikii 🧸
+                            </p>
+                            <h3 id="ikii-birthday-countdown" class="text-lg font-serif-aesthetic font-semibold text-[#4a3e3d] mt-2">
+                                Menghitung waktu...
+                            </h3>
+                            <p class="text-[10px] text-gray-400 mt-1">19 September</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- ================= PLAYLIST DETAIL POPUP (MODAL) ================= -->
+        <div id="music-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs px-6 hidden">
+            <div class="max-w-md w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-xl fade-in space-y-5 relative">
+                
+                <!-- Close Button -->
+                <button onclick="closeMusicPopup()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+
+                <!-- Date (Top) -->
+                <div class="border-b border-[#f3eae1] pb-2">
+                    <span id="modal-date" class="text-xs font-mono text-[#bd7a6b] uppercase tracking-wider">12 SEPTEMBER 2024</span>
+                </div>
+
+                <!-- Title -->
+                <h3 id="modal-title" class="text-xl font-serif-aesthetic font-semibold text-[#4a3e3d]">Semua Aku Dirayakan</h3>
+
+                <!-- Middle Photo (SVG Art Style) -->
+                <div class="w-full aspect-[4/3] rounded-2xl bg-[#f5ebe0] border border-[#ebdcd0] overflow-hidden flex flex-col items-center justify-center p-6 text-center relative">
+                    <div id="modal-icon-container" class="w-16 h-16 rounded-full bg-white/80 flex items-center justify-center text-[#bd7a6b] mb-3 shadow-xs">
+                        <i data-lucide="music-3" class="w-8 h-8"></i>
+                    </div>
+                    <span class="text-xs text-[#8e766e] font-handwritten text-xl">"Momen indah kita di hari ini."</span>
+                    <span class="absolute bottom-2 right-3 text-[9px] text-gray-400 font-mono">[Foto/Video Pendukung]</span>
+                </div>
+
+                <!-- Description (Bottom) -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-semibold text-[#bd7a6b] uppercase tracking-wide">Pesan Kenangan:</h4>
+                    <p id="modal-desc" class="text-sm text-[#5c4a47] leading-relaxed font-light">
+                        Ini adalah tempat pesan kenangan lagumu berjalan. Cerita manis di balik setiap harmoni melodi kita yang abadi.
+                    </p>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="closeMusicPopup()" 
+                        class="w-full bg-[#f1e4d8] text-[#8e766e] py-2.5 rounded-xl text-sm font-medium hover:bg-[#eaddd0] transition-colors">
+                        Selesai Membaca ❤️
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= STICKY AUDIO PLAYER (Moved slightly up to prevent overlapping) ================= -->
+        <div class="fixed bottom-24 right-4 z-40 bg-[#fbf9f6] border border-[#eaddd0] rounded-2xl p-3 shadow-md max-w-xs flex items-center space-x-3.5 fade-in">
+            <div class="relative flex-shrink-0">
+                <!-- Rotating Vinyl Record Effect (Dibuat diam di awal, hanya berputar saat memutar lagu) -->
+                <div id="vinyl-record" class="w-10 h-10 rounded-full bg-[#27272a] flex items-center justify-center">
+                    <span class="w-3 h-3 rounded-full bg-[#fbf9f6]"></span>
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                </div>
+            </div>
+            <div class="flex-grow min-w-0 pr-1">
+                <p class="text-[10px] font-mono tracking-widest text-[#bd7a6b] uppercase font-bold">Journal Tune</p>
+                <p id="now-playing-title" class="text-xs font-medium text-[#4a3e3d] truncate">Pilih Melodi...</p>
+            </div>
+            <button onclick="toggleGlobalAudio()" id="global-play-btn" class="w-8 h-8 rounded-full bg-[#e79e8c]/20 hover:bg-[#e79e8c]/30 text-[#bd7a6b] flex items-center justify-center transition-colors">
+                <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+            </button>
+        </div>
+
+        <!-- ================= INSTAGRAM-STYLE FIXED BOTTOM NAVIGATION ================= -->
+        <div class="fixed bottom-0 left-0 right-0 bg-[#fcfaf7] border-t border-[#ebdcd0] z-50 py-3.5 px-6 flex justify-around items-center md:max-w-4xl md:mx-auto md:rounded-t-3xl md:border-x shadow-lg">
+            <!-- Home Tab Button -->
+            <button id="nav-home" onclick="switchTab('home')" class="flex flex-col items-center justify-center text-[#bd7a6b] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Beranda">
+                <i data-lucide="home" class="w-6 h-6"></i>
+            </button>
+            
+            <!-- Search Tab Button (Lagu - Ganti dengan Icon Music) -->
+            <button id="nav-search" onclick="switchTab('search')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Melodi">
+                <i data-lucide="music" class="w-6 h-6"></i>
+            </button>
+            
+            <!-- Create Post Tab Button (Galeri - Ganti dengan Icon Image/Gallery) -->
+            <button id="nav-plus" onclick="switchTab('plus')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Galeri">
+                <i data-lucide="image" class="w-6 h-6"></i>
+            </button>
+            
+            <!-- Chat Tab Button (Pesan Kita) -->
+            <button id="nav-chat" onclick="switchTab('chat')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Pesan Cinta">
+                <i data-lucide="message-circle" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Profile Tab Button (Insta Profile Page) -->
+            <button id="nav-profile" onclick="switchTab('profile')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Profil Kita">
+                <div class="w-6 h-6 rounded-full border border-current flex items-center justify-center overflow-hidden">
+                    <span class="text-[9px] font-bold font-serif-aesthetic">AI</span>
+                </div>
+            </button>
+        </div>
+
+
+    <!-- Script Logika Interaktif -->
+    <script>
+        // Inisialisasi ikon Lucide
+        lucide.createIcons();
+
+        // Variabel Pengirim Pesan Default
+        let currentSender = 'ayyaa';
+
+        // Helper untuk mencegah HTML break / XSS saat ketik pesan di chat
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
             );
         }
 
-        const container = document.getElementById('root');
-        const root = ReactDOM.createRoot(container);
-        root.render(<App />);
+        // Check Password Gate
+        function checkPassword() {
+            const passwordInput = document.getElementById('password-input').value;
+            const errorText = document.getElementById('password-error');
+            const passwordGate = document.getElementById('password-gate');
+            const passwordCard = document.getElementById('password-card');
+            const mainContent = document.getElementById('main-content');
+
+            if (passwordInput === '092008') {
+                // Sembunyikan gate dengan efek transisi lembut
+                passwordGate.style.opacity = '0';
+                passwordGate.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(() => {
+                    passwordGate.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    switchTab('home'); // Tampilkan halaman beranda pertama kali
+                    loadMessagesFromStorage(); // Muat pesan dari local storage
+                    loadDriveGalleryItems(); // Muat galeri kustom dari local storage
+                    
+                    // Mulai countdown ulang tahun secara real-time setiap detik
+                    setInterval(updateBirthdayCountdowns, 1000);
+                    updateBirthdayCountdowns();
+                }, 500);
+            } else {
+                errorText.classList.remove('hidden');
+                // Beri efek getar sedikit pada card input dan warna border merah tegas
+                passwordCard.classList.add('shake', 'border-red-400');
+                const inputElement = document.getElementById('password-input');
+                inputElement.classList.add('border-red-400', 'ring-2', 'ring-red-300');
+                
+                setTimeout(() => {
+                    passwordCard.classList.remove('shake', 'border-red-400');
+                    inputElement.classList.remove('border-red-400', 'ring-2', 'ring-red-300');
+                }, 1000);
+            }
+        }
+
+        // Enter key di password input
+        document.getElementById('password-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        // Tab Switcher Logic (Instagram Style)
+        function switchTab(tabName) {
+            // Sembunyikan semua section
+            document.getElementById('home-sec').classList.add('hidden');
+            document.getElementById('playlist-sec').classList.add('hidden');
+            document.getElementById('gallery-sec').classList.add('hidden');
+            document.getElementById('chat-sec').classList.add('hidden');
+            document.getElementById('profile-sec').classList.add('hidden');
+
+            // Tampilkan section yang dipilih
+            if (tabName === 'home') {
+                document.getElementById('home-sec').classList.remove('hidden');
+            } else if (tabName === 'search') {
+                document.getElementById('playlist-sec').classList.remove('hidden');
+            } else if (tabName === 'plus') {
+                document.getElementById('gallery-sec').classList.remove('hidden');
+            } else if (tabName === 'chat') {
+                document.getElementById('chat-sec').classList.remove('hidden');
+            } else if (tabName === 'profile') {
+                document.getElementById('profile-sec').classList.remove('hidden');
+            }
+
+            // Ubah gaya navigasi tombol aktif
+            const tabs = ['home', 'search', 'plus', 'chat', 'profile'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                if (t === tabName) {
+                    btn.classList.add('text-[#bd7a6b]', 'scale-110');
+                    btn.classList.remove('text-[#8e766e]');
+                } else {
+                    btn.classList.remove('text-[#bd7a6b]', 'scale-110');
+                    btn.classList.add('text-[#8e766e]');
+                }
+            });
+
+            // Re-render Lucide icons
+            lucide.createIcons();
+            
+            // Scroll otomatis ke atas agar tidak terpotong saat pindah tab
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Map smooth scroll ke tab switcher agar tombol orisinal tetap berfungsi
+        function scrollToSection(sectionId) {
+            if (sectionId === 'home-sec') switchTab('home');
+            else if (sectionId === 'playlist-sec') switchTab('search');
+            else if (sectionId === 'gallery-sec') switchTab('plus');
+            else if (sectionId === 'chat-sec') switchTab('chat');
+        }
+
+        // Logika Hitung Mundur Ulang Tahun (12 September & 19 September)
+        function getNextBirthday(month, day) {
+            const now = new Date();
+            let bday = new Date(now.getFullYear(), month - 1, day, 0, 0, 0);
+            if (now > bday) {
+                bday.setFullYear(now.getFullYear() + 1);
+            }
+            return bday;
+        }
+
+        function updateBirthdayCountdowns() {
+            const now = new Date();
+
+            // Ulang Tahun Ayyaa: 12 September
+            const ayyaaBday = getNextBirthday(9, 12);
+            const diffAyyaa = ayyaaBday - now;
+            const daysA = Math.floor(diffAyyaa / (1000 * 60 * 60 * 24));
+            const hoursA = Math.floor((diffAyyaa % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutesA = Math.floor((diffAyyaa % (1000 * 60 * 60)) / (1000 * 60));
+            const secondsA = Math.floor((diffAyyaa % (1000 * 60)) / 1000);
+
+            // Ulang Tahun Ikii: 19 September
+            const ikiiBday = getNextBirthday(9, 19);
+            const diffIkii = ikiiBday - now;
+            const daysI = Math.floor(diffIkii / (1000 * 60 * 60 * 24));
+            const hoursI = Math.floor((diffIkii % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutesI = Math.floor((diffIkii % (1000 * 60 * 60)) / (1000 * 60));
+            const secondsI = Math.floor((diffIkii % (1000 * 60)) / 1000);
+
+            // Tampilkan ke DOM
+            document.getElementById('ayyaa-birthday-countdown').innerHTML = 
+                `${daysA}d ${hoursA}h ${minutesA}m ${secondsA}s`;
+            document.getElementById('ikii-birthday-countdown').innerHTML = 
+                `${daysI}d ${hoursI}h ${minutesI}m ${secondsI}s`;
+        }
+
+        // Parse link Google Drive menjadi direct-link rendering
+        function parseDriveUrl(url) {
+            url = url.trim();
+            // Cek jika mengandung ID file Google Drive (/file/d/[id] atau ?id=[id])
+            const regFileD = /\/file\/d\/([a-zA-Z0-9_-]+)/;
+            const regIdParam = /[?&]id=([a-zA-Z0-9_-]+)/;
+            const regLh3 = /\/d\/([a-zA-Z0-9_-]+)/;
+
+            let id = null;
+            if (regFileD.test(url)) {
+                id = url.match(regFileD)[1];
+            } else if (regIdParam.test(url)) {
+                id = url.match(regIdParam)[1];
+            } else if (regLh3.test(url)) {
+                id = url.match(regLh3)[1];
+            }
+
+            if (id) {
+                return `https://lh3.googleusercontent.com/d/${id}`;
+            }
+
+            // Jika bukan Google Drive, return link aslinya (agar gambar web lain juga bisa ditambahkan)
+            return url;
+        }
+
+        // Menambahkan Item Media ke Galeri
+        function addDriveItem() {
+            const inputElement = document.getElementById('drive-link-input');
+            const rawUrl = inputElement.value.trim();
+            if (!rawUrl) return;
+
+            const finalUrl = parseDriveUrl(rawUrl);
+
+            // Ambil data yang tersimpan
+            let customItems = JSON.parse(localStorage.getItem('ayyaa_ikii_gallery_custom')) || [];
+            customItems.push(finalUrl);
+            localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(customItems));
+
+            // Render ulang dan kosongkan input
+            loadDriveGalleryItems();
+            inputElement.value = '';
+        }
+
+        // Menghapus Item Media dari Galeri
+        function deleteDriveItem(index) {
+            let customItems = JSON.parse(localStorage.getItem('ayyaa_ikii_gallery_custom')) || [];
+            customItems.splice(index, 1);
+            localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(customItems));
+            loadDriveGalleryItems();
+        }
+
+        // Memuat Item Google Drive ke Grid Galeri
+        function loadDriveGalleryItems() {
+            const grid = document.getElementById('gallery-grid');
+            
+            // Simpan item bawaan (6 item pertama)
+            const defaultItemsHTML = `
+                <!-- Foto Item Bawaan 1 -->
+                <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                    <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f7ebe0]">
+                        <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                        <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"First Date di Kedai Kopi"</span>
+                        <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto 1]</span>
+                    </div>
+                </div>
+
+                <!-- Foto Item Bawaan 2 -->
+                <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                    <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f5ebe0]">
+                        <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                        <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"Jalan Sore di Taman Kota"</span>
+                        <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto 2]</span>
+                    </div>
+                </div>
+
+                <!-- Foto Item Bawaan 3 -->
+                <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                    <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f2e2d2]">
+                        <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                        <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"Ngerayain Ultah Kamu"</span>
+                        <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto 3]</span>
+                    </div>
+                </div>
+
+                <!-- Foto Item Bawaan 4 -->
+                <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                    <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#ebdcd0]">
+                        <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                        <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"Ketawa Gara-gara Receh"</span>
+                        <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto 4]</span>
+                    </div>
+                </div>
+
+                <!-- Foto Item Bawaan 5 -->
+                <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                    <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f7ebe0]">
+                        <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                        <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"Senja Pertama Bareng"</span>
+                        <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto 5]</span>
+                    </div>
+                </div>
+
+                <!-- Foto Item Bawaan 6 -->
+                <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                    <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f5ebe0]">
+                        <i data-lucide="video" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                        <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"Klip Video Random Lucu"</span>
+                        <span class="text-[10px] text-gray-400 mt-2 font-mono">[Video Placeholder]</span>
+                    </div>
+                </div>
+            `;
+
+            grid.innerHTML = defaultItemsHTML;
+
+            // Ambil item kustom dari local storage
+            let customItems = JSON.parse(localStorage.getItem('ayyaa_ikii_gallery_custom')) || [];
+
+            customItems.forEach((url, index) => {
+                const cardHTML = `
+                    <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+                        <img src="${url}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%23f5ebe0%22/><text x=%2250%%22 y=%2250%%22 font-family=%22sans-serif%22 font-size=%2210%22 fill=%22%23bd7a6b%22 text-anchor=%22middle%22 dy=%22.3em%22>Media Ditambahkan</text></svg>';" />
+                        <!-- Tombol Hapus overlay -->
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button onclick="deleteDriveItem(${index})" class="bg-red-500 hover:bg-red-600 text-white p-2.5 rounded-full shadow-lg transition-transform hover:scale-110">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHTML);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Toggle Audio Player (Simulasi Play/Pause)
+        let isAudioPlaying = false; // Dimulai dengan false (tidak otomatis memutar lagu bawaan)
+        function toggleGlobalAudio() {
+            const playBtn = document.getElementById('global-play-btn');
+            const nowPlaying = document.getElementById('now-playing-title');
+            const vinyl = document.getElementById('vinyl-record');
+            
+            if (isAudioPlaying) {
+                playBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-current"></i>';
+                nowPlaying.classList.add('opacity-60');
+                vinyl.classList.remove('animate-spin');
+                isAudioPlaying = false;
+            } else {
+                playBtn.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i>';
+                nowPlaying.classList.remove('opacity-60');
+                vinyl.classList.add('animate-spin');
+                vinyl.style.animationDuration = '8s';
+                isAudioPlaying = true;
+            }
+            lucide.createIcons();
+        }
+
+        // Open Music Memoar Popup
+function openMusicPopup(title, date, story, theme, musicUrl) {
+    // Di dalam fungsi ini, kamu tinggal gunakan variabel `musicUrl` 
+    // untuk dimasukkan ke elemen <audio src="..."> atau tombol "Putar Lagu" di dalam pop-up kamu.
+            const modal = document.getElementById('music-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalDate = document.getElementById('modal-date');
+            const modalDesc = document.getElementById('modal-desc');
+            const nowPlayingTitle = document.getElementById('now-playing-title');
+            const iconContainer = document.getElementById('modal-icon-container');
+            const vinyl = document.getElementById('vinyl-record');
+            const playBtn = document.getElementById('global-play-btn');
+
+            // Update konten popup modal sesuai parameter lagu
+            modalTitle.innerText = title;
+            modalDate.innerText = date.toUpperCase();
+            modalDesc.innerText = description;
+            nowPlayingTitle.innerText = title;
+
+            // Beri animasi ikon berbeda berdasarkan tema lagu
+            if (theme === 'romantic_sunset') {
+                iconContainer.innerHTML = '<i data-lucide="sun" class="w-8 h-8 text-amber-500"></i>';
+            } else if (theme === 'cozy_night') {
+                iconContainer.innerHTML = '<i data-lucide="moon" class="w-8 h-8 text-indigo-500"></i>';
+            } else if (theme === 'rainy_day') {
+                iconContainer.innerHTML = '<i data-lucide="cloud-rain" class="w-8 h-8 text-blue-400"></i>';
+            } else {
+                iconContainer.innerHTML = '<i data-lucide="sparkles" class="w-8 h-8 text-yellow-500"></i>';
+            }
+
+            // Aktifkan putaran vinyl dan ubah tombol jadi pause karena lagu diputar
+            isAudioPlaying = true;
+            playBtn.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i>';
+            nowPlayingTitle.classList.remove('opacity-60');
+            vinyl.classList.add('animate-spin');
+            vinyl.style.animationDuration = '8s';
+
+            // Tampilkan Modal
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // Close Music Memoar Popup
+        function closeMusicPopup() {
+            const modal = document.getElementById('music-modal');
+            modal.classList.add('hidden');
+        }
+
+        // Switch Sender in Chat (dm)
+        function setSender(sender) {
+            const btnAyyaa = document.getElementById('sender-ayyaa');
+            const btnIkii = document.getElementById('sender-ikii');
+
+            currentSender = sender;
+
+            if (sender === 'ayyaa') {
+                btnAyyaa.className = "px-4 py-1.5 rounded-lg font-medium transition-all bg-[#e79e8c] text-white shadow-sm";
+                btnIkii.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-[#8e766e] hover:text-[#bd7a6b]";
+            } else {
+                btnIkii.className = "px-4 py-1.5 rounded-lg font-medium transition-all bg-[#e79e8c] text-white shadow-sm";
+                btnAyyaa.className = "px-4 py-1.5 rounded-lg font-medium transition-all text-[#8e766e] hover:text-[#bd7a6b]";
+            }
+        }
+
+        // Send Chat Message
+        function sendChatMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const messageText = chatInput.value.trim();
+
+            if (messageText === '') return;
+
+            // Mendapatkan Jam Sekarang
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Enkripsi string teks agar layout HTML aman
+            const safeText = escapeHTML(messageText);
+
+            const messageObj = {
+                sender: currentSender,
+                text: safeText,
+                time: timeString
+            };
+
+            // Simpan ke local storage agar persisten di reload
+            let messages = JSON.parse(localStorage.getItem('ayyaa_ikii_chat')) || [];
+            messages.push(messageObj);
+            localStorage.setItem('ayyaa_ikii_chat', JSON.stringify(messages));
+
+            // Render ulang semua chat
+            renderMessages();
+
+            // Clear input
+            chatInput.value = '';
+        }
+
+        // Render Messages in Chat Thread
+        function renderMessages() {
+            const thread = document.getElementById('chat-thread');
+            // Menjadikan chat awal benar-benar kosong sesuai request
+            thread.innerHTML = ``;
+
+            let messages = JSON.parse(localStorage.getItem('ayyaa_ikii_chat')) || [];
+
+            messages.forEach(msg => {
+                const isMe = msg.sender === 'ikii'; // asumsikan ikii di kanan, ayyaa di kiri atau sebaliknya
+                const itemHTML = isMe ? `
+                    <div class="flex items-start justify-end space-x-2.5">
+                        <div class="max-w-[75%] bg-[#f7ebe0] border border-[#ebdcd0] p-3.5 rounded-2xl rounded-tr-none shadow-xs">
+                            <span class="block text-[10px] font-semibold text-[#bd7a6b] text-right mb-1">${msg.sender}</span>
+                            <p class="text-sm text-[#4a3e3d]">${msg.text}</p>
+                            <span class="block text-[9px] text-gray-400 text-left mt-1.5">${msg.time}</span>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-[#bd7a6b] flex items-center justify-center text-xs font-bold text-white">I</div>
+                    </div>
+                ` : `
+                    <div class="flex items-start space-x-2.5">
+                        <div class="w-8 h-8 rounded-full bg-[#f1e4d8] flex items-center justify-center text-xs font-bold text-[#8e766e]">A</div>
+                        <div class="max-w-[75%] bg-white border border-[#eaddd0] p-3.5 rounded-2xl rounded-tl-none shadow-xs">
+                            <span class="block text-[10px] font-semibold text-[#bd7a6b] mb-1">${msg.sender}</span>
+                            <p class="text-sm text-[#4a3e3d]">${msg.text}</p>
+                            <span class="block text-[9px] text-gray-400 text-right mt-1.5">${msg.time}</span>
+                        </div>
+                    </div>
+                `;
+                thread.insertAdjacentHTML('beforeend', itemHTML);
+            });
+
+            // Scroll otomatis ke chat terbawah
+            thread.scrollTop = thread.scrollHeight;
+        }
+
+        // Memuat pesan pas awal masuk
+        function loadMessagesFromStorage() {
+            renderMessages();
+        }
+
+        // Enter key di input chat
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
     </script>
 </body>
 </html>
