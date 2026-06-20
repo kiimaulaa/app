@@ -662,10 +662,71 @@
                             <p class="text-[10px] text-gray-400 mt-1">19 September</p>
                         </div>
                     </div>
+
+                    <!-- Cloud Sync Settings Button -->
+                    <div class="text-center pt-4">
+                        <button onclick="openCloudConfigModal()" class="inline-flex items-center gap-1.5 text-xs text-[#bd7a6b] bg-[#e79e8c]/10 hover:bg-[#e79e8c]/20 px-4 py-2 rounded-xl font-medium transition-all">
+                            <i data-lucide="settings" class="w-3.5 h-3.5"></i> Hubungkan Database (Cloud Sync)
+                        </button>
+                    </div>
                 </div>
             </section>
 
         </main>
+
+        <!-- ================= CLOUD SYNC CONFIG POPUP (MODAL) ================= -->
+        <div id="cloud-config-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6 hidden transition-all duration-300">
+            <div class="max-w-md w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-xl fade-in space-y-4 max-h-[85vh] overflow-y-auto smooth-scroll-container">
+                <div class="flex items-center justify-between border-b border-[#f3eae1] pb-2">
+                    <h3 class="text-lg font-serif-aesthetic font-semibold text-[#4a3e3d] flex items-center gap-1.5">
+                        <i data-lucide="cloud" class="w-5 h-5 text-[#bd7a6b]"></i> Pengaturan Cloud Sync
+                    </h3>
+                    <button onclick="closeCloudConfigModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 leading-relaxed">
+                    Agar pesan, chat, dan foto tersinkron otomatis di semua perangkat dan browser saat dibuka melalui link GitHub Pages, silakan masukkan Firebase Project Config Anda di bawah ini:
+                </p>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">API Key</label>
+                        <input type="text" id="cfg-apiKey" placeholder="AIzaSy..." class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">Auth Domain</label>
+                        <input type="text" id="cfg-authDomain" placeholder="nama-project.firebaseapp.com" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">Project ID</label>
+                        <input type="text" id="cfg-projectId" placeholder="nama-project" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">Storage Bucket</label>
+                        <input type="text" id="cfg-storageBucket" placeholder="nama-project.appspot.com" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">Messaging Sender ID</label>
+                        <input type="text" id="cfg-messagingSenderId" placeholder="1234567890" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">App ID</label>
+                        <input type="text" id="cfg-appId" placeholder="1:12345:web:abcd" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                </div>
+
+                <p id="cloud-status-msg" class="text-xs text-center hidden font-medium"></p>
+
+                <div class="flex gap-2 pt-2">
+                    <button onclick="saveCloudConfig()" class="flex-grow bg-[#e79e8c] hover:bg-[#db8d7b] text-white py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm">
+                        Simpan & Hubungkan
+                    </button>
+                    <button onclick="resetCloudConfig()" class="px-4 bg-gray-200 hover:bg-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-medium transition-all" title="Reset Konfigurasi">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- ================= PLAYLIST DETAIL POPUP (MODAL) ================= -->
         <div id="music-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6 hidden transition-all duration-300">
@@ -767,17 +828,50 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Konfigurasi Database Cloud (Menggunakan variabel global platform)
+        // ================= MANUAL FIREBASE CONFIGURATION FOR DEPLOYMENT =================
+        // Jika Anda meng-host di GitHub Pages, Anda bisa menempelkan data Firebase Anda di bawah ini
+        // agar website terhubung secara global, atau gunakan form pengaturan langsung dari web!
+        const CUSTOM_FIREBASE_CONFIG = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ayyaa-ikii-couplegram';
         let db = null;
         let auth = null;
         let isFirebaseReady = false;
         let currentAuthUser = null;
 
-        // Inisialisasi Firebase & Autentikasi segera di awal jika config tersedia
+        // Pilih konfigurasi Firebase yang akan digunakan
+        let firebaseConfig = null;
+
         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
             try {
-                const firebaseConfig = JSON.parse(__firebase_config);
+                firebaseConfig = JSON.parse(__firebase_config);
+            } catch (e) {
+                console.error("Gagal melakukan inisialisasi platform Firebase: ", e);
+            }
+        } else if (CUSTOM_FIREBASE_CONFIG && CUSTOM_FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY") {
+            firebaseConfig = CUSTOM_FIREBASE_CONFIG;
+        } else {
+            // Ambil dari localStorage jika pengguna telah menyimpannya via UI pengaturan langsung di peramban
+            const savedConfig = localStorage.getItem('custom_firebase_config');
+            if (savedConfig) {
+                try {
+                    firebaseConfig = JSON.parse(savedConfig);
+                } catch (e) {
+                    console.error("Gagal memproses config dari localStorage: ", e);
+                }
+            }
+        }
+
+        // Inisialisasi Firebase & Autentikasi segera di awal jika config tersedia
+        if (firebaseConfig) {
+            try {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -795,7 +889,7 @@
                     }
                 });
             } catch (e) {
-                console.error("Gagal melakukan inisialisasi Firebase: ", e);
+                console.error("Gagal memulai modul Firebase: ", e);
             }
         }
 
@@ -1314,6 +1408,70 @@
             }
         });
 
+        // ================= CLOUD SYNC SETTINGS HANDLERS =================
+        function openCloudConfigModal() {
+            const modal = document.getElementById('cloud-config-modal');
+            modal.classList.remove('hidden');
+
+            const savedConfigRaw = localStorage.getItem('custom_firebase_config');
+            let savedConfig = null;
+            if (savedConfigRaw) {
+                try { savedConfig = JSON.parse(savedConfigRaw); } catch(e) {}
+            } else if (CUSTOM_FIREBASE_CONFIG && CUSTOM_FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY") {
+                savedConfig = CUSTOM_FIREBASE_CONFIG;
+            }
+
+            if (savedConfig) {
+                document.getElementById('cfg-apiKey').value = savedConfig.apiKey || '';
+                document.getElementById('cfg-authDomain').value = savedConfig.authDomain || '';
+                document.getElementById('cfg-projectId').value = savedConfig.projectId || '';
+                document.getElementById('cfg-storageBucket').value = savedConfig.storageBucket || '';
+                document.getElementById('cfg-messagingSenderId').value = savedConfig.messagingSenderId || '';
+                document.getElementById('cfg-appId').value = savedConfig.appId || '';
+            }
+        }
+
+        function closeCloudConfigModal() {
+            document.getElementById('cloud-config-modal').classList.add('hidden');
+        }
+
+        function showCloudStatus(text, isError = false) {
+            const statusEl = document.getElementById('cloud-status-msg');
+            statusEl.innerText = text;
+            statusEl.className = `text-xs text-center font-medium ${isError ? 'text-red-500' : 'text-green-600'}`;
+            statusEl.classList.remove('hidden');
+        }
+
+        function saveCloudConfig() {
+            const config = {
+                apiKey: document.getElementById('cfg-apiKey').value.trim(),
+                authDomain: document.getElementById('cfg-authDomain').value.trim(),
+                projectId: document.getElementById('cfg-projectId').value.trim(),
+                storageBucket: document.getElementById('cfg-storageBucket').value.trim(),
+                messagingSenderId: document.getElementById('cfg-messagingSenderId').value.trim(),
+                appId: document.getElementById('cfg-appId').value.trim()
+            };
+
+            if (!config.apiKey || !config.projectId) {
+                showCloudStatus("Harap masukkan setidaknya API Key dan Project ID!", true);
+                return;
+            }
+
+            localStorage.setItem('custom_firebase_config', JSON.stringify(config));
+            showCloudStatus("Konfigurasi disimpan! Memuat ulang halaman untuk menghubungkan database...");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        }
+
+        function resetCloudConfig() {
+            localStorage.removeItem('custom_firebase_config');
+            showCloudStatus("Konfigurasi dihapus! Memuat ulang halaman...");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        }
+
         // Hubungkan semua fungsi utama ke object window agar berjalan di runtime HTML Inline
         window.checkPassword = checkPassword;
         window.switchTab = switchTab;
@@ -1325,6 +1483,10 @@
         window.closeMusicPopup = closeMusicPopup;
         window.setSender = setSender;
         window.sendChatMessage = sendChatMessage;
+        window.openCloudConfigModal = openCloudConfigModal;
+        window.closeCloudConfigModal = closeCloudConfigModal;
+        window.saveCloudConfig = saveCloudConfig;
+        window.resetCloudConfig = resetCloudConfig;
 
     </script>
 </body>
