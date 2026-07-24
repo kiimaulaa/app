@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us - Couplegram</title>
+    <title>About Us</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts: Playfair Display, Plus Jakarta Sans, Caveat & Instagram Aesthetic Fonts -->
+    <!-- Google Fonts: Playfair Display & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&family=Playfair+Display:ital,wght=0,400;0,600;1,400&family=Caveat:wght=400;700&family=Grand+Hotel&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&family=Playfair+Display:ital,wght=0,400;0,600;1,400&family=Caveat:wght=400;700&display=swap" rel="stylesheet">
     
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -30,9 +30,6 @@
         }
         .font-handwritten {
             font-family: 'Caveat', cursive;
-        }
-        .font-insta-logo {
-            font-family: 'Grand Hotel', cursive;
         }
         /* Custom scrollbar estetik */
         ::-webkit-scrollbar {
@@ -57,7 +54,7 @@
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Animasi getar untuk login salah */
+        /* Animasi getar untuk input password salah */
         .shake {
             animation: shake 0.4s ease-in-out;
         }
@@ -71,6 +68,18 @@
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
         }
+        /* Bubble chat Instagram style */
+        .chat-bubble-me {
+            background: linear-gradient(135deg, #e79e8c 0%, #bd7a6b 100%);
+            color: white;
+            border-radius: 20px 20px 4px 20px;
+        }
+        .chat-bubble-other {
+            background-color: #ffffff;
+            color: #4a3e3d;
+            border: 1px solid #ebdcd0;
+            border-radius: 20px 20px 20px 4px;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col overflow-x-hidden selection:bg-[#e79e8c] selection:text-white pb-32">
@@ -78,60 +87,48 @@
     <!-- Audio Element untuk memutar musik -->
     <audio id="global-audio" loop></audio>
 
-    <!-- ================= INSTAGRAM-STYLE LOGIN GATE ================= -->
-    <div id="password-gate" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#f7f3ed] px-4 py-8 overflow-y-auto">
-        <div id="login-card" class="max-w-sm w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-7 shadow-sm text-center space-y-6 fade-in my-auto">
+    <!-- ================= INSTAGRAM LOGIN GATE ================= -->
+    <div id="password-gate" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#f7f3ed] px-6">
+        <div id="password-card" class="max-w-sm w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-8 shadow-sm text-center space-y-6 fade-in relative">
+            <!-- Ring Binder Atas Decorative -->
+            <div class="flex justify-center space-x-2 -mt-4 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#cbd5e1] inline-block shadow-inner"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#cbd5e1] inline-block shadow-inner"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#cbd5e1] inline-block shadow-inner"></span>
+            </div>
             
-            <!-- Instagram Logo Header -->
-            <div class="space-y-1">
-                <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-tr from-amber-400 via-[#e79e8c] to-[#bd7a6b] p-1 shadow-sm flex items-center justify-center mb-2">
-                    <div class="w-full h-full bg-white rounded-full flex items-center justify-center">
-                        <i data-lucide="instagram" class="w-8 h-8 text-[#bd7a6b]"></i>
-                    </div>
+            <div class="space-y-2">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#e79e8c]/20 text-[#bd7a6b] mb-1">
+                    <i data-lucide="instagram" class="w-6 h-6"></i>
                 </div>
-                <h1 class="text-4xl font-insta-logo text-[#bd7a6b] tracking-wider pt-1">Couplegram</h1>
-                <p class="text-xs text-gray-500 font-light">Masuk ke jurnal cinta kita 💕</p>
+                <h1 class="text-3xl font-serif-aesthetic text-[#bd7a6b] font-semibold tracking-wider">Couplegram</h1>
+                <p class="text-xs text-gray-500 font-light">Masuk ke akunmu dulu yaa..</p>
             </div>
 
-            <!-- Login Form Fields -->
-            <div class="space-y-3">
-                <!-- Username Input -->
-                <div class="relative">
-                    <input type="text" id="login-username" placeholder="Username (ikii / ayyaa)" 
-                        class="w-full px-4 py-3 rounded-xl border border-[#e3d5c8] bg-[#fbf9f6] text-sm focus:ring-2 focus:ring-[#e79e8c] focus:outline-none transition-all placeholder:text-gray-400 text-[#4a3e3d]">
+            <!-- Login Form -->
+            <div class="space-y-3.5 text-left">
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1 ml-1">Username</label>
+                    <input type="text" id="login-username" placeholder="ikii / ayyaa" 
+                        class="w-full px-4 py-3 rounded-xl border border-[#e3d5c8] bg-[#fbf9f6] text-sm focus:ring-2 focus:ring-[#e79e8c] focus:outline-none transition-all placeholder:text-gray-300 text-[#4a3e3d]">
                 </div>
 
-                <!-- Password Input -->
-                <div class="relative">
-                    <input type="password" id="login-password" placeholder="Kata Sandi" 
-                        class="w-full px-4 py-3 pr-10 rounded-xl border border-[#e3d5c8] bg-[#fbf9f6] text-sm focus:ring-2 focus:ring-[#e79e8c] focus:outline-none transition-all placeholder:text-gray-400 text-[#4a3e3d]">
-                    <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600">
-                        <i id="toggle-pwd-icon" data-lucide="eye" class="w-4 h-4"></i>
-                    </button>
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1 ml-1">Password</label>
+                    <input type="password" id="login-password" placeholder="••••" 
+                        class="w-full px-4 py-3 rounded-xl border border-[#e3d5c8] bg-[#fbf9f6] text-sm focus:ring-2 focus:ring-[#e79e8c] focus:outline-none transition-all placeholder:text-gray-300 text-[#4a3e3d]">
                 </div>
 
-                <!-- Login Button -->
-                <button onclick="checkAccountLogin()" 
-                    class="w-full bg-[#e79e8c] text-white py-3 rounded-xl font-medium text-sm tracking-wide shadow-sm hover:bg-[#db8d7b] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
-                    Masuk
+                <button onclick="checkPassword()" 
+                    class="w-full mt-2 bg-[#e79e8c] text-white py-3 rounded-xl font-medium tracking-wide shadow-sm hover:bg-[#db8d7b] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 text-sm">
+                    Masuk <i data-lucide="log-in" class="w-4 h-4"></i>
                 </button>
                 
-                <!-- Error Message -->
-                <p id="password-error" class="text-xs text-red-400 font-light hidden pt-1">Username atau password salah boloo 🥺</p>
+                <p id="password-error" class="text-xs text-red-400 font-light text-center hidden pt-1">Username atau password salah boloo 🥺</p>
             </div>
 
-            <!-- Quick Account Hint Info -->
-            <div class="bg-[#f7f3ed] p-3 rounded-2xl text-[11px] text-gray-500 space-y-1 border border-[#eaddd0]">
-                <p class="font-semibold text-[#bd7a6b]">Gunakan Akun:</p>
-                <div class="flex justify-around text-gray-600 pt-0.5">
-                    <span>🧸 ikii (1909)</span>
-                    <span>•</span>
-                    <span>🎀 ayyaa (1209)</span>
-                </div>
-            </div>
-
-            <div class="text-xs text-gray-400 pt-3 border-t border-[#f3eae1] font-light">
-                About Us • Perfect Couple Journal
+            <div class="text-[11px] text-gray-400 pt-4 border-t border-[#f3eae1] font-light">
+                All About Us • Private Account
             </div>
         </div>
     </div>
@@ -144,10 +141,8 @@
             <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                     <span class="text-2xl font-serif-aesthetic font-semibold text-[#bd7a6b] tracking-wider cursor-pointer" onclick="switchTab('home')">About Us</span>
-                    
-                    <!-- Badge Logged-In User -->
-                    <span id="active-user-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-[#f1e4d8] text-[#bd7a6b] font-medium font-serif-aesthetic border border-[#eaddd0]">
-                        Loading...
+                    <span id="header-user-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-[#f1e4d8] text-[#8e766e] font-medium font-serif-aesthetic flex items-center gap-1">
+                        <!-- Filled by JS -->
                     </span>
                     
                     <!-- Indikator Koneksi Realtime -->
@@ -158,7 +153,7 @@
                 
                 <!-- Instagram Top Icons -->
                 <div class="flex items-center space-x-5 text-[#8e766e]">
-                    <button onclick="switchTab('profile')" class="hover:text-[#bd7a6b] transition-colors relative" title="Profil & Momen">
+                    <button onclick="switchTab('profile')" class="hover:text-[#bd7a6b] transition-colors relative" title="Momen Spesial">
                         <i data-lucide="heart" class="w-6 h-6"></i>
                         <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-400"></span>
                     </button>
@@ -194,9 +189,6 @@
                         <!-- Date & Header -->
                         <div class="flex justify-between items-center border-b border-[#ebdcd0] pb-3">
                             <span class="font-handwritten text-[#bd7a6b] text-2xl font-bold">About Us..</span>
-                            <span id="welcome-user-text" class="text-xs text-[#8e766e] italic">
-                                Halo!
-                            </span>
                         </div>
 
                         <!-- Main Photo Box -->
@@ -218,7 +210,7 @@
                                 "Seperti 3726 mdpl, selalu butuh waktu yang lama untuk mendapatkan sesuatu yang indah." — 3726 MDPL
                             </p>
                             <p class="indent-6 font-handwritten text-2xl text-[#bd7a6b] pt-2 text-center">
-                                Love You Always! 🤍
+                                Love You! 🤍
                             </p>
                         </div>
 
@@ -341,6 +333,227 @@
                             Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
                         </span>
                     </div>
+
+                    <!-- LAGU 7 -->
+                    <div onclick="openMusicPopup('Senja Sudut Kota', 'Yogyakarta', 'Senja ALKID jadi saksi buat first date kitaa.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/SAMUEL%20CIPTA%20-%20SENJA%20SUDUT%20KOTA%20(OFFICIAL%20MUSIC%20VIDEO)%20%5BD89cIekJNH8%5D.mp3', 'https://lh3.googleusercontent.com/d/11sR9O-wcXukY-3V5KwxojFNts6oP9-_o')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Senja Sudut Kota</h3>
+                                <p class="text-xs text-gray-400">SAMUEL Cipta</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 8 -->
+                    <div onclick="openMusicPopup('Shape of My Heart', 'Yogyakarta', 'Untuk yang menyenangkan, semoga dia tidak pernah berubah. Terima kasih sudah datang sebagai tawa, senang, dan suka. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Backstreet%20Boys%20-%20Shape%20Of%20My%20Heart%20(Official%20HD%20Video)%20%5BOT5msu-dap8%5D.mp3', 'https://lh3.googleusercontent.com/d/1bu-fNJqZcA5XmYMlDh9K5bJ8KBEL_DHS')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Shape of My Heart</h3>
+                                <p class="text-xs text-gray-400">Backstreet Boys</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 9 -->
+                    <div onclick="openMusicPopup('Celengan Rindu', 'Yogyakarta', 'Kangenn beratt, Nggamau nggaada kamuu..', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Fiersa%20besari%20-%20Celengan%20rindu%20%5BX_uIsIJD7fM%5D.mp3', 'https://lh3.googleusercontent.com/d/1u3xbfKpAMOyXZ6gSjByCRtmsAgreiwGW')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Celengan Rindu</h3>
+                                <p class="text-xs text-gray-400">Fiersa Besari</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 10 -->
+                    <div onclick="openMusicPopup('Untuk Perempuan Yang Sedang Di Pelukan', 'Yogyakarta', 'Terimakasih selalu untuk genggaman dan pelukan hangatnyaa. nayyara sayangg...', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Untuk%20Perempuan%20Yang%20Sedang%20Di%20Pelukan%20%5BjAYviJQYcAo%5D.mp3', 'https://lh3.googleusercontent.com/d/1sbh1N50j0ixsqv96yYEG_5RB1Q_Qvm_2')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Untuk Perempuan Yang Sedang Di Pelukan</h3>
+                                <p class="text-xs text-gray-400">Payung Teduh</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 11 -->
+                    <div onclick="openMusicPopup('Mantra', 'Yogyakarta', 'Barangkali Manusia Juga Bisa Disebut Sebagai Kehidupan. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Dimansyah%20Laitupa%20-%20Mantra%20(Official%20Music%20Video)%20%5B_m7R0BB86Mw%5D.mp3', 'https://lh3.googleusercontent.com/d/1L8s3Yq8F6tWYOOe4BSSqZ4KJc_6u4Gxx')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Mantra</h3>
+                                <p class="text-xs text-gray-400">Dimansyah Laitupa</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 12 -->
+                    <div onclick="openMusicPopup('Menceritakanmu', 'Yogyakarta', 'Terima kasih sudah ada di hidup gue yang sepi ini, ya. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/BATAS%20SENJA%20-%20Menceritakanmu%20(%20OFFICIAL%20LIRIK%20VIDEO%20%5B2r-jZMVDFzI%5D.mp3', 'https://lh3.googleusercontent.com/d/1N07bQZOV_5wkod4ltrr11iYzXeaKrW1-')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Menceritakanmu</h3>
+                                <p class="text-xs text-gray-400">BATAS SENJA</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 13 -->
+                    <div onclick="openMusicPopup('One Only', 'Yogyakarta', 'cuma mau kenal kamu, deket kamu, sama kamu, selamanyaa...', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Pamungkas%20-%20One%20Only%20(Lyrics%20Video)%20%5BdBFp0Ext0y8%5D.mp3', 'https://lh3.googleusercontent.com/d/1jXfUsLou2_f2ep_Zn3tvv9AHX_22MvJE')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">One Only</h3>
+                                <p class="text-xs text-gray-400">Pamungkas</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 14 -->
+                    <div onclick="openMusicPopup('Dunia Yang Nanti', 'Yogyakarta', 'Sore tidak selalu tentang jingganya langit, sore bisa saja tentang kepastian, bahwa ia sudah tersenyum hari ini. Jangan kekurangan kebahagiaan, ya?. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Raim%20Laode%20-%20Dunia%20Yang%20Nanti%20(%20Lirik%20video%20)%20%5BawWKxGftWh4%5D.mp3', 'https://lh3.googleusercontent.com/d/1W062pJnTANXyRt2OHe6paPSHqrT6UqUE')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Dunia Yang Nanti</h3>
+                                <p class="text-xs text-gray-400">Raim Laode</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 15 -->
+                    <div onclick="openMusicPopup('Kita Usahakan Rumah Itu', 'Yogyakarta', 'Kita usahakan untuk tetap jatuh cinta dengan menghargai. Semoga dia selalu mengagumkan, semoga dia selalu jadi wujud lagu sempurna untuk gue. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Sal%20Priadi%20-%20Kita%20usahakan%20rumah%20itu%20(Official%20Lyric%20Video)%20%5B7SqNVv98e8Q%5D.mp3', 'https://lh3.googleusercontent.com/d/1pmcpyjwGhHIyjQ85443fK8IEgPzfDVFL')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Kita Usahakan Rumah Itu</h3>
+                                <p class="text-xs text-gray-400">Sal Priadi</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 16 -->
+                    <div onclick="openMusicPopup('Nanti Kita Seperti Ini', 'Yogyakarta', 'Di perjalanan yang panjang ini, jangan jadi milik siapa pun dulu, ya? -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/BATAS%20SENJA%20-%20Nanti%20Kita%20Like%20This%20(OFFICIAL%20MUSIC%20VIDEO%20)%20%5Bs6H6ffS6zJI%5D.mp3', 'https://lh3.googleusercontent.com/d/1AIWMfj-RQHfr4vIzHHC0GppW7AXbp8Nn')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Nanti Kita Seperti Ini</h3>
+                                <p class="text-xs text-gray-400">Batas Senja</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 17 -->
+                    <div onclick="openMusicPopup('Taruh', 'Yogyakarta', 'Ayy, mekarlah dengan indah, meski nanti ternyata layu, lo tetap bunga. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadin%20Amizah%20-%20Taruh%20(Official%20Lyric%20Video)%20%5BVrp2Be-RVVM%5D.mp3', 'https://lh3.googleusercontent.com/d/1rujLxYGPqRLlh6dPQGsZTXlwinGHJQsO')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Taruh</h3>
+                                <p class="text-xs text-gray-400">Nadin Amizah</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 18 -->
+                    <div onclick="openMusicPopup('Masa Ini, Nanti, dan Masa Indah Lainnya', 'Yogyakarta', 'Setiap orang hidup dalam kalimatnya yang pernah, and sekarang sudah. Pada hal-hal yang sudah berlalu, bolehkah untuk rindu?. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Masa%20ini,%20Nanti,%20dan%20Masa%20Indah%20Lainnya%20%5BdsOGH_ZBdCM%5D%20(1).mp3', 'https://lh3.googleusercontent.com/d/12gSY_QmYFohFe5luMfqZASsQDATWThsy')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Masa Ini, Nanti, dan Masa Indah Lainnya</h3>
+                                <p class="text-xs text-gray-400">Nuca</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 19 -->
+                    <div onclick="openMusicPopup('Foto Kita Blur', 'Yogyakarta', 'Diantara foto kita yang blur, semoga kamu tetep jelas buat bersinar. -3726 mdpl', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Sal%20Priadi%20-%20Foto%20kita%20blur%20(Official%20Lyric%20Video)%20%5BytMxh-_6EcI%5D.mp3', 'https://lh3.googleusercontent.com/d/14jkonrfeC_SGK8iNA0E75OmjjSULahlQ')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Foto Kita Blur</h3>
+                                <p class="text-xs text-gray-400">Sal Priadi</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
                 </div>
             </section>
 
@@ -351,7 +564,7 @@
                     <p class="text-xs text-gray-500 max-w-sm mx-auto">Potongan cerita yang harus diabadikan.</p>
                 </div>
 
-                <!-- Input Khusus Google Drive Link / URL Foto -->
+                <!-- Input Khusus Google Drive Link -->
                 <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center gap-2 border-b border-[#ebdcd0] pb-2">
                         <i data-lucide="link-2" class="w-5 h-5 text-[#bd7a6b]"></i>
@@ -370,93 +583,87 @@
 
                 <!-- Grid Galeri Utama -->
                 <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <!-- Foto-foto default dan kustom akan dimuat dinamis -->
+                    <!-- Foto-foto default akan dimuat dan digabungkan secara dinamis di JS -->
                 </div>
             </section>
 
-            <!-- ================= MESSAGES CHAT SECTION ================= -->
+            <!-- ================= MESSAGES CHAT SECTION (INSTAGRAM DM STYLE) ================= -->
             <section id="chat-sec" class="hidden space-y-6 fade-in">
-                <!-- Header Direct Messages dengan tombol Bersihkan Obrolan -->
-                <div class="text-center space-y-2 relative">
-                    <h2 class="text-2xl font-serif-aesthetic font-semibold text-[#4a3e3d]">Direct Messages</h2>
-                    <button onclick="openClearChatModal()" class="absolute right-2 top-0 text-red-400 hover:text-red-500 p-1.5 rounded-xl transition-all" title="Bersihkan Obrolan">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                </div>
-
                 <!-- Chat Box Container -->
-                <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-sm flex flex-col h-[500px]">
-                    <!-- Header Chat: Active Sender Status -->
-                    <div class="flex items-center justify-between pb-4 border-b border-[#ebdcd0]">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></span>
-                            <span class="text-xs sm:text-sm font-medium text-gray-600">Mengirim sebagai:</span>
-                            <span id="chat-active-sender-label" class="text-xs px-3 py-1 rounded-full bg-[#e79e8c] text-white font-semibold">
-                                🎀 ayyaa
-                            </span>
+                <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl shadow-sm flex flex-col h-[560px] overflow-hidden">
+                    
+                    <!-- Instagram Header Chat Bar -->
+                    <div class="bg-white px-5 py-3.5 border-b border-[#ebdcd0] flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <div id="dm-partner-avatar" class="w-10 h-10 rounded-full bg-[#bd7a6b] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                                    <!-- Dynamic Partner Avatar -->
+                                </div>
+                                <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white"></span>
+                            </div>
+                            <div>
+                                <h3 id="dm-partner-name" class="font-semibold text-[#4a3e3d] text-sm flex items-center gap-1">
+                                    <!-- Partner Name -->
+                                </h3>
+                                <p class="text-[10px] text-emerald-600 font-medium">Aktif sekarang</p>
+                            </div>
                         </div>
-                        
-                        <!-- Toggle Switch Sender (Optional override) -->
-                        <div class="inline-flex bg-[#f1e4d8] rounded-xl p-1 text-xs">
-                            <button id="sender-ayyaa" onclick="setSender('ayyaa')" 
-                                class="px-3 py-1 rounded-lg font-medium transition-all bg-[#e79e8c] text-white shadow-sm">
-                                🎀 ayyaa
-                            </button>
-                            <button id="sender-ikii" onclick="setSender('ikii')" 
-                                class="px-3 py-1 rounded-lg font-medium transition-all text-[#8e766e] hover:text-[#bd7a6b]">
-                                🧸 ikii
+
+                        <!-- Action Icons -->
+                        <div class="flex items-center space-x-3 text-[#bd7a6b]">
+                            <button onclick="openClearChatModal()" class="p-2 hover:bg-[#f7f3ed] rounded-full transition-colors text-red-400 hover:text-red-500" title="Bersihkan Obrolan">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
                             </button>
                         </div>
                     </div>
 
                     <!-- Chat Message Thread Area -->
-                    <div id="chat-thread" class="flex-grow overflow-y-auto py-4 space-y-4 pr-1 smooth-scroll-container">
-                        <!-- Chat default siap digunakan -->
+                    <div id="chat-thread" class="flex-grow overflow-y-auto p-4 space-y-3 bg-[#faf7f2] smooth-scroll-container">
+                        <!-- Chat messages rendered dynamically -->
                     </div>
 
                     <!-- Warning Banner Database Cloud -->
-                    <div id="db-warning-banner" class="hidden bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl p-3.5 space-y-1 mb-4 mx-2">
-                        <p class="font-bold flex items-center gap-1.5">
-                            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i> Database Cloud Luring (Offline)
-                        </p>
-                        <p class="text-gray-600 leading-relaxed font-light">
-                            Pesan tersimpan di penyimpanan lokal browser. Untuk koneksi realtime Firebase, pastikan aturan keamanan Firestore diaktifkan.
+                    <div id="db-warning-banner" class="hidden bg-amber-50 border-t border-amber-200 text-amber-800 text-xs p-3 space-y-1">
+                        <p class="font-bold flex items-center gap-1.5 text-[11px]">
+                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600"></i> Mode Luring (Tersimpan di HP ini)
                         </p>
                     </div>
 
-                    <!-- Chat Input Field -->
-                    <div class="pt-4 border-t border-[#ebdcd0] flex gap-2">
-                        <input type="text" id="chat-input" placeholder="Tulis pesan rahasiamu di sini..." 
-                            class="flex-grow px-4 py-3 bg-[#f7f3ed] border border-[#eaddd0] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#e79e8c] text-[#4a3e3d]">
-                        <button onclick="sendChatMessage()" 
-                            class="bg-[#e79e8c] text-white px-5 rounded-xl hover:bg-[#db8d7b] transition-all flex items-center justify-center">
-                            <i data-lucide="send" class="w-4 h-4"></i>
-                        </button>
+                    <!-- Instagram Chat Input Field -->
+                    <div class="p-3 bg-white border-t border-[#ebdcd0]">
+                        <div class="flex items-center bg-[#f7f3ed] border border-[#eaddd0] rounded-full px-4 py-1.5 focus-within:ring-2 focus-within:ring-[#e79e8c] transition-all">
+                            <input type="text" id="chat-input" placeholder="Kirim pesan..." 
+                                class="flex-grow bg-transparent text-sm text-[#4a3e3d] focus:outline-none py-1.5">
+                            <button onclick="sendChatMessage()" 
+                                class="text-[#bd7a6b] font-semibold hover:text-[#e79e8c] text-sm pl-2 transition-colors flex items-center gap-1">
+                                Send
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- ================= DYNAMIC PROFILE SECTION (INSTAGRAM STYLE) ================= -->
+            <!-- ================= PROFILE SECTION (CUSTOM INSTAGRAM PROFILE) ================= -->
             <section id="profile-sec" class="hidden space-y-6 fade-in">
                 <!-- Profile Header Card -->
                 <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
                     <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-[#f3eae1]">
-                        <!-- Instagram Avatar Style -->
+                        <!-- Dynamic User Avatar -->
                         <div class="relative flex-shrink-0">
                             <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 via-[#e79e8c] to-[#bd7a6b] p-1 shadow-md">
-                                <div class="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden relative">
-                                    <span id="profile-avatar-initial" class="font-serif-aesthetic text-2xl font-bold text-[#bd7a6b]">A & I</span>
+                                <div id="profile-avatar-circle" class="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden font-serif-aesthetic text-2xl font-bold text-[#bd7a6b]">
+                                    <!-- Dynamic Avatar Letter -->
                                 </div>
                             </div>
-                            <div class="absolute -bottom-1 -right-1 bg-red-400 text-white rounded-full p-1.5 border-2 border-white">
+                            <div class="absolute -bottom-1 -right-1 bg-red-400 text-white rounded-full p-1.5 border-2 border-white shadow-xs">
                                 <i data-lucide="heart" class="w-3.5 h-3.5 fill-current"></i>
                             </div>
                         </div>
 
-                        <!-- Stats & Bio Dynamic -->
+                        <!-- Stats & Dynamic Profile Info -->
                         <div class="flex-grow text-center sm:text-left space-y-3">
                             <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                                <h2 id="profile-username-handle" class="text-xl font-bold text-[#4a3e3d]">perfectcouple_</h2>
+                                <h2 id="profile-username-heading" class="text-xl font-bold text-[#4a3e3d]">username</h2>
                                 <span class="inline-flex items-center gap-1 bg-[#e79e8c]/20 text-[#bd7a6b] px-2.5 py-0.5 rounded-full text-xs font-semibold self-center sm:self-auto">
                                     Official Account <i data-lucide="badge-check" class="w-3.5 h-3.5 fill-current"></i>
                                 </span>
@@ -469,16 +676,9 @@
                                 <div><strong class="text-[#4a3e3d]">1</strong> Mengikuti</div>
                             </div>
 
-                            <!-- Bio Dynamic Layout -->
-                            <div class="text-sm space-y-1 text-gray-600">
-                                <p id="profile-full-name" class="font-semibold text-[#4a3e3d]">Nama Lengkap</p>
-                                <p id="profile-bio-quote" class="text-xs italic text-[#bd7a6b]">"Ada orang yang hadir sebentar lalu pergi, and ada kamu yang datang lalu menjadi rumah."</p>
-                                <p class="flex items-center justify-center sm:justify-start gap-1 text-xs">
-                                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#bd7a6b]"></i> Lahir ayyaa: <span class="font-medium">12 September 2008</span>
-                                </p>
-                                <p class="flex items-center justify-center sm:justify-start gap-1 text-xs">
-                                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#bd7a6b]"></i> Lahir ikii: <span class="font-medium">19 September 2008</span>
-                                </p>
+                            <!-- Instagram Bio Layout -->
+                            <div id="profile-bio-container" class="text-sm space-y-1 text-gray-600">
+                                <!-- Dynamic bio loaded via JavaScript -->
                             </div>
                         </div>
                     </div>
@@ -508,38 +708,20 @@
                         </div>
                     </div>
 
-                    <!-- Account Action Buttons (Logout & Cloud Sync) -->
-                    <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-                        <button onclick="logoutAccount()" class="inline-flex items-center gap-1.5 text-xs text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-xl font-medium transition-all border border-red-200">
-                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Keluar Akun
-                        </button>
+                    <!-- Buttons: Cloud Config & Logout -->
+                    <div class="flex flex-wrap justify-center gap-3 pt-4 border-t border-[#f3eae1]">
                         <button onclick="openCloudConfigModal()" class="inline-flex items-center gap-1.5 text-xs text-[#bd7a6b] bg-[#e79e8c]/10 hover:bg-[#e79e8c]/20 px-4 py-2.5 rounded-xl font-medium transition-all">
-                            <i data-lucide="settings" class="w-3.5 h-3.5"></i> Pengaturan Cloud Sync
+                            <i data-lucide="settings" class="w-3.5 h-3.5"></i> Pengaturan Cloud
+                        </button>
+
+                        <button onclick="logout()" class="inline-flex items-center gap-1.5 text-xs text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-xl font-medium transition-all">
+                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Keluar (Logout)
                         </button>
                     </div>
                 </div>
             </section>
 
         </main>
-
-        <!-- ================= CLEAR CHAT CONFIRMATION MODAL ================= -->
-        <div id="clear-chat-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6 hidden">
-            <div class="max-w-sm w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-xl text-center space-y-4">
-                <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 mx-auto flex items-center justify-center">
-                    <i data-lucide="trash-2" class="w-6 h-6"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-[#4a3e3d]">Hapus Semua Pesan?</h3>
-                <p class="text-xs text-gray-500">Apakah kamu yakin ingin membersihkan seluruh obrolan? Tindakan ini tidak dapat dibatalkan.</p>
-                <div class="flex gap-2 pt-2">
-                    <button onclick="confirmClearChats()" class="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-red-600 transition-colors">
-                        Ya, Hapus
-                    </button>
-                    <button onclick="closeClearChatModal()" class="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-300 transition-colors">
-                        Batal
-                    </button>
-                </div>
-            </div>
-        </div>
 
         <!-- ================= DIAGNOSTIC LOG MODAL (DETEKTOR ERROR) ================= -->
         <div id="debug-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-6 hidden transition-all duration-300">
@@ -553,16 +735,38 @@
                     </button>
                 </div>
                 <div class="flex-grow overflow-y-auto space-y-4 pr-1 text-xs text-gray-600 leading-relaxed font-light smooth-scroll-container">
-                    <p class="font-medium text-[#bd7a6b]">Log Diagnostik Server:</p>
+                    <p class="font-medium text-[#bd7a6b]">Kenapa websitemu berstatus "Luring (Offline)"?</p>
+                    <p>Status offline terjadi karena koneksi ke server database Firebase gagal dilakukan. Silakan periksa daftar baris error di bawah untuk mengetahui akar masalahnya:</p>
+                    
                     <div class="p-3 bg-gray-900 text-gray-100 rounded-xl">
+                        <p class="font-bold text-[10px] text-gray-400 mb-1 font-mono">Daftar Diagnostik Server (Error Log):</p>
                         <div id="debug-log-list" class="space-y-1.5 max-h-48 overflow-y-auto font-mono text-[10px]">
-                            <!-- Pesan error dari server -->
+                            <!-- Pesan error dari server akan masuk di sini secara otomatis -->
                         </div>
                     </div>
                 </div>
                 <div class="pt-2 flex-shrink-0">
                     <button onclick="closeDebugModal()" class="w-full bg-[#e79e8c] hover:bg-[#db8d7b] text-white py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm">
-                        Mengerti, Tutup
+                        Mengerti, Tutup Laporan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= CLEAR CHAT MODAL ================= -->
+        <div id="clear-chat-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6 hidden transition-all duration-300">
+            <div class="max-w-xs w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-xl fade-in text-center space-y-4">
+                <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto">
+                    <i data-lucide="trash-2" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-base font-semibold text-[#4a3e3d]">Bersihkan Obrolan?</h3>
+                <p class="text-xs text-gray-500 leading-relaxed">Semua pesan antara ikii dan ayyaa akan dihapus. Langkah ini tidak dapat dibatalkan.</p>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="confirmClearChats()" class="flex-grow bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl text-xs font-semibold transition-all">
+                        Hapus Semua
+                    </button>
+                    <button onclick="closeClearChatModal()" class="px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-xl text-xs font-semibold transition-all">
+                        Batal
                     </button>
                 </div>
             </div>
@@ -580,7 +784,7 @@
                     </button>
                 </div>
                 <p class="text-xs text-gray-500 leading-relaxed">
-                    Masukkan Firebase Project Config Anda jika ingin menyambungkan secara langsung:
+                    Agar pesan, chat, dan foto tersinkron otomatis di semua perangkat dan browser saat dibuka melalui link GitHub Pages, silakan masukkan Firebase Project Config Anda di bawah ini:
                 </p>
                 <div class="space-y-3 text-sm">
                     <div>
@@ -595,6 +799,18 @@
                         <label class="block text-xs font-semibold text-gray-600 mb-0.5">Project ID</label>
                         <input type="text" id="cfg-projectId" placeholder="nama-project" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
                     </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">Storage Bucket</label>
+                        <input type="text" id="cfg-storageBucket" placeholder="nama-project.appspot.com" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">Messaging Sender ID</label>
+                        <input type="text" id="cfg-messagingSenderId" placeholder="1234567890" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">App ID</label>
+                        <input type="text" id="cfg-appId" placeholder="1:12345:web:abcd" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
                 </div>
 
                 <p id="cloud-status-msg" class="text-xs text-center hidden font-medium"></p>
@@ -603,7 +819,7 @@
                     <button onclick="saveCloudConfig()" class="flex-grow bg-[#e79e8c] hover:bg-[#db8d7b] text-white py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm">
                         Simpan & Hubungkan
                     </button>
-                    <button onclick="resetCloudConfig()" class="px-4 bg-gray-200 hover:bg-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-medium transition-all">
+                    <button onclick="resetCloudConfig()" class="px-4 bg-gray-200 hover:bg-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-medium transition-all" title="Reset Konfigurasi">
                         Reset
                     </button>
                 </div>
@@ -613,25 +829,40 @@
         <!-- ================= PLAYLIST DETAIL POPUP (MODAL) ================= -->
         <div id="music-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6 hidden transition-all duration-300">
             <div class="max-w-md w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-xl fade-in space-y-5 relative max-h-[85vh] overflow-y-auto scroll-smooth smooth-scroll-container pr-2">
+                
+                <!-- Close Button -->
                 <button onclick="closeMusicPopup()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10 bg-[#fcfaf7] rounded-full p-1">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
+
+                <!-- Date (Top) -->
                 <div class="border-b border-[#f3eae1] pb-2 pt-2">
                     <span id="modal-date" class="text-xs font-mono text-[#bd7a6b] uppercase tracking-wider">12 SEPTEMBER 2024</span>
                 </div>
-                <h3 id="modal-title" class="text-xl font-serif-aesthetic font-semibold text-[#4a3e3d]">Judul Lagu</h3>
+
+                <!-- Title -->
+                <h3 id="modal-title" class="text-xl font-serif-aesthetic font-semibold text-[#4a3e3d]">Semua Aku Dirayakan</h3>
+
+                <!-- Middle Photo (Drive Image / SVG Fallback) -->
                 <div class="w-full aspect-[4/3] rounded-2xl bg-[#f5ebe0] border border-[#ebdcd0] overflow-hidden flex flex-col items-center justify-center relative flex-shrink-0">
                     <img id="popup-image" src="" class="w-full h-full object-cover hidden" onerror="this.style.display='none'; document.getElementById('modal-icon-container').style.display='flex';">
+                    
                     <div id="modal-icon-container" class="w-16 h-16 rounded-full bg-white/80 flex items-center justify-center text-[#bd7a6b] mb-3 shadow-xs">
                         <i data-lucide="music-3" class="w-8 h-8"></i>
                     </div>
                 </div>
+
+                <!-- Description (Bottom) -->
                 <div class="space-y-2">
                     <h4 class="text-xs font-semibold text-[#bd7a6b] uppercase tracking-wide">Pesan Kenangan:</h4>
-                    <p id="modal-desc" class="text-sm text-[#5c4a47] leading-relaxed font-light break-words">About Us</p>
+                    <p id="modal-desc" class="text-sm text-[#5c4a47] leading-relaxed font-light break-words">
+                        About Us
+                    </p>
                 </div>
+
                 <div class="pt-2">
-                    <button onclick="closeMusicPopup()" class="w-full bg-[#f1e4d8] text-[#8e766e] py-2.5 rounded-xl text-sm font-medium hover:bg-[#eaddd0] transition-colors">
+                    <button onclick="closeMusicPopup()" 
+                        class="w-full bg-[#f1e4d8] text-[#8e766e] py-2.5 rounded-xl text-sm font-medium hover:bg-[#eaddd0] transition-colors">
                         Okeyy..
                     </button>
                 </div>
@@ -659,25 +890,30 @@
 
         <!-- ================= INSTAGRAM-STYLE FIXED BOTTOM NAVIGATION ================= -->
         <div class="fixed bottom-0 left-0 right-0 bg-[#fcfaf7] border-t border-[#ebdcd0] z-50 py-3.5 px-6 flex justify-around items-center md:max-w-4xl md:mx-auto md:rounded-t-3xl md:border-x shadow-lg">
+            <!-- Home Tab Button -->
             <button id="nav-home" onclick="switchTab('home')" class="flex flex-col items-center justify-center text-[#bd7a6b] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Beranda">
                 <i data-lucide="home" class="w-6 h-6"></i>
             </button>
             
+            <!-- Search Tab Button (Lagu) -->
             <button id="nav-search" onclick="switchTab('search')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Melodi">
                 <i data-lucide="music" class="w-6 h-6"></i>
             </button>
             
+            <!-- Create Post Tab Button (Galeri) -->
             <button id="nav-plus" onclick="switchTab('plus')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Galeri">
                 <i data-lucide="image" class="w-6 h-6"></i>
             </button>
             
+            <!-- Chat Tab Button (Pesan Kita) -->
             <button id="nav-chat" onclick="switchTab('chat')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Pesan Cinta">
                 <i data-lucide="message-circle" class="w-6 h-6"></i>
             </button>
 
+            <!-- Profile Tab Button (Insta Profile Page) -->
             <button id="nav-profile" onclick="switchTab('profile')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Profil Kita">
                 <div class="w-6 h-6 rounded-full border border-current flex items-center justify-center overflow-hidden">
-                    <span id="nav-profile-avatar-tag" class="text-[9px] font-bold font-serif-aesthetic">AI</span>
+                    <span id="nav-profile-initial" class="text-[9px] font-bold font-serif-aesthetic">AI</span>
                 </div>
             </button>
         </div>
@@ -689,7 +925,7 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ================= MANUAL FIREBASE CONFIGURATION =================
+        // ================= MANUAL FIREBASE CONFIGURATION FOR DEPLOYMENT =================
         const MANUAL_FIREBASE_CONFIG = {
           apiKey: "AIzaSyDlRPLT4wj9Z5Ty4E9zHiWM2J1XsFt5lH4",
           authDomain: "kiiayyaa.firebaseapp.com",
@@ -699,41 +935,18 @@
           appId: "1:493602497047:web:df1dd4f9f96f8fb8eeb252"
         };
 
-        // KREDENSIAL DUA AKUN INSTAGRAM STYLE
-        const ACCOUNTS = {
-            'ikii': {
-                password: '1909',
-                name: 'Ikii 🧸',
-                fullName: 'M. Rizki (Ikii)',
-                handle: 'ikii_09',
-                avatarInitial: 'IK',
-                quote: '"Terima kasih sudah memilih menjadi tempat pulangnya gue." — 19 Sept',
-                badge: '🧸 ikii'
-            },
-            'ayyaa': {
-                password: '1209',
-                name: 'Ayyaa 🎀',
-                fullName: 'Nayyara (Ayyaa)',
-                handle: 'ayyaa_09',
-                avatarInitial: 'AY',
-                quote: '"Ada orang yang hadir sebentar lalu pergi, and ada kamu yang datang lalu menjadi rumah." — 12 Sept',
-                badge: '🎀 ayyaa'
-            }
-        };
-
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ayyaa-ikii-couplegram';
         let db = null;
         let auth = null;
         let isFirebaseReady = false;
         let currentAuthUser = null;
 
-        // Referensi listener realtime
+        // User Account Logged-In State
+        let currentUser = localStorage.getItem('couplegram_current_user') || null; // 'ikii' or 'ayyaa'
+
+        // Referensi pembersih listener realtime
         let unsubscribeChats = null;
         let unsubscribeGallery = null;
-
-        // Active Account State
-        let activeUser = localStorage.getItem('logged_in_account') || null; // 'ikii' or 'ayyaa'
-        let currentSender = activeUser || 'ayyaa';
 
         // Debug Logger
         function logDebug(stage, status, detail = "") {
@@ -745,14 +958,13 @@
             }
         }
 
-        // Resolusi konfigurasi Firebase
         let firebaseConfig = null;
 
         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
             try {
                 firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
             } catch (e) {
-                console.error("Gagal inisialisasi Firebase Config: ", e);
+                console.error("Gagal melakukan inisialisasi platform Firebase: ", e);
             }
         } else {
             const savedConfig = localStorage.getItem('custom_firebase_config');
@@ -760,14 +972,13 @@
                 try {
                     firebaseConfig = JSON.parse(savedConfig);
                 } catch (e) {
-                    console.error("Gagal config dari localStorage: ", e);
+                    console.error("Gagal memproses config dari localStorage: ", e);
                 }
             } else {
                 firebaseConfig = MANUAL_FIREBASE_CONFIG;
             }
         }
 
-        // Jalankan Autentikasi terlebih dahulu secara aman
         if (firebaseConfig) {
             try {
                 logDebug("Sistem", "Menginisialisasi Firebase...");
@@ -775,9 +986,11 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
                 isFirebaseReady = true;
+                logDebug("Sistem", "Berhasil dimuat.");
 
                 const initAuth = async () => {
                     try {
+                        logDebug("Autentikasi", "Mencoba masuk...");
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await signInWithCustomToken(auth, __initial_auth_token);
                         } else {
@@ -795,11 +1008,11 @@
                             currentAuthUser = user;
                             logDebug("Autentikasi", "Pengguna Terdaftar UID: " + user.uid);
                             updateUIConnectionStatus(true);
-                            if (activeUser) {
+                            if (currentUser) {
                                 setupDataListeners();
                             }
                         } else {
-                            logDebug("Autentikasi", "Status berubah.");
+                            logDebug("Autentikasi", "Status berubah menjadi keluar.");
                             updateUIConnectionStatus(false);
                         }
                     });
@@ -857,132 +1070,140 @@
             );
         }
 
-        // Toggle Password Visibility Input
-        function togglePasswordVisibility() {
-            const pwdInput = document.getElementById('login-password');
-            const icon = document.getElementById('toggle-pwd-icon');
-            if (pwdInput.type === 'password') {
-                pwdInput.type = 'text';
-                icon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                pwdInput.type = 'password';
-                icon.setAttribute('data-lucide', 'eye');
-            }
-            lucide.createIcons();
-        }
+        // Auto Login if session exists
+        window.addEventListener('DOMContentLoaded', () => {
+            if (currentUser === 'ikii' || currentUser === 'ayyaa') {
+                document.getElementById('password-gate').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                updateProfileView();
+                switchTab('home');
+                setupDataListeners();
 
-        // Login System Checklist
-        function checkAccountLogin() {
+                setInterval(() => {
+                    updateBirthdayCountdowns();
+                }, 1000);
+                updateBirthdayCountdowns();
+            }
+        });
+
+        // Instagram System Login Check
+        async function checkPassword() {
             const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
             const passwordInput = document.getElementById('login-password').value.trim();
             const errorText = document.getElementById('password-error');
-            const loginCard = document.getElementById('login-card');
+            const passwordGate = document.getElementById('password-gate');
+            const passwordCard = document.getElementById('password-card');
+            const mainContent = document.getElementById('main-content');
 
-            if (ACCOUNTS[usernameInput] && ACCOUNTS[usernameInput].password === passwordInput) {
-                // Login Berhasil
-                activeUser = usernameInput;
-                currentSender = usernameInput;
-                localStorage.setItem('logged_in_account', usernameInput);
-                
-                applyLoggedInUserUI();
-                
-                const passwordGate = document.getElementById('password-gate');
-                const mainContent = document.getElementById('main-content');
+            let isValid = false;
 
+            if (usernameInput === 'ikii' && passwordInput === '1909') {
+                currentUser = 'ikii';
+                isValid = true;
+            } else if (usernameInput === 'ayyaa' && passwordInput === '1209') {
+                currentUser = 'ayyaa';
+                isValid = true;
+            }
+
+            if (isValid) {
+                localStorage.setItem('couplegram_current_user', currentUser);
+                errorText.classList.add('hidden');
+                
                 passwordGate.style.opacity = '0';
                 passwordGate.style.transition = 'opacity 0.3s ease-out';
+                
                 setTimeout(() => {
                     passwordGate.classList.add('hidden');
                     mainContent.classList.remove('hidden');
+                    updateProfileView();
                     switchTab('home');
 
                     setupDataListeners();
-
+                    
                     setInterval(() => {
                         updateBirthdayCountdowns();
                     }, 1000);
                     updateBirthdayCountdowns();
                 }, 300);
-
             } else {
-                // Login Gagal
                 errorText.classList.remove('hidden');
-                loginCard.classList.add('shake', 'border-red-400');
-                
+                passwordCard.classList.add('shake');
                 setTimeout(() => {
-                    loginCard.classList.remove('shake', 'border-red-400');
-                }, 1000);
+                    passwordCard.classList.remove('shake');
+                }, 800);
             }
         }
 
-        // Terapkan Sifat & Tampilan Pengguna
-        function applyLoggedInUserUI() {
-            if (!activeUser || !ACCOUNTS[activeUser]) return;
-
-            const userData = ACCOUNTS[activeUser];
-            
-            // Header Badge
-            const badgeEl = document.getElementById('active-user-badge');
-            if (badgeEl) badgeEl.innerText = userData.badge;
-
-            // Welcome Text
-            const welcomeText = document.getElementById('welcome-user-text');
-            if (welcomeText) welcomeText.innerText = `Halo, ${userData.name}! 👋`;
-
-            // Dynamic Profile UI
-            const profileHandle = document.getElementById('profile-username-handle');
-            if (profileHandle) profileHandle.innerText = userData.handle;
-
-            const profileFullName = document.getElementById('profile-full-name');
-            if (profileFullName) profileFullName.innerText = userData.fullName;
-
-            const profileAvatarInitial = document.getElementById('profile-avatar-initial');
-            if (profileAvatarInitial) profileAvatarInitial.innerText = userData.avatarInitial;
-
-            const profileQuote = document.getElementById('profile-bio-quote');
-            if (profileQuote) profileQuote.innerText = userData.quote;
-
-            const navAvatarTag = document.getElementById('nav-profile-avatar-tag');
-            if (navAvatarTag) navAvatarTag.innerText = userData.avatarInitial;
-
-            // Chat Sender Badge
-            const chatSenderLabel = document.getElementById('chat-active-sender-label');
-            if (chatSenderLabel) {
-                chatSenderLabel.innerText = userData.badge;
-            }
-
-            // Highlight sender toggle buttons
-            setSender(activeUser);
-        }
-
-        // Logout
-        function logoutAccount() {
-            localStorage.removeItem('logged_in_account');
-            activeUser = null;
+        function logout() {
+            localStorage.removeItem('couplegram_current_user');
+            currentUser = null;
             window.location.reload();
         }
 
-        // Autologin jika session tersimpan di localStorage
-        window.addEventListener('DOMContentLoaded', () => {
-            if (activeUser && ACCOUNTS[activeUser]) {
-                document.getElementById('password-gate').classList.add('hidden');
-                document.getElementById('main-content').classList.remove('hidden');
-                applyLoggedInUserUI();
-                switchTab('home');
-                setupDataListeners();
-                setInterval(updateBirthdayCountdowns, 1000);
-                updateBirthdayCountdowns();
-            }
+        // Enter key event listeners for login
+        document.getElementById('login-username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
+        document.getElementById('login-password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
         });
 
-        // Keypress enter for login
-        const pwdInputEl = document.getElementById('login-password');
-        if (pwdInputEl) {
-            pwdInputEl.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') checkAccountLogin();
-            });
+        // Update Profile View based on Current User
+        function updateProfileView() {
+            const headerBadge = document.getElementById('header-user-badge');
+            const avatarCircle = document.getElementById('profile-avatar-circle');
+            const usernameHeading = document.getElementById('profile-username-heading');
+            const bioContainer = document.getElementById('profile-bio-container');
+            const partnerAvatar = document.getElementById('dm-partner-avatar');
+            const partnerName = document.getElementById('dm-partner-[#4a3e3d]');
+            const partnerNameEl = document.getElementById('dm-partner-name');
+            const navInitial = document.getElementById('nav-profile-initial');
+
+            if (currentUser === 'ikii') {
+                if (headerBadge) headerBadge.innerHTML = `🧸 ikii`;
+                if (avatarCircle) avatarCircle.innerHTML = `🧸`;
+                if (usernameHeading) usernameHeading.innerHTML = `ikii_19`;
+                if (navInitial) navInitial.innerHTML = `I`;
+                if (bioContainer) {
+                    bioContainer.innerHTML = `
+                        <p class="font-semibold text-[#4a3e3d]">Ikii 🧸</p>
+                        <p class="text-xs italic text-[#bd7a6b]">"Ada orang yang hadir sebentar lalu pergi, and ada kamu yang datang lalu menjadi rumah." — 1909</p>
+                        <p class="flex items-center justify-center sm:justify-start gap-1 text-xs pt-1">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Ulang Tahun: <span class="font-medium">19 September 2008</span>
+                        </p>
+                        <p class="flex items-center justify-center sm:justify-start gap-1 text-xs">
+                            <i data-lucide="heart" class="w-3.5 h-3.5 text-red-400 fill-current"></i> Pasangan: <span class="font-medium text-[#bd7a6b]">Ayyaa 🎀</span>
+                        </p>
+                    `;
+                }
+                if (partnerAvatar) partnerAvatar.innerHTML = `🎀`;
+                if (partnerNameEl) partnerNameEl.innerHTML = `ayyaa_12 <i data-lucide="badge-check" class="w-3.5 h-3.5 text-[#bd7a6b] fill-current"></i>`;
+
+            } else if (currentUser === 'ayyaa') {
+                if (headerBadge) headerBadge.innerHTML = `🎀 ayyaa`;
+                if (avatarCircle) avatarCircle.innerHTML = `🎀`;
+                if (usernameHeading) usernameHeading.innerHTML = `ayyaa_12`;
+                if (navInitial) navInitial.innerHTML = `A`;
+                if (bioContainer) {
+                    bioContainer.innerHTML = `
+                        <p class="font-semibold text-[#4a3e3d]">Ayyaa 🎀</p>
+                        <p class="text-xs italic text-[#bd7a6b]">"Diantara milyaran bintang, kamu adalah alasan favoritku untuk tersenyum." — 1209</p>
+                        <p class="flex items-center justify-center sm:justify-start gap-1 text-xs pt-1">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Ulang Tahun: <span class="font-medium">12 September 2008</span>
+                        </p>
+                        <p class="flex items-center justify-center sm:justify-start gap-1 text-xs">
+                            <i data-lucide="heart" class="w-3.5 h-3.5 text-red-400 fill-current"></i> Pasangan: <span class="font-medium text-[#bd7a6b]">Ikii 🧸</span>
+                        </p>
+                    `;
+                }
+                if (partnerAvatar) partnerAvatar.innerHTML = `🧸`;
+                if (partnerNameEl) partnerNameEl.innerHTML = `ikii_19 <i data-lucide="badge-check" class="w-3.5 h-3.5 text-[#bd7a6b] fill-current"></i>`;
+            }
+
+            lucide.createIcons();
         }
 
+        // Tab Switcher Logic
         function switchTab(tabName) {
             document.getElementById('home-sec').classList.add('hidden');
             document.getElementById('playlist-sec').classList.add('hidden');
@@ -1025,6 +1246,7 @@
             else if (sectionId === 'chat-sec') switchTab('chat');
         }
 
+        // Countdown Ulang Tahun
         function getNextBirthday(month, day) {
             const now = new Date();
             let bday = new Date(now.getFullYear(), month - 1, day, 0, 0, 0);
@@ -1058,6 +1280,7 @@
             if (bdayIkiiEl) bdayIkiiEl.innerHTML = `${daysI}d ${hoursI}h ${minutesI}m ${secondsI}s`;
         }
 
+        // Parse Google Drive Link
         function parseDriveUrl(url) {
             url = url.trim();
             const regFileD = /\/file\/d\/([a-zA-Z0-9_-]+)/;
@@ -1079,6 +1302,7 @@
             return url;
         }
 
+        // Listener Real-time & Sinkronisasi Data Firestore
         function setupDataListeners() {
             if (unsubscribeChats) {
                 unsubscribeChats();
@@ -1124,6 +1348,7 @@
             }
         }
 
+        // Simpan Foto Baru
         async function addDriveItem() {
             const inputElement = document.getElementById('drive-link-input');
             const rawUrl = inputElement.value.trim();
@@ -1135,10 +1360,12 @@
                 try {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'gallery'), {
                         url: finalUrl,
-                        timestamp: Date.now()
+                        timestamp: Date.now(),
+                        uploader: currentUser
                     });
                 } catch (e) {
-                    console.error("Gagal unggah foto cloud: ", e);
+                    console.error("Gagal mengunggah foto: ", e);
+                    logDebug("Tambah Galeri", "Gagal!", e.message);
                 }
             } else {
                 fallbackGallery.push(finalUrl);
@@ -1149,12 +1376,14 @@
             inputElement.value = '';
         }
 
+        // Hapus Foto
         async function deleteDriveItem(id, index) {
             if (isFirebaseReady && !id.startsWith('local-') && currentAuthUser) {
                 try {
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'gallery', id));
                 } catch (e) {
-                    console.error("Gagal hapus foto cloud: ", e);
+                    console.error("Gagal menghapus foto: ", e);
+                    logDebug("Hapus Galeri", "Gagal!", e.message);
                 }
             } else {
                 const fallbackIndex = parseInt(id.replace('local-', '')) || index;
@@ -1164,6 +1393,7 @@
             }
         }
 
+        // Render Galeri Grid
         function renderGallery(customItems = []) {
             const grid = document.getElementById('gallery-grid');
             if (!grid) return;
@@ -1183,6 +1413,7 @@
                         <div id="fb-foto-${idx}" class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f7ebe0]">
                             <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
                             <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"${item.caption}"</span>
+                            <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto ${idx + 1}]</span>
                         </div>
                     </div>
                 `;
@@ -1206,6 +1437,7 @@
             lucide.createIcons();
         }
 
+        // Audio Player Global
         let isAudioPlaying = false; 
         const audioEl = document.getElementById('global-audio');
 
@@ -1233,7 +1465,7 @@
                     vinyl.style.animationDuration = '8s';
                     isAudioPlaying = true;
                 }).catch(err => {
-                    console.log("Audio play error:", err);
+                    console.log("Audio play blocked / error:", err);
                 });
             }
             lucide.createIcons();
@@ -1283,10 +1515,18 @@
                     nowPlayingTitle.classList.remove('opacity-60');
                     vinyl.classList.add('animate-spin');
                     vinyl.style.animationDuration = '8s';
-                }).catch(e => console.log("Audio auto play:", e));
+                }).catch(e => console.log("Gagal memutar audio otomatis:", e));
+            } else {
+                isAudioPlaying = true;
+                playBtn.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i>';
+                nowPlayingTitle.classList.remove('opacity-60');
+                vinyl.classList.add('animate-spin');
+                vinyl.style.animationDuration = '8s';
             }
 
             modal.classList.remove('hidden');
+            const scrollContainer = modal.querySelector('.smooth-scroll-container');
+            if (scrollContainer) scrollContainer.scrollTop = 0;
             lucide.createIcons();
         }
 
@@ -1295,28 +1535,7 @@
             if (modal) modal.classList.add('hidden');
         }
 
-        function setSender(sender) {
-            const btnAyyaa = document.getElementById('sender-ayyaa');
-            const btnIkii = document.getElementById('sender-ikii');
-
-            currentSender = sender;
-
-            if (sender === 'ayyaa') {
-                if (btnAyyaa) btnAyyaa.className = "px-3 py-1 rounded-lg font-medium transition-all bg-[#e79e8c] text-white shadow-sm";
-                if (btnIkii) btnIkii.className = "px-3 py-1 rounded-lg font-medium transition-all text-[#8e766e] hover:text-[#bd7a6b]";
-            } else {
-                if (btnIkii) btnIkii.className = "px-3 py-1 rounded-lg font-medium transition-all bg-[#e79e8c] text-white shadow-sm";
-                if (btnAyyaa) btnAyyaa.className = "px-3 py-1 rounded-lg font-medium transition-all text-[#8e766e] hover:text-[#bd7a6b]";
-            }
-
-            const chatLabel = document.getElementById('chat-active-sender-label');
-            if (chatLabel && ACCOUNTS[sender]) {
-                chatLabel.innerText = ACCOUNTS[sender].badge;
-            }
-
-            setupDataListeners();
-        }
-
+        // Kirim Chat DM
         async function sendChatMessage() {
             const chatInput = document.getElementById('chat-input');
             if (!chatInput) return;
@@ -1329,7 +1548,7 @@
             const safeText = escapeHTML(messageText);
 
             const messageObj = {
-                sender: currentSender,
+                sender: currentUser || 'ikii',
                 text: safeText,
                 time: timeString,
                 timestamp: Date.now()
@@ -1339,7 +1558,8 @@
                 try {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), messageObj);
                 } catch (e) {
-                    console.error("Gagal kirim chat: ", e);
+                    console.error("Gagal mengirim pesan: ", e);
+                    logDebug("Kirim Chat", "Gagal!", e.message);
                 }
             } else {
                 fallbackChats.push(messageObj);
@@ -1350,6 +1570,7 @@
             chatInput.value = '';
         }
 
+        // Clear All Chats
         async function clearAllChats() {
             localStorage.removeItem('ayyaa_ikii_chat');
             fallbackChats = [];
@@ -1366,8 +1587,9 @@
                     });
                     
                     await Promise.all(deletePromises);
+                    logDebug("Database", "Semua pesan cloud berhasil dibersihkan.");
                 } catch (e) {
-                    console.error("Gagal hapus pesan: ", e);
+                    console.error("Gagal menghapus pesan cloud Firestore: ", e);
                 }
             }
             
@@ -1389,37 +1611,36 @@
             await clearAllChats();
         }
 
+        // Render Thread DM dalam gaya Instagram
         function renderMessages(messagesList = []) {
             const thread = document.getElementById('chat-thread');
             if (!thread) return;
             thread.innerHTML = '';
 
             messagesList.forEach(msg => {
-                const isMyMessage = (msg.sender === currentSender);
-                const initial = msg.sender === 'ikii' ? 'I' : 'A';
-                const avatarBg = msg.sender === 'ikii' ? 'bg-[#bd7a6b] text-white' : 'bg-[#e79e8c] text-white';
+                const isMyMessage = (msg.sender === currentUser);
+                const senderAvatarLetter = msg.sender === 'ikii' ? '🧸' : '🎀';
 
                 let itemHTML = '';
 
                 if (isMyMessage) {
                     itemHTML = `
-                        <div class="flex items-start justify-end space-x-2.5">
-                            <div class="max-w-[75%] bg-[#f7ebe0] border border-[#ebdcd0] p-3.5 rounded-2xl rounded-tr-none shadow-xs">
-                                <span class="block text-[10px] font-semibold text-[#bd7a6b] text-right mb-1">${msg.sender} (Kamu)</span>
-                                <p class="text-sm text-[#4a3e3d] text-right break-words">${msg.text}</p>
-                                <span class="block text-[9px] text-gray-400 text-left mt-1.5">${msg.time}</span>
+                        <div class="flex items-end justify-end space-x-2 my-1">
+                            <div class="max-w-[75%] px-4 py-2.5 chat-bubble-me text-sm shadow-xs break-words">
+                                <p class="leading-relaxed">${msg.text}</p>
+                                <span class="block text-[9px] text-white/70 text-right mt-1 font-light">${msg.time}</span>
                             </div>
-                            <div class="w-8 h-8 rounded-full ${avatarBg} flex items-center justify-center text-xs font-bold flex-shrink-0">${initial}</div>
                         </div>
                     `;
                 } else {
                     itemHTML = `
-                        <div class="flex items-start space-x-2.5">
-                            <div class="w-8 h-8 rounded-full ${avatarBg} flex items-center justify-center text-xs font-bold flex-shrink-0">${initial}</div>
-                            <div class="max-w-[75%] bg-white border border-[#eaddd0] p-3.5 rounded-2xl rounded-tl-none shadow-xs">
-                                <span class="block text-[10px] font-semibold text-[#bd7a6b] mb-1">${msg.sender}</span>
-                                <p class="text-sm text-[#4a3e3d] break-words">${msg.text}</p>
-                                <span class="block text-[9px] text-gray-400 text-right mt-1.5">${msg.time}</span>
+                        <div class="flex items-end space-x-2 my-1">
+                            <div class="w-7 h-7 rounded-full bg-[#bd7a6b] text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-xs mb-1">
+                                ${senderAvatarLetter}
+                            </div>
+                            <div class="max-w-[75%] px-4 py-2.5 chat-bubble-other text-sm shadow-xs break-words">
+                                <p class="leading-relaxed">${msg.text}</p>
+                                <span class="block text-[9px] text-gray-400 mt-1 font-light">${msg.time}</span>
                             </div>
                         </div>
                     `;
@@ -1436,10 +1657,13 @@
         const chatInputEl = document.getElementById('chat-input');
         if (chatInputEl) {
             chatInputEl.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') sendChatMessage();
+                if (e.key === 'Enter') {
+                    sendChatMessage();
+                }
             });
         }
 
+        // Cloud Config Handlers
         function openCloudConfigModal() {
             const modal = document.getElementById('cloud-config-modal');
             if (!modal) return;
@@ -1457,6 +1681,9 @@
                 document.getElementById('cfg-apiKey').value = savedConfig.apiKey || '';
                 document.getElementById('cfg-authDomain').value = savedConfig.authDomain || '';
                 document.getElementById('cfg-projectId').value = savedConfig.projectId || '';
+                document.getElementById('cfg-storageBucket').value = savedConfig.storageBucket || '';
+                document.getElementById('cfg-messagingSenderId').value = savedConfig.messagingSenderId || '';
+                document.getElementById('cfg-appId').value = savedConfig.appId || '';
             }
         }
 
@@ -1465,22 +1692,42 @@
             if (modal) modal.classList.add('hidden');
         }
 
+        function showCloudStatus(text, isError = false) {
+            const statusEl = document.getElementById('cloud-status-msg');
+            if (!statusEl) return;
+            statusEl.innerText = text;
+            statusEl.className = `text-xs text-center font-medium ${isError ? 'text-red-500' : 'text-green-600'}`;
+            statusEl.classList.remove('hidden');
+        }
+
         function saveCloudConfig() {
             const config = {
                 apiKey: document.getElementById('cfg-apiKey').value.trim(),
                 authDomain: document.getElementById('cfg-authDomain').value.trim(),
                 projectId: document.getElementById('cfg-projectId').value.trim(),
+                storageBucket: document.getElementById('cfg-storageBucket').value.trim(),
+                messagingSenderId: document.getElementById('cfg-messagingSenderId').value.trim(),
+                appId: document.getElementById('cfg-appId').value.trim()
             };
 
-            if (!config.apiKey || !config.projectId) return;
+            if (!config.apiKey || !config.projectId) {
+                showCloudStatus("Harap masukkan setidaknya API Key dan Project ID!", true);
+                return;
+            }
 
             localStorage.setItem('custom_firebase_config', JSON.stringify(config));
-            window.location.reload();
+            showCloudStatus("Konfigurasi disimpan! Memuat ulang halaman...");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         }
 
         function resetCloudConfig() {
             localStorage.removeItem('custom_firebase_config');
-            window.location.reload();
+            showCloudStatus("Konfigurasi dihapus! Memuat ulang halaman...");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
         }
 
         function openDebugModal() {
@@ -1493,10 +1740,9 @@
             if (modal) modal.classList.add('hidden');
         }
 
-        // Attach global functions to window
-        window.togglePasswordVisibility = togglePasswordVisibility;
-        window.checkAccountLogin = checkAccountLogin;
-        window.logoutAccount = logoutAccount;
+        // Attach to global window
+        window.checkPassword = checkPassword;
+        window.logout = logout;
         window.switchTab = switchTab;
         window.scrollToSection = scrollToSection;
         window.addDriveItem = addDriveItem;
@@ -1504,7 +1750,6 @@
         window.toggleGlobalAudio = toggleGlobalAudio;
         window.openMusicPopup = openMusicPopup;
         window.closeMusicPopup = closeMusicPopup;
-        window.setSender = setSender;
         window.sendChatMessage = sendChatMessage;
         window.openCloudConfigModal = openCloudConfigModal;
         window.closeCloudConfigModal = closeCloudConfigModal;
