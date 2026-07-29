@@ -8,10 +8,10 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts: Playfair Display & Plus Jakarta Sans -->
+    <!-- Google Fonts: Playfair Display, Plus Jakarta Sans, Caveat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&family=Playfair+Display:ital,wght=0,400;0,600;1,400&family=Caveat:wght=400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&family=Playfair+Display:ital,wght=0,400;0,600;0,700;1,400&family=Caveat:wght=400;700&display=swap" rel="stylesheet">
     
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -101,15 +101,15 @@
                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#e79e8c]/20 text-[#bd7a6b] mb-1">
                     <i data-lucide="instagram" class="w-6 h-6"></i>
                 </div>
-                <h1 class="text-3xl font-serif-aesthetic text-[#bd7a6b] font-semibold tracking-wider">Couplegram</h1>
-                <p class="text-xs text-gray-500 font-light">Masuk ke akunmu dulu yaa..</p>
+                <h1 class="text-3xl font-serif-aesthetic text-[#bd7a6b] font-semibold tracking-wider">About Us</h1>
+                <p class="text-xs text-gray-500 font-light">Login Dulu Yaaa..</p>
             </div>
 
             <!-- Login Form -->
             <div class="space-y-3.5 text-left">
                 <div>
                     <label class="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1 ml-1">Username</label>
-                    <input type="text" id="login-username" placeholder="ikii / ayyaa" 
+                    <input type="text" id="login-username" placeholder="••••••••" 
                         class="w-full px-4 py-3 rounded-xl border border-[#e3d5c8] bg-[#fbf9f6] text-sm focus:ring-2 focus:ring-[#e79e8c] focus:outline-none transition-all placeholder:text-gray-300 text-[#4a3e3d]">
                 </div>
 
@@ -121,7 +121,7 @@
 
                 <button onclick="checkPassword()" 
                     class="w-full mt-2 bg-[#e79e8c] text-white py-3 rounded-xl font-medium tracking-wide shadow-sm hover:bg-[#db8d7b] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 text-sm">
-                    Masuk <i data-lucide="log-in" class="w-4 h-4"></i>
+                    Login <i data-lucide="log-in" class="w-4 h-4"></i>
                 </button>
                 
                 <p id="password-error" class="text-xs text-red-400 font-light text-center hidden pt-1">Username atau password salah boloo 🥺</p>
@@ -139,7 +139,7 @@
         <!-- HEADER / NAVIGATION (INSTAGRAM STYLE TOP BAR) -->
         <header class="sticky top-0 z-40 bg-[#f7f3ed]/90 backdrop-blur-md border-b border-[#ebdcd0]">
             <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-2 sm:space-x-3">
                     <span class="text-2xl font-serif-aesthetic font-semibold text-[#bd7a6b] tracking-wider cursor-pointer" onclick="switchTab('home')">About Us</span>
                     <span id="header-user-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-[#f1e4d8] text-[#8e766e] font-medium font-serif-aesthetic flex items-center gap-1">
                         <!-- Filled by JS -->
@@ -153,8 +153,10 @@
                 
                 <!-- Instagram Top Icons -->
                 <div class="flex items-center space-x-5 text-[#8e766e]">
-                    <button onclick="switchTab('profile')" class="hover:text-[#bd7a6b] transition-colors relative" title="Momen Spesial">
-                        <i data-lucide="heart" class="w-6 h-6"></i>
+                    <!-- Tombol Love (Momen Spesial & Tulis Cerita Popup) -->
+                    <button onclick="openStoryModal()" class="hover:text-[#bd7a6b] transition-colors relative" title="Tulis & Lihat Cerita Spesial">
+                        <i data-lucide="heart" class="w-6 h-6 text-[#bd7a6b] fill-[#bd7a6b]/10"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-400 animate-ping"></span>
                         <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-400"></span>
                     </button>
                     <button onclick="switchTab('chat')" class="hover:text-[#bd7a6b] transition-colors relative" title="Pesan Cinta">
@@ -188,7 +190,7 @@
 
                         <!-- Date & Header -->
                         <div class="flex justify-between items-center border-b border-[#ebdcd0] pb-3">
-                            <span class="font-handwritten text-[#bd7a6b] text-2xl font-bold">About Us..</span>
+                            <span class="font-handwritten text-[#bd7a6b] text-2xl sm:text-3xl font-bold">About Us..</span>
                         </div>
 
                         <!-- Main Photo Box -->
@@ -574,7 +576,7 @@
                         <input type="text" id="drive-link-input" placeholder="Tempel link Google Drive atau URL gambar/video di sini..." 
                             class="flex-grow px-4 py-3 bg-[#f7f3ed] border border-[#eaddd0] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#e79e8c] text-[#4a3e3d]">
                         <button onclick="addDriveItem()" 
-                            class="bg-[#e79e8c] text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-[#db8d7b] transition-all flex items-center justify-center gap-1.5">
+                            class="bg-[#e79e8c] text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-[#db8d7b] transition-all flex items-center justify-center gap-1.5 shadow-sm">
                             <i data-lucide="plus" class="w-4 h-4"></i> Tambah
                         </button>
                     </div>
@@ -607,13 +609,6 @@
                                 </h3>
                                 <p class="text-[10px] text-emerald-600 font-medium">Aktif sekarang</p>
                             </div>
-                        </div>
-
-                        <!-- Action Icons -->
-                        <div class="flex items-center space-x-3 text-[#bd7a6b]">
-                            <button onclick="openClearChatModal()" class="p-2 hover:bg-[#f7f3ed] rounded-full transition-colors text-red-400 hover:text-red-500" title="Bersihkan Obrolan">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
-                            </button>
                         </div>
                     </div>
 
@@ -715,13 +710,74 @@
                         </button>
 
                         <button onclick="logout()" class="inline-flex items-center gap-1.5 text-xs text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-xl font-medium transition-all">
-                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Keluar (Logout)
+                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
                         </button>
                     </div>
                 </div>
             </section>
 
         </main>
+
+        <!-- ================= POPUP CERITA & TULIS CERITA (FITUR BARU TOMBOL LOVE) ================= -->
+        <div id="story-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 sm:px-6 hidden transition-all duration-300">
+            <div class="max-w-lg w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-xl fade-in relative max-h-[85vh] flex flex-col overflow-hidden">
+                
+                <!-- Modal Top Navigation Bar -->
+                <div class="flex items-center justify-between border-b border-[#f3eae1] pb-3 flex-shrink-0">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b]">
+                            <i data-lucide="heart" class="w-4 h-4 fill-current"></i>
+                        </div>
+                        <h3 class="text-lg font-serif-aesthetic font-semibold text-[#4a3e3d]">Momen & Cerita Kita</h3>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="toggleWriteStoryForm()" id="btn-toggle-write-story" class="inline-flex items-center gap-1 text-xs bg-[#e79e8c] text-white px-3 py-1.5 rounded-xl font-medium hover:bg-[#db8d7b] transition-all shadow-xs">
+                            <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Tulis Cerita
+                        </button>
+                        <button onclick="closeStoryModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-1">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form Tulis Cerita Baru (Hidden by Default) -->
+                <div id="write-story-form-container" class="hidden bg-[#f7f3ed] border border-[#eaddd0] rounded-2xl p-4 my-3 space-y-3 flex-shrink-0 fade-in">
+                    <div class="flex items-center justify-between border-b border-[#eaddd0] pb-2">
+                        <span class="text-xs font-semibold text-[#bd7a6b] uppercase tracking-wider flex items-center gap-1">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Tulis Cerita Baru
+                        </span>
+                        <button onclick="toggleWriteStoryForm()" class="text-xs text-gray-400 hover:text-gray-600">Batal</button>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <label class="block font-semibold text-gray-600 mb-1">Tempat / Lokasi</label>
+                            <input type="text" id="story-place-input" placeholder="contoh: Senja ALKID / Yogyakarta" 
+                                class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-gray-600 mb-1">Waktu / Tanggal</label>
+                            <input type="text" id="story-date-input" placeholder="contoh: 12 September 2024" 
+                                class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Inti Tulisan Cerita</label>
+                        <textarea id="story-text-input" rows="3" placeholder="Tuliskan cerita manis atau ungkapan perasaanmu di sini..." 
+                            class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none resize-none"></textarea>
+                    </div>
+                    <button onclick="saveStory()" class="w-full bg-[#e79e8c] hover:bg-[#db8d7b] text-white py-2 rounded-xl text-xs font-semibold transition-all shadow-xs flex items-center justify-center gap-1.5">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i> Simpan Cerita
+                    </button>
+                </div>
+
+                <!-- Story List Container (Scrollable List Popup) -->
+                <div id="story-popup-list" class="flex-grow overflow-y-auto space-y-4 pt-3 pr-1 smooth-scroll-container">
+                    <!-- Cards Cerita akan dirender secara dinamis melalui JavaScript -->
+                </div>
+
+            </div>
+        </div>
 
         <!-- ================= DIAGNOSTIC LOG MODAL (DETEKTOR ERROR) ================= -->
         <div id="debug-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-6 hidden transition-all duration-300">
@@ -748,25 +804,6 @@
                 <div class="pt-2 flex-shrink-0">
                     <button onclick="closeDebugModal()" class="w-full bg-[#e79e8c] hover:bg-[#db8d7b] text-white py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm">
                         Mengerti, Tutup Laporan
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= CLEAR CHAT MODAL ================= -->
-        <div id="clear-chat-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6 hidden transition-all duration-300">
-            <div class="max-w-xs w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-xl fade-in text-center space-y-4">
-                <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto">
-                    <i data-lucide="trash-2" class="w-6 h-6"></i>
-                </div>
-                <h3 class="text-base font-semibold text-[#4a3e3d]">Bersihkan Obrolan?</h3>
-                <p class="text-xs text-gray-500 leading-relaxed">Semua pesan antara ikii dan ayyaa akan dihapus. Langkah ini tidak dapat dibatalkan.</p>
-                <div class="flex gap-2 pt-2">
-                    <button onclick="confirmClearChats()" class="flex-grow bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl text-xs font-semibold transition-all">
-                        Hapus Semua
-                    </button>
-                    <button onclick="closeClearChatModal()" class="px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2.5 rounded-xl text-xs font-semibold transition-all">
-                        Batal
                     </button>
                 </div>
             </div>
@@ -923,7 +960,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ================= MANUAL FIREBASE CONFIGURATION FOR DEPLOYMENT =================
         const MANUAL_FIREBASE_CONFIG = {
@@ -947,6 +984,7 @@
         // Referensi pembersih listener realtime
         let unsubscribeChats = null;
         let unsubscribeGallery = null;
+        let unsubscribeStories = null;
 
         // Debug Logger
         function logDebug(stage, status, detail = "") {
@@ -1046,6 +1084,18 @@
 
         let fallbackChats = JSON.parse(localStorage.getItem('ayyaa_ikii_chat')) || [];
         let fallbackGallery = JSON.parse(localStorage.getItem('ayyaa_ikii_gallery_custom')) || [];
+        
+        // Default Cerita Awal
+        let fallbackStories = JSON.parse(localStorage.getItem('ayyaa_ikii_stories')) || [
+            {
+                id: 'default-story-1',
+                sender: 'ikii',
+                place: 'Senja ALKID, Yogyakarta',
+                date: '12 September 2024',
+                text: 'Sekalinya sudah jatuh cinta, mau seluruh dunia bilang nggak boleh, kamu bakalan tetap jatuh cinta. Terima kasih sudah mengizinkan aku menjadi bagian dari ceritamu.',
+                timestamp: Date.now() - 100000
+            }
+        ];
 
         lucide.createIcons();
 
@@ -1155,49 +1205,48 @@
             const usernameHeading = document.getElementById('profile-username-heading');
             const bioContainer = document.getElementById('profile-bio-container');
             const partnerAvatar = document.getElementById('dm-partner-avatar');
-            const partnerName = document.getElementById('dm-partner-[#4a3e3d]');
             const partnerNameEl = document.getElementById('dm-partner-name');
             const navInitial = document.getElementById('nav-profile-initial');
 
             if (currentUser === 'ikii') {
-                if (headerBadge) headerBadge.innerHTML = `🧸 ikii`;
+                if (headerBadge) headerBadge.innerHTML = `ikii`;
                 if (avatarCircle) avatarCircle.innerHTML = `🧸`;
-                if (usernameHeading) usernameHeading.innerHTML = `ikii_19`;
+                if (usernameHeading) usernameHeading.innerHTML = `ikii`;
                 if (navInitial) navInitial.innerHTML = `I`;
                 if (bioContainer) {
                     bioContainer.innerHTML = `
-                        <p class="font-semibold text-[#4a3e3d]">Ikii 🧸</p>
-                        <p class="text-xs italic text-[#bd7a6b]">"Ada orang yang hadir sebentar lalu pergi, and ada kamu yang datang lalu menjadi rumah." — 1909</p>
+                        <p class="font-semibold text-[#4a3e3d]">Ikii </p>
+                        <p class="text-xs italic text-[#bd7a6b]">"Ada orang yang hadir sebentar lalu pergi, and ada kamu yang datang lalu menjadi rumah." — 0mdpl</p>
                         <p class="flex items-center justify-center sm:justify-start gap-1 text-xs pt-1">
                             <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Ulang Tahun: <span class="font-medium">19 September 2008</span>
                         </p>
                         <p class="flex items-center justify-center sm:justify-start gap-1 text-xs">
-                            <i data-lucide="heart" class="w-3.5 h-3.5 text-red-400 fill-current"></i> Pasangan: <span class="font-medium text-[#bd7a6b]">Ayyaa 🎀</span>
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Ulang Tahun ayyaa: <span class="font-medium">12 September 2008</span>
                         </p>
                     `;
                 }
                 if (partnerAvatar) partnerAvatar.innerHTML = `🎀`;
-                if (partnerNameEl) partnerNameEl.innerHTML = `ayyaa_12 <i data-lucide="badge-check" class="w-3.5 h-3.5 text-[#bd7a6b] fill-current"></i>`;
+                if (partnerNameEl) partnerNameEl.innerHTML = `ayyaa <i data-lucide="badge-check" class="w-3.5 h-3.5 text-[#bd7a6b] fill-current"></i>`;
 
             } else if (currentUser === 'ayyaa') {
-                if (headerBadge) headerBadge.innerHTML = `🎀 ayyaa`;
+                if (headerBadge) headerBadge.innerHTML = `ayyaa`;
                 if (avatarCircle) avatarCircle.innerHTML = `🎀`;
-                if (usernameHeading) usernameHeading.innerHTML = `ayyaa_12`;
+                if (usernameHeading) usernameHeading.innerHTML = `ayyaa`;
                 if (navInitial) navInitial.innerHTML = `A`;
                 if (bioContainer) {
                     bioContainer.innerHTML = `
-                        <p class="font-semibold text-[#4a3e3d]">Ayyaa 🎀</p>
-                        <p class="text-xs italic text-[#bd7a6b]">"Diantara milyaran bintang, kamu adalah alasan favoritku untuk tersenyum." — 1209</p>
+                        <p class="font-semibold text-[#4a3e3d]">Ayyaa </p>
+                        <p class="text-xs italic text-[#bd7a6b]">"di dunia yang hanya sekali, semoga masih ada kita selanjutnya." — 0mdpl</p>
                         <p class="flex items-center justify-center sm:justify-start gap-1 text-xs pt-1">
                             <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Ulang Tahun: <span class="font-medium">12 September 2008</span>
                         </p>
                         <p class="flex items-center justify-center sm:justify-start gap-1 text-xs">
-                            <i data-lucide="heart" class="w-3.5 h-3.5 text-red-400 fill-current"></i> Pasangan: <span class="font-medium text-[#bd7a6b]">Ikii 🧸</span>
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Ulang Tahun ikii: <span class="font-medium">19 September 2008</span>
                         </p>
                     `;
                 }
                 if (partnerAvatar) partnerAvatar.innerHTML = `🧸`;
-                if (partnerNameEl) partnerNameEl.innerHTML = `ikii_19 <i data-lucide="badge-check" class="w-3.5 h-3.5 text-[#bd7a6b] fill-current"></i>`;
+                if (partnerNameEl) partnerNameEl.innerHTML = `ikii <i data-lucide="badge-check" class="w-3.5 h-3.5 text-[#bd7a6b] fill-current"></i>`;
             }
 
             lucide.createIcons();
@@ -1312,6 +1361,10 @@
                 unsubscribeGallery();
                 unsubscribeGallery = null;
             }
+            if (unsubscribeStories) {
+                unsubscribeStories();
+                unsubscribeStories = null;
+            }
 
             if (isFirebaseReady && currentAuthUser) {
                 logDebug("Database", "Membuka sinkronisasi real-time...");
@@ -1342,10 +1395,167 @@
                     renderGallery(fallbackGallery.map((url, i) => ({ id: `local-${i}`, url })));
                 });
 
+                // Real-time listener Cerita Momen
+                unsubscribeStories = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'stories'), (snapshot) => {
+                    let storiesList = [];
+                    snapshot.forEach(doc => {
+                        storiesList.push({ id: doc.id, ...doc.data() });
+                    });
+                    storiesList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    renderStories(storiesList);
+                }, (error) => {
+                    logDebug("Database (Cerita)", "Gagal Membuka Cerita!", error.code + " - " + error.message);
+                    renderStories(fallbackStories);
+                });
+
             } else {
                 renderMessages(fallbackChats);
                 renderGallery(fallbackGallery.map((url, i) => ({ id: `local-${i}`, url })));
+                renderStories(fallbackStories);
             }
+        }
+
+        // ================= FITUR CERITA MOMEN & TULIS CERITA (LOVE BUTTON) =================
+        function openStoryModal() {
+            const modal = document.getElementById('story-modal');
+            if (modal) modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeStoryModal() {
+            const modal = document.getElementById('story-modal');
+            if (modal) modal.classList.add('hidden');
+            const form = document.getElementById('write-story-form-container');
+            if (form) form.classList.add('hidden');
+        }
+
+        function toggleWriteStoryForm() {
+            const form = document.getElementById('write-story-form-container');
+            if (form) {
+                form.classList.toggle('hidden');
+                if (!form.classList.contains('hidden')) {
+                    // Set default tanggal saat ini
+                    const dateInput = document.getElementById('story-date-input');
+                    if (dateInput && !dateInput.value) {
+                        const today = new Date();
+                        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+                        dateInput.value = today.toLocaleDateString('id-ID', options);
+                    }
+                }
+            }
+        }
+
+        async function saveStory() {
+            const placeInput = document.getElementById('story-place-input').value.trim();
+            const dateInput = document.getElementById('story-date-input').value.trim();
+            const textInput = document.getElementById('story-text-input').value.trim();
+
+            if (!textInput) return;
+
+            const newStory = {
+                sender: currentUser || 'ikii',
+                place: placeInput || 'Yogyakarta',
+                date: dateInput || new Date().toLocaleDateString('id-ID'),
+                text: escapeHTML(textInput),
+                timestamp: Date.now()
+            };
+
+            if (isFirebaseReady && currentAuthUser) {
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'stories'), newStory);
+                } catch (e) {
+                    console.error("Gagal menyimpan cerita: ", e);
+                    logDebug("Simpan Cerita", "Gagal!", e.message);
+                }
+            } else {
+                newStory.id = 'local-story-' + Date.now();
+                fallbackStories.unshift(newStory);
+                localStorage.setItem('ayyaa_ikii_stories', JSON.stringify(fallbackStories));
+                renderStories(fallbackStories);
+            }
+
+            // Clear inputs & close form
+            document.getElementById('story-place-input').value = '';
+            document.getElementById('story-date-input').value = '';
+            document.getElementById('story-text-input').value = '';
+            toggleWriteStoryForm();
+        }
+
+        async function deleteStory(id, index) {
+            if (isFirebaseReady && !id.startsWith('local-story-') && currentAuthUser) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stories', id));
+                } catch (e) {
+                    console.error("Gagal menghapus cerita: ", e);
+                }
+            } else {
+                fallbackStories.splice(index, 1);
+                localStorage.setItem('ayyaa_ikii_stories', JSON.stringify(fallbackStories));
+                renderStories(fallbackStories);
+            }
+        }
+
+        function renderStories(storiesList = []) {
+            const container = document.getElementById('story-popup-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (storiesList.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 space-y-2">
+                        <i data-lucide="book-open" class="w-10 h-10 text-gray-300 mx-auto"></i>
+                        <p class="text-xs text-gray-400">Belum ada cerita yang ditulis. Klik "Tulis Cerita" untuk membagikan kenangan pertamamu!</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            storiesList.forEach((story, index) => {
+                const avatarEmoji = story.sender === 'ikii' ? '🧸' : '🎀';
+                const displayName = story.sender === 'ikii' ? 'ikii' : 'ayyaa';
+
+                const storyCardHTML = `
+                    <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl p-4 shadow-sm hover:shadow-md transition-all space-y-3 relative group fade-in">
+                        <!-- BAGIAN ATAS: Keterangan Akun, Waktu, Tempat -->
+                        <div class="flex items-center justify-between border-b border-[#f3eae1] pb-2.5">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-9 h-9 rounded-full bg-[#bd7a6b] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                                    ${avatarEmoji}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-[#4a3e3d] text-xs flex items-center gap-1">
+                                        ${displayName} <i data-lucide="badge-check" class="w-3.5 h-3.5 text-[#bd7a6b] fill-current"></i>
+                                    </h4>
+                                    <span class="text-[10px] text-gray-400 font-light flex items-center gap-1 mt-0.5">
+                                        <i data-lucide="map-pin" class="w-3 h-3 text-[#bd7a6b]"></i> ${story.place || 'Yogyakarta'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#f7ebe0] text-[#8e766e] font-mono border border-[#ebdcd0]">
+                                    ${story.date || 'Terbaru'}
+                                </span>
+                                ${story.sender === currentUser ? `
+                                    <button onclick="deleteStory('${story.id}', ${index})" class="text-gray-300 hover:text-red-500 transition-colors p-1" title="Hapus Cerita">
+                                        <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- BAGIAN BAWAH: Inti Tulisan Cerita -->
+                        <div class="pt-1">
+                            <p class="text-xs sm:text-sm text-[#5c4a47] leading-relaxed font-light break-words whitespace-pre-line">
+                                "${story.text}"
+                            </p>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', storyCardHTML);
+            });
+
+            lucide.createIcons();
         }
 
         // Simpan Foto Baru
@@ -1570,47 +1780,6 @@
             chatInput.value = '';
         }
 
-        // Clear All Chats
-        async function clearAllChats() {
-            localStorage.removeItem('ayyaa_ikii_chat');
-            fallbackChats = [];
-
-            if (isFirebaseReady && currentAuthUser) {
-                try {
-                    const chatCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'chats');
-                    const qSnapshot = await getDocs(chatCollectionRef);
-                    const deletePromises = [];
-                    
-                    qSnapshot.forEach((docSnap) => {
-                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'chats', docSnap.id);
-                        deletePromises.push(deleteDoc(docRef));
-                    });
-                    
-                    await Promise.all(deletePromises);
-                    logDebug("Database", "Semua pesan cloud berhasil dibersihkan.");
-                } catch (e) {
-                    console.error("Gagal menghapus pesan cloud Firestore: ", e);
-                }
-            }
-            
-            renderMessages([]);
-        }
-
-        function openClearChatModal() {
-            const modal = document.getElementById('clear-chat-modal');
-            if (modal) modal.classList.remove('hidden');
-        }
-
-        function closeClearChatModal() {
-            const modal = document.getElementById('clear-chat-modal');
-            if (modal) modal.classList.add('hidden');
-        }
-
-        async function confirmClearChats() {
-            closeClearChatModal();
-            await clearAllChats();
-        }
-
         // Render Thread DM dalam gaya Instagram
         function renderMessages(messagesList = []) {
             const thread = document.getElementById('chat-thread');
@@ -1755,9 +1924,6 @@
         window.closeCloudConfigModal = closeCloudConfigModal;
         window.saveCloudConfig = saveCloudConfig;
         window.resetCloudConfig = resetCloudConfig;
-        window.openClearChatModal = openClearChatModal;
-        window.closeClearChatModal = closeClearChatModal;
-        window.confirmClearChats = confirmClearChats;
         window.openDebugModal = openDebugModal;
         window.closeDebugModal = closeDebugModal;
 
