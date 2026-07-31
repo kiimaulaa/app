@@ -192,6 +192,7 @@ async function saveReply() {
     }
   </style>
 </head>
+
 <body class="bg-[#EDE9DF] text-scrapbook-brownText min-h-screen font-sans overflow-x-hidden relative selection:bg-scrapbook-kraft/40 selection:text-scrapbook-brownText">
 
   <!-- Scrapbook Warm Ambient Background Drops -->
@@ -704,12 +705,17 @@ async function saveReply() {
     ];
 
     // Autoload reply message from localStorage so it persists across refreshes
-    document.addEventListener("DOMContentLoaded", loadReply);
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedReply = localStorage.getItem('nayyara_reply_message');
+      if (savedReply) {
+        replyInput.value = savedReply;
+      }
+    });
 
     // Real-time autosave as Nayyara types so nothing is lost even on crash/refresh
-    replyInput.addEventListener("input", () => {
-    saveReply();
-});
+    replyInput.addEventListener('input', () => {
+      localStorage.setItem('nayyara_reply_message', replyInput.value);
+    });
 
     // Control Audio Track Play / Pause
     function toggleMusic(forcePlay = null) {
@@ -895,7 +901,8 @@ async function saveReply() {
 
     // Explicit manual save button to trigger feedback UI & Confetti
     document.getElementById('btn-save-reply').onclick = () => {
-      await saveReply();
+      const replyMsg = replyInput.value;
+      localStorage.setItem('nayyara_reply_message', replyMsg);
       
       const savedStatus = document.getElementById('saved-status-text');
       savedStatus.classList.remove('opacity-0');
