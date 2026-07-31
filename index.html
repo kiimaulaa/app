@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hbd ayy</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts (Scrapbook & Handwritten aesthetics) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Fredoka:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Canvas Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            scrapbook: {
+              kraft: '#D8C3A5',
+              cream: '#F4EFE6',
+              paper: '#FAF6EE',
+              ink: '#2B2D42',
+              peach: '#E8A87C',
+              sage: '#85DCB0',
+              rose: '#E98074',
+              brownText: '#4E3629',
+              tapeYellow: 'rgba(247, 212, 134, 0.45)',
+              tapePink: 'rgba(233, 128, 116, 0.45)',
+              tapeBlue: 'rgba(147, 197, 253, 0.45)',
+              tapeGreen: 'rgba(133, 220, 176, 0.45)'
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+            cozy: ['Fredoka', 'sans-serif'],
+            handwritten: ['Caveat', 'cursive'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Minimalist Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(216, 195, 165, 0.3); }
+    ::-webkit-scrollbar-thumb { background: #D8C3A5; border-radius: 10px; }
+
+    /* Scrapbook Notebook Page Styling with layered shadow */
+    .scrapbook-card {
+      background: #FAF6EE;
+      border: 2px solid #E4DCD0;
+      box-shadow: 
+        4px 4px 0px #dccfbe,
+        8px 8px 0px #ebd9c5,
+        15px 15px 30px rgba(78, 54, 41, 0.08);
+      position: relative;
+    }
+
+    /* Grid paper pattern */
+    .notebook-grid {
+      background-size: 20px 20px;
+      background-image: 
+        linear-gradient(to right, rgba(216, 195, 165, 0.15) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(216, 195, 165, 0.15) 1px, transparent 1px);
+    }
+
+    /* Lined paper pattern */
+    .notebook-lines {
+      background-image: linear-gradient(#e5dec9 1px, transparent 1px);
+      background-size: 100% 26px;
+      line-height: 26px;
+    }
+
+    /* Sticker styling */
+    .sticker {
+      box-shadow: 1px 2px 3px rgba(0,0,0,0.1);
+      transform: rotate(var(--r, 0deg));
+    }
+
+    /* Ripped paper effect */
+    .ripped-edge {
+      background: radial-gradient(circle, transparent 40%, #FAF6EE 41%);
+      background-size: 10px 20px;
+      height: 10px;
+    }
+
+    /* Ambient Warm Kraft Lighting */
+    .warm-kraft-glow {
+      filter: blur(120px);
+      opacity: 0.55;
+      mix-blend-mode: multiply;
+    }
+
+    @keyframes vinyl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .animate-vinyl { animation: vinyl-spin 15s linear infinite; }
+
+    @keyframes soft-float {
+      0%, 100% { transform: translateY(0px) rotate(-1deg); }
+      50% { transform: translateY(-4px) rotate(1deg); }
+    }
+    .animate-scrapbook-float { animation: soft-float 5.5s ease-in-out infinite; }
+
+    /* Elegant Custom Spring transitions for scrapbook cards */
+    .page-card {
+      transition: opacity 0.85s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-origin: center bottom;
+    }
+
+    /* Target state when sliding OUT (To the top left with slight tilt) */
+    .card-hidden-prev {
+      opacity: 0 !important;
+      transform: scale(0.92) translateY(-70px) rotate(-5deg) !important;
+      pointer-events: none;
+    }
+
+    /* Target state when sliding IN (From the bottom right with slight tilt) */
+    .card-hidden-next {
+      opacity: 0 !important;
+      transform: scale(0.92) translateY(70px) rotate(5deg) !important;
+      pointer-events: none;
+    }
+
+    /* Cake Candles Animation */
+    @keyframes flicker {
+      0%, 100% { transform: scale(1) rotate(-2deg); opacity: 0.9; }
+      50% { transform: scale(1.1) rotate(3deg); opacity: 1; filter: drop-shadow(0 0 10px rgba(245,158,11,0.8)); }
+    }
+    .candle-flame {
+      animation: flicker 0.6s ease-in-out infinite alternate;
+    }
+
+    /* Custom CSS shaking for invalid code */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .shake-anim {
+      animation: shake 0.4s ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-[#EDE9DF] text-scrapbook-brownText min-h-screen font-sans overflow-x-hidden relative selection:bg-scrapbook-kraft/40 selection:text-scrapbook-brownText">
+
+  <!-- Scrapbook Warm Ambient Background Drops -->
+  <div class="absolute top-10 left-10 w-[300px] h-[300px] rounded-full bg-[#E3DAC9] warm-kraft-glow pointer-events-none"></div>
+  <div class="absolute bottom-10 right-10 w-[350px] h-[350px] rounded-full bg-[#E98074]/10 warm-kraft-glow pointer-events-none"></div>
+
+  <!-- Ambient Audio Track -->
+  <audio id="bg-music" loop>
+    <source src="https://raw.githubusercontent.com/kiimaulaa/lagu/main/Nadin%20Amizah%20-%20Semua%20Aku%20Dirayakan%20(Official%20Music%20Video)%20%5BCptnLrdF3_E%5D.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Retro Badge Music Player -->
+  <div class="fixed bottom-6 right-6 z-50">
+    <div id="music-player" class="bg-[#FAF6EE] border-2 border-scrapbook-kraft px-4 py-3 rounded-2xl flex items-center gap-3 shadow-lg transition-all duration-300 hover:scale-105">
+      <div class="relative w-10 h-10 rounded-full bg-[#2c2c2c] flex items-center justify-center overflow-hidden border-2 border-scrapbook-kraft shadow-inner">
+        <div id="vinyl-disk" class="w-full h-full bg-[radial-gradient(circle_at_center,_#444_10%,_#111_15%,_#333_30%,_#111_50%)] rounded-full flex items-center justify-center">
+          <div class="w-3 h-3 bg-scrapbook-rose rounded-full border border-white/20"></div>
+        </div>
+      </div>
+      <div class="text-left hidden sm:block">
+        <p class="text-[8px] text-scrapbook-brownText/50 uppercase tracking-widest font-mono font-bold">journal tune</p>
+        <p id="music-title" class="text-xs font-semibold text-scrapbook-brownText">lofi tape for ayya</p>
+      </div>
+      <button id="music-toggle" class="w-7 h-7 rounded-full bg-[#EAE7DC] hover:bg-scrapbook-kraft/40 text-scrapbook-brownText flex items-center justify-center transition-all border border-scrapbook-kraft/30">
+        <i id="music-icon" class="fas fa-play text-[10px] pl-0.5"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Scrapbook Container -->
+  <main class="relative z-10 max-w-md mx-auto px-4 min-h-screen flex items-center justify-center py-8">
+
+    <!-- ================= LANDING PAGE: KODE KEAMANAN ================= -->
+    <section id="landing-page" class="page-card w-full scrapbook-card notebook-grid rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-6">
+      <!-- Washi tape decoration -->
+      <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-28 h-6 bg-scrapbook-tapePink transform rotate-1 border-l border-r border-dashed border-white/30 z-20"></div>
+      
+      <div class="w-20 h-20 bg-white border-2 border-scrapbook-kraft/40 flex items-center justify-center shadow-lg relative animate-scrapbook-float">
+        <div class="absolute -top-4 -left-3 w-12 h-5 bg-scrapbook-tapeYellow transform -rotate-12 z-10 border-l border-r border-dashed border-white/40"></div>
+        <i class="fa-solid fa-lock text-3xl text-scrapbook-rose transform rotate-2"></i>
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-[10px] uppercase tracking-widest text-scrapbook-rose font-mono font-bold">private security entry...</p>
+        <h1 class="font-serif text-2xl font-semibold tracking-tight text-scrapbook-brownText leading-tight">hii ayyaa..💖</h1>
+        <p class="text-slate-600 text-xs leading-relaxed max-w-xs mx-auto">
+          masukin pin dulu yakk buat lanjut,  kodenya tanggal ulang tahun cowo lu (format: ddmmyy)
+        </p>
+      </div>
+
+      <div class="w-full space-y-3">
+        <div class="relative" id="pin-input-container">
+          <input type="password" id="pin-input" maxlength="6" placeholder="******" class="w-full py-3 bg-white text-center text-xl font-bold tracking-widest border-2 border-dashed border-scrapbook-kraft/60 rounded-xl focus:outline-none focus:border-scrapbook-rose transition-all placeholder:text-slate-300">
+        </div>
+        <button id="btn-pin-submit" class="w-full py-3.5 bg-scrapbook-rose hover:bg-scrapbook-rose/90 text-white font-semibold text-xs rounded-full shadow-md transition-all border-2 border-dashed border-white/40">
+          buka pintu masuk 🗝️
+        </button>
+        <p id="pin-error-msg" class="text-[11px] text-red-500 font-mono hidden"></p>
+      </div>
+      
+      <div class="absolute bottom-4 left-4 right-4 text-[9px] text-slate-400 font-mono">
+        hint: inget tanggal lahir gw kagaa?
+      </div>
+    </section>
+
+    <!-- ================= INTERACTIVE BIRTHDAY CAKE PAGE ================= -->
+    <section id="cake-page" class="page-card hidden w-full scrapbook-card notebook-grid rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-6">
+      
+      <!-- Spiral Binder Decoration -->
+      <div class="absolute -left-3 top-6 bottom-6 flex flex-col justify-around pointer-events-none z-20">
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+      </div>
+
+      <div class="space-y-1">
+        <p class="text-[10px] uppercase tracking-widest text-scrapbook-rose font-mono font-bold">make a wish...</p>
+        <h1 class="font-serif text-2xl font-semibold text-scrapbook-brownText">yeayy, </p> happy birthday ayyaa! 🎂</h1>
+        <p class="text-slate-600 text-xs">Tap lilinnya buat matiin dan lanjut ke lembar jurnal selanjutnya yaaa!</p>
+      </div>
+
+      <!-- 2D Interactive Cake with SVG candle and flames -->
+      <div class="relative py-8 flex flex-col items-center justify-center w-full">
+        <!-- The Candles (Lilin 18) -->
+        <div class="flex gap-4 justify-center items-end h-28 relative z-20">
+          <!-- Candle 1 (Satu) -->
+          <div id="candle-1" class="relative flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-105">
+            <!-- Flame 1 -->
+            <div id="flame-1" class="candle-flame w-6 h-10 bg-gradient-to-t from-orange-400 via-amber-400 to-yellow-200 rounded-full blur-[1px] absolute -top-11"></div>
+            <!-- Body of Candle with number "1" -->
+            <div class="w-7 h-20 bg-gradient-to-r from-sky-400 to-cyan-300 rounded-md border border-sky-500/40 flex items-center justify-center shadow-md relative overflow-hidden">
+              <span class="font-cozy text-2xl font-bold text-white drop-shadow-md">1</span>
+              <div class="absolute inset-y-0 left-1 w-1 bg-white/40"></div>
+            </div>
+          </div>
+
+          <!-- Candle 8 (Delapan) -->
+          <div id="candle-8" class="relative flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-105">
+            <!-- Flame 8 -->
+            <div id="flame-8" class="candle-flame w-6 h-10 bg-gradient-to-t from-orange-400 via-amber-400 to-yellow-200 rounded-full blur-[1px] absolute -top-11"></div>
+            <!-- Body of Candle with number "8" -->
+            <div class="w-7 h-20 bg-gradient-to-r from-pink-400 to-rose-300 rounded-md border border-pink-500/40 flex items-center justify-center shadow-md relative overflow-hidden">
+              <span class="font-cozy text-2xl font-bold text-white drop-shadow-md">8</span>
+              <div class="absolute inset-y-0 left-1 w-1 bg-white/40"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- The Cake Layer 2D Aesthetic Scrapbook Style -->
+        <div class="w-56 h-28 bg-[#FFF2E2] border-2 border-scrapbook-kraft rounded-2xl relative shadow-md z-10 -mt-2">
+          <!-- Cream Drippings -->
+          <div class="absolute top-0 left-0 right-0 h-8 bg-scrapbook-rose rounded-t-[14px] flex justify-around items-end pb-0.5">
+            <div class="w-5 h-5 bg-scrapbook-rose rounded-full -mb-2"></div>
+            <div class="w-4 h-6 bg-scrapbook-rose rounded-full -mb-3"></div>
+            <div class="w-5 h-4 bg-scrapbook-rose rounded-full -mb-1"></div>
+            <div class="w-4 h-5 bg-scrapbook-rose rounded-full -mb-2"></div>
+            <div class="w-5 h-7 bg-scrapbook-rose rounded-full -mb-3.5"></div>
+            <div class="w-3 h-4 bg-scrapbook-rose rounded-full -mb-1.5"></div>
+          </div>
+          <!-- Little Cherries / Berries on top of cake -->
+          <div class="absolute top-[-8px] left-4 w-4 h-4 bg-red-500 rounded-full shadow-inner border border-red-600"></div>
+          <div class="absolute top-[-8px] right-4 w-4 h-4 bg-red-500 rounded-full shadow-inner border border-red-600"></div>
+          <div class="absolute top-[-10px] left-1/2 -translate-x-1/2 w-4 h-4 bg-red-500 rounded-full shadow-inner border border-red-600"></div>
+
+          <!-- Happy birthday text inside cake -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center pt-8">
+            <p class="font-handwritten text-xl text-scrapbook-brownText tracking-wide font-bold">18th Sweetest Year</p>
+          </div>
+        </div>
+
+        <!-- Plate -->
+        <div class="w-64 h-3 bg-[#E9E1D2] border-b-2 border-scrapbook-kraft/70 rounded-full -mt-1 shadow-sm"></div>
+      </div>
+
+      <!-- Action Button after blowing candle -->
+      <div id="cake-success-container" class="w-full hidden scale-90 opacity-0 transition-all duration-500">
+        <button id="btn-to-page1" class="w-full py-3.5 bg-scrapbook-rose hover:bg-scrapbook-rose/90 text-white font-semibold text-xs rounded-full shadow-md border-2 border-dashed border-white/40">
+          ada sesuatu buat kamu ayy! <i class="fas fa-arrow-right ml-1"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 1: THE CRITICAL TRUTH ================= -->
+    <section id="page1" class="page-card hidden w-full scrapbook-card notebook-grid rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-6">
+      
+      <!-- Spiral Notebook Rings Binder Decoration (High-effort scrapbook feel) -->
+      <div class="absolute -left-3 top-6 bottom-6 flex flex-col justify-around pointer-events-none z-20">
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+      </div>
+
+      <!-- Cute Polaroid Icon Placeholder with multilayered tape -->
+      <div class="w-20 h-20 bg-white border-2 border-scrapbook-kraft/40 flex items-center justify-center shadow-lg relative animate-scrapbook-float">
+        <!-- Ripped Washi Tapes overlapping -->
+        <div class="absolute -top-4 -left-3 w-12 h-5 bg-scrapbook-tapePink transform -rotate-12 z-10 border-l border-r border-dashed border-white/40"></div>
+        <div class="absolute -top-3 right-0 w-10 h-4 bg-scrapbook-tapeYellow transform rotate-6 z-10 border-l border-r border-dashed border-white/40"></div>
+        <i class="fa-solid fa-camera text-3xl text-scrapbook-rose transform rotate-2"></i>
+      </div>
+      
+      <div class="space-y-3 relative">
+        <!-- Hand-drawn heart doodle -->
+        <div class="absolute -top-5 -right-2 text-scrapbook-rose opacity-60 text-lg transform rotate-12"><i class="fa-solid fa-heart-pulse"></i></div>
+        
+        <p class="text-[10px] uppercase tracking-widest text-scrapbook-rose font-mono font-bold">journal entry #01...</p>
+        <h1 class="font-serif text-3xl font-semibold tracking-tight text-scrapbook-brownText leading-tight">sayang a ikii tida?</h1>
+        <p class="text-slate-600 text-xs leading-relaxed max-w-xs mx-auto font-sans">
+          hihii jawab jujur yaa ama aku, gaboleh bohong ayy.
+        </p>
+      </div>
+      
+      <!-- Interactive Yes/No Area -->
+      <div class="w-full pt-2">
+        <div class="flex flex-col items-center justify-center gap-4 relative min-h-[170px] w-full" id="button-container">
+          
+          <!-- Cute Custom Speech Bubble for the "Tidak" button -->
+          <div id="bubble-comment" class="absolute bg-scrapbook-brownText text-[#FAF6EE] text-[10px] font-mono px-3 py-1.5 rounded-xl shadow-md opacity-0 pointer-events-none transition-all duration-200 after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-scrapbook-brownText">
+            males banget dih wkwk 😜
+          </div>
+
+          <!-- Stitched style Button Ya -->
+          <button id="btn-ya" class="px-8 py-3.5 bg-scrapbook-rose hover:bg-scrapbook-rose/90 text-white font-semibold text-xs rounded-full shadow-md transition-all duration-300 w-48 z-10 border-2 border-dashed border-white/50 relative overflow-hidden">
+            sayang bangeeet! 💖✨
+          </button>
+          
+          <!-- Ripped cardboard styled Button Tidak -->
+          <button id="btn-tidak" class="px-8 py-3 bg-white hover:bg-scrapbook-cream text-slate-500 border-2 border-dashed border-scrapbook-kraft/60 font-semibold text-xs rounded-lg shadow-sm transition-all duration-200 w-48 absolute">
+            enggak biasa aja tuh 😜
+          </button>
+        </div>
+      </div>
+      
+      <!-- Retro Postal Mark/Sticker -->
+      <div class="absolute bottom-4 right-4 w-12 h-12 rounded-full border-2 border-dashed border-scrapbook-rose/40 flex items-center justify-center text-scrapbook-rose/40 text-[9px] font-mono uppercase transform rotate-12 pointer-events-none">
+        certified bby
+      </div>
+    </section>
+
+    <!-- ================= PAGE 2: THE ENVELOPE (STATIONERY LETTERS) ================= -->
+    <section id="page2" class="page-card hidden w-full scrapbook-card rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-6">
+      
+      <!-- Spiral binder design -->
+      <div class="absolute -left-3 top-6 bottom-6 flex flex-col justify-around pointer-events-none z-20">
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+      </div>
+
+      <!-- Corner photo corner sticker decoration -->
+      <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-scrapbook-rose/30 rounded-tr-xl pointer-events-none"></div>
+
+      <div id="envelope-intro" class="space-y-2">
+        <div class="text-[9px] bg-scrapbook-cream border border-scrapbook-kraft text-scrapbook-brownText/70 font-mono px-3 py-1 rounded-full uppercase tracking-widest font-bold inline-block">chapter 01 — love letter</div>
+        <h1 class="font-serif text-3xl font-semibold text-scrapbook-brownText">happy 12 SEPTEMBER! 🥳🎂</h1>
+        <p class="text-slate-600 text-xs leading-relaxed">aku pengen nyampein sesuatu ke kamu lewat surat ini. tap segel LOVE di tengah buat buka suratnya yakk !</p>
+      </div>
+      
+      <!-- Kraft Envelope inside the Scrapbook Card -->
+      <div id="envelope-area" class="py-4 flex justify-center items-center w-full min-h-[200px]">
+        <div id="envelope-click" class="relative cursor-pointer transition-all hover:scale-105 active:scale-95">
+          <div class="w-56 h-36 bg-[#E3D1B4] rounded-2xl border-2 border-scrapbook-kraft shadow-lg flex items-center justify-center relative">
+            <!-- Washi tape on envelope -->
+            <div class="absolute -top-3 left-4 w-14 h-4 bg-scrapbook-tapeBlue transform rotate-6 z-10 border-l border-r border-dashed border-white/30"></div>
+            <!-- Envelope Flaps Design -->
+            <div class="absolute inset-0 z-20 pointer-events-none" style="background: linear-gradient(35deg, transparent 48%, rgba(0,0,0,0.03) 50%, transparent 52%);"></div>
+            
+            <div id="wax-seal" class="absolute w-12 h-12 rounded-full bg-scrapbook-rose border-2 border-white flex items-center justify-center shadow-md z-30">
+              <i class="fa-solid fa-heart text-white text-sm animate-pulse"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FULL HEARTFELT LETTER DISPLAY (Paper Sheet design with lines) -->
+      <div id="full-letter-sheet" class="hidden scale-95 opacity-0 transition-all duration-700 w-full bg-[#FCFAF5] text-scrapbook-brownText rounded-xl p-5 text-left shadow-inner border border-scrapbook-kraft/50 space-y-4 max-h-[380px] overflow-y-auto relative">
+        <div class="absolute top-4 right-4 text-scrapbook-rose/20 text-4xl pointer-events-none">
+          <i class="fa-solid fa-feather-pointed"></i>
+        </div>
+        
+        <!-- Washi tape holding paper inside binder -->
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-20 h-5 bg-scrapbook-tapeYellow transform rotate-1 border-l border-r border-dashed border-white/30"></div>
+
+        <div class="flex justify-between items-center border-b border-scrapbook-kraft/30 pb-2 pt-2">
+          <span class="font-serif text-xs font-bold text-scrapbook-rose italic">buat ayyaa, dibaca yups..</span>
+          <span class="text-[8px] text-slate-400 font-mono">12.09.2026</span>
+        </div>
+        
+        <div class="space-y-4 font-sans text-xs text-slate-700 leading-relaxed notebook-lines">
+          <p>haii kamu! HAPPY BIRTHDAY SAYANGG 🥳, SLAMAT ATAS  18-nya yaakk! buat satu-satunya cewe yang bikin aku slalu ngerasa dihargain, dingertiin, dicintain, and disayangin yang ampe sesayang itu.. 🥳🎂</p>
+          <p>aku cuma pengen bilang trimakasii banyak-banyak karna kamu udaa hadir di 17-nya aku and bikin sweet seventeenku jadi seindah itu. makasih udah jadi 'tempat' yang bisa nenangin aku, jadi tempatt ternyaman aku yang slalu ngertiin aku, makasih udah slalu sabar ama sikap nggajelas aku and dengerin semua ceritaku yang anehh itu, and always support aku buat semua inii.. 💖✨</p>
+          <p>apalagii yang udaa ngertiin aku tentang segala hal, jadi tempat cerita aku satu-satunya, yang sebelomnya aku belom pernah ngerasa se-dingertiin ini.. sampe aku slalu ngerasa nyaman dan emang kamu 'rumah' buat aku balik.. 🫶🏻💖 </p>
+          <p>trimakasii banyaak slalu jadi support system terbesarku, yang slalu support aku buat berubah jadi lebii baik dan sabar nanggepin aku, semangatt terus jugaa buat hijrah jadi lebih baik yaa!! pastii bisa sayangg, jangan jadiin hubungan kita tu jadi penghambat hijrahnya kita yaa, semangat teruss sayangg buat nambah dan murojaah hafalannya.. pokonyaa kita bareng-bareng terus yaaa, gabolee nggak..🫶🏻💖💝</p>
+          <p> SEMANGATT TERUSS BLAJARNYAA SAYANGG, SMOGA KITA BISA LOLOS ELIGIBLE SAMPE TEMBUS KE UNIV IMPIAN KITA.. SUKSESS SLALU YAPP! SMOGA KITA SLALU DIMUDAHKAN DAN DILANCARKAN DISEGALA SESUATUNYAA DAN UJIAN-UJIANNYA✨️✨️
+          <p>maaf aku gabisa dateng langsung buat ngucapin ke kamu, and maaf juga kalo masih ada kurang and salah dari aku yang bikin kamu ngga enak, dan belom bisa jadi kayak apa yang kamu harapkann.</p>
+          <p>tapii, semoga di umur ke-18 inii, kita slalu panjang umur, sehat slalu, bisa sama-sama terus, and slalu tambah-tambah buat dikelilingi banyak kebahagiaan, dijauhkan dari hal-hal yang ngga-ngga, and please... tetep jadi nayyaa yang aku kenal yaa, yang slalu sabar and support apapun yang aku lakuin. jangan pernah berubah yaa cantikk. hihii. 💝💖</p>
+          <p>kangen gasii ama hari-hari yang udaa kita laluin? aku adaa inii buat kamu, diliat yakk! 👇</p>
+        </div>
+        
+        <div class="border-t border-scrapbook-kraft/30 pt-3 flex justify-between items-center">
+          <span class="font-handwritten text-2xl text-scrapbook-rose">sayangg ayyaa, dari ikii 🤍</span>
+        </div>
+      </div>
+
+      <div id="next-to-gallery" class="w-full hidden scale-90 opacity-0 transition-all">
+        <button id="to-page3" class="w-full py-3.5 bg-scrapbook-rose text-white font-semibold text-xs rounded-full shadow-md border-2 border-dashed border-white/40">
+          foto kitaa ada disinii!! <i class="fas fa-arrow-right ml-2 text-[10px]"></i>
+        </button>
+      </div>
+
+      <div id="tap-wax-hint" class="text-xs font-semibold text-scrapbook-rose animate-bounce flex items-center gap-1.5 justify-center">
+        <i class="fas fa-hand-pointer text-[10px]"></i> pencet segel LOVE di atas
+      </div>
+    </section>
+
+    <!-- ================= PAGE 3: THE SCRAPBOOK PHOTO COLLAGE ================= -->
+    <section id="page3" class="page-card hidden w-full scrapbook-card rounded-2xl p-6 shadow-xl flex flex-col items-center space-y-5">
+      
+      <!-- Ring binder design -->
+      <div class="absolute -left-3 top-6 bottom-6 flex flex-col justify-around pointer-events-none z-20">
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
+      </div>
+
+      <div class="text-center space-y-1 relative w-full">
+        <div class="text-[9px] bg-scrapbook-cream border border-scrapbook-kraft text-scrapbook-brownText/70 font-mono px-3 py-1 rounded-full uppercase tracking-widest font-bold inline-block">chapter 02 — memory board</div>
+        <h1 class="font-serif text-2xl font-semibold text-scrapbook-brownText">our digital scrapbook 📸</h1>
+        <p class="text-slate-500 text-[11px] leading-relaxed">ingett moment inii kahh? tap salah satu foto buat liat fullnya yak!</p>
+        
+        <!-- Retro Star Sticker -->
+        <div class="absolute -top-1 right-2 w-8 h-8 text-amber-300 text-lg animate-pulse pointer-events-none"><i class="fa-solid fa-star"></i></div>
+      </div>
+
+      <!-- Tactile Scrapbook grid collage with realistic overlapping elements -->
+      <div class="w-full grid grid-cols-2 gap-4 py-2 relative min-h-[290px] px-1">
+        
+        <!-- Polaroid Item 1 -->
+        <div onclick="openLightbox(0)" class="bg-white p-2 pb-5 rounded-md shadow-md transform -rotate-3 hover:rotate-0 hover:scale-105 transition-all duration-300 cursor-pointer border border-scrapbook-kraft/30 relative">
+          <!-- Realistic wooden peg peg/clip at the top -->
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-2 h-5 bg-[#D7A15C] rounded-sm border border-amber-800/20 shadow-sm z-10 flex flex-col items-center">
+            <div class="w-1.5 h-0.5 bg-slate-400 mt-1"></div> <!-- metallic peg ring -->
+          </div>
+          <div class="w-full aspect-square bg-[#FCFAF5] rounded-sm overflow-hidden mb-2">
+            <img src="https://lh3.googleusercontent.com/d/1rxhWjY-eNjUp6j0DuXJAHxFTpCZilv5s" class="w-full aspect-square object-cover">
+          </div>
+          <p class="text-[9px] text-center font-handwritten text-xl text-scrapbook-brownText">ciee yang Level UP!!... 🤍</p>
+        </div>
+
+        <!-- Polaroid Item 2 -->
+        <div onclick="openLightbox(1)" class="bg-white p-2 pb-5 rounded-md shadow-md transform rotate-3 hover:rotate-0 hover:scale-105 transition-all duration-300 cursor-pointer border border-scrapbook-kraft/30 relative">
+          <!-- Layered crossed Washi Tapes -->
+          <div class="absolute -top-2 -right-1 w-10 h-4 bg-scrapbook-tapeGreen transform rotate-12 z-10 border-l border-r border-dashed border-white/30"></div>
+          <div class="absolute -top-3 right-2 w-8 h-4 bg-scrapbook-tapePink transform -rotate-12 z-10 border-l border-r border-dashed border-white/30"></div>
+          <div class="w-full aspect-square bg-[#FCFAF5] rounded-sm overflow-hidden mb-2">
+            <img src="https://lh3.googleusercontent.com/d/1TvvkzFgSApHrYu-hMQMtiYZt9vZP-N-j" class="w-full aspect-square object-cover">
+          </div>
+          <p class="text-[9px] text-center font-handwritten text-xl text-scrapbook-brownText">kangenn genggam tidaa? 🤍</p>
+        </div>
+
+        <!-- Polaroid Item 3 -->
+        <div onclick="openLightbox(2)" class="bg-white p-2 pb-5 rounded-md shadow-md transform -rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-300 cursor-pointer border border-scrapbook-kraft/30 relative">
+          <!-- Paper clip graphic element -->
+          <div class="absolute -top-2 left-6 w-3 h-6 border-2 border-slate-400 rounded-full z-10 transform -rotate-12"></div>
+          <div class="w-full aspect-square bg-[#FCFAF5] rounded-sm overflow-hidden mb-2">
+            <img src="https://lh3.googleusercontent.com/d/1-3B6onz5Y86nUu13aKHsXEmHKyBYIVkH" class="w-full aspect-square object-cover">
+          </div>
+          <p class="text-[9px] text-center font-handwritten text-xl text-scrapbook-brownText">sayangg bangt ama poto ini 🤍</p>
+        </div>
+
+        <!-- Polaroid Item 4 -->
+        <div onclick="openLightbox(3)" class="bg-white p-2 pb-5 rounded-md shadow-md transform rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-300 cursor-pointer border border-scrapbook-kraft/30 relative">
+          <!-- Wooden peg at the top -->
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-2 h-5 bg-[#D7A15C] rounded-sm border border-amber-800/20 shadow-sm z-10 flex flex-col items-center">
+            <div class="w-1.5 h-0.5 bg-slate-400 mt-1"></div>
+          </div>
+          <div class="w-full aspect-square bg-[#FCFAF5] rounded-sm overflow-hidden mb-2">
+            <img src="https://lh3.googleusercontent.com/d/1M43Rm4L3kNYG0zm_dVMjSmDJvAgtjPWK" class="w-full aspect-square object-cover">
+          </div>
+          <p class="text-[9px] text-center font-handwritten text-xl text-scrapbook-brownText">kangenn sumpaa sengg pen pelukk 🤍</p>
+        </div>
+
+      </div>
+
+      <!-- Next Slide Trigger Button styled like torn paper strip -->
+      <button id="to-page4" class="w-full py-4 bg-gradient-to-r from-scrapbook-rose to-scrapbook-brownText hover:opacity-95 text-white font-semibold text-xs rounded-full shadow-md transition-all border-2 border-dashed border-white/30">
+        terakhir dehh, inii buat kamuu! ✨
+      </button>
+    </section>
+
+    <!-- ================= PAGE 4: THE GRAND FINALE ================= -->
+    <section id="page4" class="page-card hidden w-full bg-[#2C211A] text-[#FAF6EE] rounded-2xl p-6 shadow-2xl border-2 border-scrapbook-kraft flex flex-col items-center space-y-6 relative overflow-hidden">
+      
+      <!-- Star dust fairy lights particles backdrop -->
+      <canvas id="sky-canvas" class="absolute inset-0 w-full h-full pointer-events-auto z-0 rounded-2xl"></canvas>
+
+      <!-- Corner photo corner sticker decoration -->
+      <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-scrapbook-rose/30 rounded-tr-xl pointer-events-none z-10"></div>
+      <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-scrapbook-rose/30 rounded-bl-xl pointer-events-none z-10"></div>
+
+      <div class="relative z-10 text-center w-full flex flex-col items-center space-y-5">
+        <div class="text-[9px] bg-white/10 text-scrapbook-kraft border border-white/10 font-mono px-3 py-1 rounded-full uppercase tracking-widest font-bold">chapter 03 — final memory</div>
+        
+        <div class="space-y-1">
+          <p class="text-xs text-scrapbook-rose font-mono tracking-widest uppercase">happy level up day, ayyaa!</p>
+          <h1 class="font-serif text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#FAF6EE] via-[#E8A87C] to-[#E98074]">
+            HAPPY BIRTH DAY SAYANGG! 🎂
+          </h1>
+        </div>
+
+        <!-- Scrapbook-styled list of reason items -->
+        <div class="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 text-left shadow-inner">
+          <h3 class="text-[10px] uppercase tracking-widest text-scrapbook-peach font-mono font-bold mb-3 flex items-center gap-1.5">
+            <i class="fa-solid fa-heart text-scrapbook-rose text-[9px] animate-pulse"></i> impression for you:
+          </h3>
+          <div class="grid grid-cols-1 gap-2 text-xs" id="reasons-container">
+            <!-- Modern minimalistic reason cards -->
+            <div class="reason-item bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-xl p-3 cursor-pointer transition-all flex items-start gap-3" data-active="false">
+              <span class="text-scrapbook-rose text-xs mt-0.5"><i class="fa-regular fa-star"></i></span>
+              <div class="space-y-1">
+                <p class="text-slate-300 font-medium">tempat ter-nyaman aku!</p>
+                <p class="hidden text-[#FAF6EE] text-[10px] font-mono leading-relaxed pt-1.5 border-t border-white/5">haii. trimakasii udaa jadi tempat ter-nyaman aku, yang mau dengerin semua cerita gajelas aku, slalu ngertiin aku, tempat curhat aku, sampe jadi sandaran ternyamannya aku, gatau kenapaa kalo sama kamu tu udah ilang semua beban akuu ayy..</p>
+              </div>
+            </div>
+            <div class="reason-item bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-xl p-3 cursor-pointer transition-all flex items-start gap-3" data-active="false">
+              <span class="text-scrapbook-rose text-xs mt-0.5"><i class="fa-regular fa-star"></i></span>
+              <div class="space-y-1">
+                <p class="text-slate-300 font-medium font-sans">sipalingg.</p>
+                <p class="hidden text-[#FAF6EE] text-[10px] font-mono leading-relaxed pt-1.5 border-t border-white/5">trimakasii juga udah slalu ngingetinn orang yang batu kek aku ini untuk brubah jadi lebih baik, slalu nanyainn sampe ngasii kabar tiap hari, dan slalu jadi support systemku buat berubah lebih baikk.</p>
+              </div>
+            </div>
+            <div class="reason-item bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-xl p-3 cursor-pointer transition-all flex items-start gap-3" data-active="false">
+              <span class="text-scrapbook-rose text-xs mt-0.5"><i class="fa-regular fa-star"></i></span>
+              <div class="space-y-1">
+                <p class="text-slate-300 font-medium">17th.</p>
+                <p class="hidden text-[#FAF6EE] text-[10px] font-mono leading-relaxed pt-1.5 border-t border-white/5">aku sering ngerasa, hadirnya kamu di sweet seventeen ku tu bukan sekedar hadir doang ayy, tapi hadiah dari tuhan buat aku yang udah di rencanain sedemikian rupa!.</p>
+              </div>
+            </div>
+          </div>
+          <p class="text-[9px] text-center text-slate-400 mt-2 italic"><i class="fas fa-info-circle"></i> klik tiap kotak di atas buat liat kesan dari aku!</p>
+        </div>
+
+        <!-- Custom Typewriter Box with Notion look -->
+        <div class="w-full bg-black/40 backdrop-blur-sm border border-white/5 p-4 rounded-xl text-left text-xs text-[#EAE7DC] font-mono leading-relaxed h-32 overflow-y-auto" id="typewriter-box">
+          <span id="typewriter-text"></span><span class="animate-pulse font-bold text-scrapbook-rose">|</span>
+        </div>
+
+        <!-- ================= PENULISAN PESAN UNTUK KITA ================= -->
+        <div class="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 text-left shadow-inner space-y-3">
+          <h3 class="text-[10px] uppercase tracking-widest text-scrapbook-peach font-mono font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-pen-nib text-scrapbook-rose text-[9px]"></i> tulis pesan balasanmu di sini ya ayy:
+          </h3>
+          <textarea id="nayy-reply-input" rows="3" placeholder="bolee tinggalin pesan buat a ikii?..." class="w-full p-3 bg-black/20 text-[#FAF6EE] text-xs font-mono rounded-xl border border-white/10 focus:outline-none focus:border-scrapbook-rose transition-all resize-none"></textarea>
+          <div class="flex justify-between items-center">
+            <span id="saved-status-text" class="text-[10px] text-emerald-400 font-mono italic opacity-0"><i class="fas fa-check-circle"></i> pesan tersimpan aman!</span>
+            <button id="btn-save-reply" class="px-4 py-2 bg-scrapbook-rose hover:bg-scrapbook-rose/90 text-white font-semibold text-[10px] rounded-lg transition-all shadow-sm">
+              simpan pesan <i class="fas fa-save ml-1"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Small User Interactive Tip -->
+        <p class="text-[9px] text-scrapbook-kraft/70 flex items-center gap-1.5 justify-center">
+          <i class="fa-solid fa-wand-magic-sparkles text-scrapbook-rose animate-pulse"></i> klik di mana aja buat terbangkan peri lampu hangat! 🏮
+        </p>
+
+        <!-- Minimalist restart button -->
+        <button id="btn-restart" class="mt-2 px-5 py-2 bg-white/5 text-scrapbook-kraft hover:text-white text-xs rounded-full border border-white/10 transition-all flex items-center gap-1.5">
+          <i class="fas fa-redo-alt text-[9px]"></i> mulai ulang
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= LIGHTBOX MODAL FOR IMAGES ================= -->
+  <div id="lightbox" class="fixed inset-0 bg-[#07080f]/90 z-50 flex flex-col items-center justify-center p-6 hidden opacity-0 transition-opacity duration-300">
+    <button onclick="closeLightbox()" class="absolute top-6 right-6 text-white text-2xl hover:text-scrapbook-rose transition-colors"><i class="fa-solid fa-xmark"></i></button>
+    <div class="bg-white p-4 pb-8 rounded-lg max-w-[310px] w-full shadow-2xl border border-white/10 transform scale-95 transition-transform duration-300 relative" id="lightbox-card">
+      <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-5 bg-scrapbook-tapePink border-l border-r border-dashed border-white/30 transform -rotate-6 z-10"></div>
+      <img id="lightbox-img" src="" class="w-full aspect-square object-cover rounded-sm mb-4">
+      <p id="lightbox-caption" class="font-handwritten text-2xl text-center text-scrapbook-brownText leading-snug px-2"></p>
+    </div>
+  </div>
+
+  <script>
+    const momentsData = [
+      { image: "https://lh3.googleusercontent.com/d/1rxhWjY-eNjUp6j0DuXJAHxFTpCZilv5s", caption: "ciee yang Level UP!!... 🤍" },
+      { image: "https://lh3.googleusercontent.com/d/1TvvkzFgSApHrYu-hMQMtiYZt9vZP-N-j", caption: "kangenn genggam tidaa? 🤍" },
+      { image: "https://lh3.googleusercontent.com/d/1-3B6onz5Y86nUu13aKHsXEmHKyBYIVkH", caption: "sayangg bangt ama poto ini 🤍" },
+      { image: "https://lh3.googleusercontent.com/d/1TT4vSXW09_nssWlU3R06mltMCUAt4334", caption: "kangenn sumpaa sengg pen pelukk 🤍" }
+    ];
+    const typewriterMessage = "hari ini, hari dimana seorang NAYYARA RAMADHANI PUTRI IRHANTO lahir ke duniaa. slamat ulang tahun ke-18 yaa. aku mau bilang, trimakasii banyak udah mau ketemu, kenal, dan deket sama aku. trimakasi jugaa udah jadi BEST PART buat aku, yang slalu ngertiin sampe sayang ama aku. and trimakasi udah hadir di sweet seventeen aku, jangan berubah yaa!! tetepp jadi NAYYARAA yang aku kenal. semoga di 18 ini, semesta slalu dengerin semua wish list baik kamu. kalo ada apa-apaa, bilang aku yaa! aku gaakan kemana mana kok, aku bakal sama kayak yang kamu kenal! i always support and pround of you. happy birthday, ketua sayangg!  LOVE YOU ❤️";
+
+    let isPlaying = false;
+    let typewriterIndex = 0;
+    let typewriterInterval;
+    let countAttempts = 0;
+
+    // Lilin status tiup
+    let candle1Blown = false;
+    let candle8Blown = false;
+
+    // DOM Elements
+    const bgMusic = document.getElementById('bg-music');
+    const musicToggle = document.getElementById('music-toggle');
+    const musicIcon = document.getElementById('music-icon');
+    const vinylDisk = document.getElementById('vinyl-disk');
+    const musicTitle = document.getElementById('music-title');
+
+    const landingPage = document.getElementById('landing-page');
+    const cakePage = document.getElementById('cake-page');
+    const p1 = document.getElementById('page1');
+    const p2 = document.getElementById('page2');
+    const p3 = document.getElementById('page3');
+    const p4 = document.getElementById('page4');
+    
+    const pinInput = document.getElementById('pin-input');
+    const btnPinSubmit = document.getElementById('btn-pin-submit');
+    const pinErrorMsg = document.getElementById('pin-error-msg');
+    
+    const flame1 = document.getElementById('flame-1');
+    const flame8 = document.getElementById('flame-8');
+    const candle1 = document.getElementById('candle-1');
+    const candle8 = document.getElementById('candle-8');
+    const cakeSuccessContainer = document.getElementById('cake-success-container');
+    const btnToPage1 = document.getElementById('btn-to-page1');
+
+    const btnYa = document.getElementById('btn-ya');
+    const btnTidak = document.getElementById('btn-tidak');
+    const bubbleComment = document.getElementById('bubble-comment');
+    const replyInput = document.getElementById('nayy-reply-input');
+
+    const funnyComments = [
+      "males banget dih wkwk 😜",
+      "pencet 'sayang banget' aja napa!",
+      "eh jempolnya meleset ya? 😂",
+      "ganti haluan cepet ayyy!",
+      "tombol ini mogok kerja dulu 🤔",
+      "ga usah maksa deh, klik 'Ya' aja ❤️"
+    ];
+
+    // Autoload reply message from localStorage so it persists across refreshes
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedReply = localStorage.getItem('nayyara_reply_message');
+      if (savedReply) {
+        replyInput.value = savedReply;
+      }
+    });
+
+    // Real-time autosave as Nayyara types so nothing is lost even on crash/refresh
+    replyInput.addEventListener('input', () => {
+      localStorage.setItem('nayyara_reply_message', replyInput.value);
+    });
+
+    // Control Audio Track Play / Pause
+    function toggleMusic(forcePlay = null) {
+      if (forcePlay === true) {
+        bgMusic.play().then(() => {
+          isPlaying = true;
+          musicIcon.className = "fas fa-pause text-[10px]";
+          vinylDisk.classList.add('animate-vinyl');
+        }).catch(e => {
+          console.log("Musik tertahan sistem browser. Menunggu klik user.");
+        });
+      } else if (forcePlay === false) {
+        bgMusic.pause();
+        isPlaying = false;
+        musicIcon.className = "fas fa-play text-[10px] pl-0.5";
+        vinylDisk.classList.remove('animate-vinyl');
+      } else {
+        if (!isPlaying) {
+          bgMusic.play().then(() => {
+            isPlaying = true;
+            musicIcon.className = "fas fa-pause text-[10px]";
+            vinylDisk.classList.add('animate-vinyl');
+          }).catch(e => {
+            console.log("Musik tertahan browser.");
+          });
+        } else {
+          bgMusic.pause();
+          isPlaying = false;
+          musicIcon.className = "fas fa-play text-[10px] pl-0.5";
+          vinylDisk.classList.remove('animate-vinyl');
+        }
+      }
+    }
+
+    // Event listener tombol musik manual
+    musicToggle.addEventListener('click', () => toggleMusic());
+
+    // PIN Submit logic
+    function validatePin() {
+      const enteredPin = pinInput.value.trim();
+      if (enteredPin === "190908") {
+        pinErrorMsg.classList.add('hidden');
+        musicTitle.textContent = "Semua Aku Dirayakan";
+        toggleMusic(true); 
+        
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+        navigateToPage(landingPage, cakePage);
+      } else {
+        landingPage.classList.add('shake-anim');
+        pinErrorMsg.textContent = "kodenya salah ayy, coba diinget lagi format ddmmyy!";
+        pinErrorMsg.classList.remove('hidden');
+        
+        // Shake animation on container
+        const container = document.getElementById('pin-input-container');
+        container.classList.add('shake-anim');
+        setTimeout(() => {
+          landingPage.classList.remove('shake-anim');
+          container.classList.remove('shake-anim');
+        }, 400);
+      }
+    }
+
+    btnPinSubmit.onclick = validatePin;
+    pinInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') validatePin(); });
+
+    // Tiup lilin logic
+    function checkCandles() {
+      if (candle1Blown && candle8Blown) {
+        confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+        cakeSuccessContainer.classList.remove('hidden');
+        setTimeout(() => {
+          cakeSuccessContainer.classList.add('scale-100', 'opacity-100');
+        }, 50);
+      }
+    }
+
+    candle1.onclick = () => {
+      if (!candle1Blown) {
+        flame1.style.display = 'none';
+        candle1Blown = true;
+        confetti({ particleCount: 10, spread: 30, origin: { y: 0.5 } });
+        checkCandles();
+      }
+    };
+
+    candle8.onclick = () => {
+      if (!candle8Blown) {
+        flame8.style.display = 'none';
+        candle8Blown = true;
+        confetti({ particleCount: 10, spread: 30, origin: { y: 0.5 } });
+        checkCandles();
+      }
+    };
+
+    btnToPage1.onclick = () => {
+      navigateToPage(cakePage, p1);
+    };
+
+    btnTidak.onmouseover = () => {
+      const containerRect = document.getElementById('button-container').getBoundingClientRect();
+      const x = Math.random() * (containerRect.width - 100), y = (Math.random() * 100) - 50;
+      btnTidak.style.position = 'absolute';
+      btnTidak.style.left = `${x}px`; btnTidak.style.top = `${y + 55}px`;
+      
+      countAttempts++;
+      bubbleComment.textContent = funnyComments[countAttempts % funnyComments.length];
+      bubbleComment.style.opacity = '1';
+      bubbleComment.style.left = `${x - 15}px`; bubbleComment.style.top = `${y + 12}px`;
+    };
+
+    btnYa.onclick = () => { 
+      navigateToPage(p1, p2); 
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); 
+      toggleMusic(true); 
+    };
+
+    // Highly-stylized physical page swipe transition
+    function navigateToPage(from, to) {
+      // 1. Slide 'from' card up, tilt and fade out
+      from.classList.add('card-hidden-prev');
+      
+      setTimeout(() => { 
+        // 2. Unrender the 'from' card
+        from.classList.add('hidden'); 
+        
+        // 3. Position the 'to' card in its start off-screen state (from bottom/tilted)
+        to.classList.remove('hidden'); 
+        to.classList.add('card-hidden-next');
+        
+        // Force Reflow
+        void to.offsetWidth; 
+        
+        // 4. Elastic glide 'to' card beautifully into center stage
+        to.classList.remove('card-hidden-next'); 
+      }, 350); // Balanced timing for seamless overlapping crossfade
+    }
+
+    document.getElementById('wax-seal').onclick = () => {
+      document.getElementById('envelope-area').classList.add('hidden');
+      document.getElementById('envelope-intro').classList.add('hidden');
+      document.getElementById('tap-wax-hint').classList.add('hidden');
+      const letter = document.getElementById('full-letter-sheet');
+      letter.classList.remove('hidden'); 
+      setTimeout(() => letter.classList.add('scale-100', 'opacity-100'), 50);
+      const btn = document.getElementById('next-to-gallery');
+      btn.classList.remove('hidden'); 
+      setTimeout(() => btn.classList.add('scale-100', 'opacity-100'), 300);
+    };
+
+    document.getElementById('to-page3').onclick = () => navigateToPage(p2, p3);
+    document.getElementById('to-page4').onclick = () => { 
+      navigateToPage(p3, p4); 
+      startTypewriter(); 
+      initSkyCanvas(); 
+    };
+
+    function openLightbox(i) {
+      document.getElementById('lightbox-img').src = momentsData[i].image;
+      document.getElementById('lightbox-caption').textContent = momentsData[i].caption;
+      const lb = document.getElementById('lightbox'); 
+      lb.classList.remove('hidden'); 
+      setTimeout(() => lb.classList.add('opacity-100'), 50);
+    }
+    
+    function closeLightbox() { 
+      document.getElementById('lightbox').classList.add('opacity-0'); 
+      setTimeout(() => document.getElementById('lightbox').classList.add('hidden'), 300); 
+    }
+
+    function startTypewriter() {
+      const el = document.getElementById('typewriter-text'); 
+      el.textContent = ""; 
+      typewriterIndex = 0;
+      clearInterval(typewriterInterval);
+      typewriterInterval = setInterval(() => {
+        if (typewriterIndex < typewriterMessage.length) { 
+          el.textContent += typewriterMessage.charAt(typewriterIndex++); 
+        } else {
+          clearInterval(typewriterInterval);
+        }
+      }, 50);
+    }
+
+    // Explicit manual save button to trigger feedback UI & Confetti
+    document.getElementById('btn-save-reply').onclick = () => {
+      const replyMsg = replyInput.value;
+      localStorage.setItem('nayyara_reply_message', replyMsg);
+      
+      const savedStatus = document.getElementById('saved-status-text');
+      savedStatus.classList.remove('opacity-0');
+      savedStatus.classList.add('opacity-100');
+      
+      confetti({
+        particleCount: 40,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 }
+      });
+      confetti({
+        particleCount: 40,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 }
+      });
+
+      setTimeout(() => {
+        savedStatus.classList.remove('opacity-100');
+        savedStatus.classList.add('opacity-0');
+      }, 3000);
+    };
+
+    // Aesthetic Reasons Toggle
+    document.querySelectorAll('.reason-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const isActive = item.getAttribute('data-active') === 'true';
+        const hiddenMsg = item.querySelector('p.hidden');
+        const icon = item.querySelector('i');
+
+        if (!isActive) {
+          item.setAttribute('data-active', 'true');
+          item.classList.add('border-white/20', 'bg-white/[0.08]');
+          if (hiddenMsg) hiddenMsg.classList.remove('hidden');
+          if (icon) {
+            icon.className = "fa-solid fa-heart text-scrapbook-rose animate-pulse";
+          }
+          confetti({
+            particleCount: 15,
+            spread: 25,
+            origin: { y: 0.8 }
+          });
+        } else {
+          item.setAttribute('data-active', 'false');
+          item.classList.remove('border-white/20', 'bg-white/[0.08]');
+          if (hiddenMsg) hiddenMsg.classList.add('hidden');
+          if (icon) {
+            icon.className = "fa-regular fa-star text-scrapbook-rose";
+          }
+        }
+      });
+    });
+
+    // Fairy Lights canvas upward floating particles loop
+    let canvasResizeListener = null;
+    function initSkyCanvas() {
+      const canvas = document.getElementById('sky-canvas'); 
+      const ctx = canvas.getContext('2d');
+      
+      const handleResize = () => {
+        canvas.width = canvas.offsetWidth; 
+        canvas.height = canvas.offsetHeight;
+      };
+      
+      handleResize();
+      if (!canvasResizeListener) {
+        window.addEventListener('resize', handleResize);
+        canvasResizeListener = true;
+      }
+
+      let particles = [];
+      
+      function create(clickX, clickY) { 
+        return { 
+          x: clickX !== undefined ? clickX : Math.random() * canvas.width, 
+          y: clickY !== undefined ? clickY : canvas.height + 10, 
+          s: Math.random() * 4 + 2, 
+          a: 1,
+          speedY: Math.random() * 0.5 + 0.3
+        }; 
+      }
+      
+      setInterval(() => {
+        if (!p4.classList.contains('hidden')) {
+          particles.push(create());
+        }
+      }, 150);
+
+      // Add interactivity on tap
+      canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        for (let j = 0; j < 10; j++) {
+          particles.push(create(clickX, clickY));
+        }
+      });
+
+      function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach((p, i) => {
+          p.y -= p.speedY; 
+          p.a -= 0.0025; 
+          ctx.fillStyle = `rgba(233,128,116,${p.a})`;
+          ctx.beginPath(); 
+          ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); 
+          ctx.fill();
+          if(p.a <= 0) particles.splice(i, 1);
+        });
+        requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    document.getElementById('btn-restart').onclick = () => location.reload();
+  </script>
+</body>
+</html>
