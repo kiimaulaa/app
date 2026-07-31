@@ -19,6 +19,47 @@
   <!-- Canvas Confetti Library -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyD-FaFv1_dLj35U1ht8AWG6A0iCU-5O0X0",
+    authDomain: "birthday-2ee9a.firebaseapp.com",
+    projectId: "birthday-2ee9a",
+    storageBucket: "birthday-2ee9a.firebasestorage.app",
+    messagingSenderId: "162432647198",
+    appId: "1:162432647198:web:27cc16a7a53c030e7b6e0f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const replyRef = doc(db, "birthday", "reply");
+onSnapshot(replyRef, (snap) => {
+    if (snap.exists()) {
+        replyInput.value = snap.data().message || "";
+    }
+});
+async function loadReply() {
+    const snap = await getDoc(replyRef);
+
+    if (snap.exists()) {
+        replyInput.value = snap.data().message || "";
+    }
+}
+
+async function saveReply() {
+    await setDoc(replyRef, {
+        message: replyInput.value,
+        updatedAt: Date.now()
+    });
+}
+
   <script>
     tailwind.config = {
       theme: {
@@ -663,17 +704,12 @@
     ];
 
     // Autoload reply message from localStorage so it persists across refreshes
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedReply = localStorage.getItem('nayyara_reply_message');
-      if (savedReply) {
-        replyInput.value = savedReply;
-      }
-    });
+    document.addEventListener("DOMContentLoaded", loadReply);
 
     // Real-time autosave as Nayyara types so nothing is lost even on crash/refresh
-    replyInput.addEventListener('input', () => {
-      localStorage.setItem('nayyara_reply_message', replyInput.value);
-    });
+    replyInput.addEventListener("input", () => {
+    saveReply();
+});
 
     // Control Audio Track Play / Pause
     function toggleMusic(forcePlay = null) {
@@ -859,8 +895,7 @@
 
     // Explicit manual save button to trigger feedback UI & Confetti
     document.getElementById('btn-save-reply').onclick = () => {
-      const replyMsg = replyInput.value;
-      localStorage.setItem('nayyara_reply_message', replyMsg);
+      await saveReply();
       
       const savedStatus = document.getElementById('saved-status-text');
       savedStatus.classList.remove('opacity-0');
@@ -975,7 +1010,13 @@
       }
       loop();
     }
-
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc,
+    onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
     document.getElementById('btn-restart').onclick = () => location.reload();
   </script>
 </body>
