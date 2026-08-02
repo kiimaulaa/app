@@ -1336,8 +1336,8 @@
             return url;
         }
 
-        // Helper Kompresi Gambar agar Pas di Storage & Base64 Firestore
-        function compressImage(file, maxWidth = 1024, maxHeight = 1024, quality = 0.7) {
+        // Helper Kompresi Gambar agar Pas di Storage & Base64 Firestore (< 750KB)
+        function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.6) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
@@ -1361,7 +1361,26 @@
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-                        const dataUrl = canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', quality);
+
+                        let currentQuality = quality;
+                        let dataUrl = canvas.toDataURL('image/jpeg', currentQuality);
+
+                        // Optimasi agar string Base64 aman dari batas 1MB Firestore
+                        while (dataUrl.length > 750000 && currentQuality > 0.2) {
+                            currentQuality -= 0.1;
+                            dataUrl = canvas.toDataURL('image/jpeg', currentQuality);
+                        }
+
+                        if (dataUrl.length > 750000) {
+                            const scale = 0.7;
+                            const canvas2 = document.createElement('canvas');
+                            canvas2.width = Math.floor(width * scale);
+                            canvas2.height = Math.floor(height * scale);
+                            const ctx2 = canvas2.getContext('2d');
+                            ctx2.drawImage(canvas, 0, 0, canvas2.width, canvas2.height);
+                            dataUrl = canvas2.toDataURL('image/jpeg', 0.5);
+                        }
+
                         resolve(dataUrl);
                     };
                     img.onerror = (err) => reject(err);
@@ -1398,7 +1417,7 @@
                 try {
                     let fileDataUrl = '';
                     if (file.type.startsWith('image')) {
-                        fileDataUrl = await compressImage(file, 1200, 1200, 0.75);
+                        fileDataUrl = await compressImage(file, 800, 800, 0.65);
                     } else {
                         fileDataUrl = await readFileAsDataURL(file);
                     }
@@ -1411,19 +1430,33 @@
                         user: currentUser || 'ikii'
                     };
 
-                    // Kirim ke Firestore jika online, atau lokal jika offline
-                    if (isFirebaseReady && db && auth && auth.currentUser) {
-                        const galleryCol = collection(db, 'artifacts', appId, 'public', 'data', 'gallery');
-                        await addDoc(galleryCol, newItem);
-                    } else {
+                    let uploadedToCloud = false;
+
+                    // Hanya kirim ke Firestore jika aman (<850,000 karakter Base64 ~600KB)
+                    if (isFirebaseReady && db && auth && auth.currentUser && fileDataUrl.length < 850000) {
+                        try {
+                            const galleryCol = collection(db, 'artifacts', appId, 'public', 'data', 'gallery');
+                            await addDoc(galleryCol, newItem);
+                            uploadedToCloud = true;
+                        } catch (cloudErr) {
+                            console.warn("Upload ke cloud gagal/melebihi limit, menyimpan ke memori lokal:", cloudErr);
+                        }
+                    }
+
+                    // Jika tidak/gagal upload ke cloud, simpan lokal
+                    if (!uploadedToCloud) {
                         newItem.id = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
                         fallbackGallery.unshift(newItem);
-                        localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                        try {
+                            localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                        } catch (quotaErr) {
+                            console.warn("Storage lokal penuh, foto tetap ditampilkan di sesi ini:", quotaErr);
+                        }
                         renderGalleryItems();
                     }
                 } catch (err) {
                     console.error("Gagal memproses file galeri:", err);
-                    alert("Gagal mengunggah file " + file.name + ". Silakan coba lagi!");
+                    alert("Gagal memproses file " + file.name + ". Silakan coba lagi!");
                 }
             }
 
@@ -1434,7 +1467,7 @@
         // Tambah link Drive / URL langsung di Galeri
         async function addDriveItem() {
             const input = document.getElementById('drive-link-input');
-            const rawUrl = input.value.trim();
+            const rawUrl = input ? input.value.trim() : '';
 
             if (!rawUrl) {
                 alert("Masukkan link Google Drive atau link gambar/video dulu yaa!");
@@ -1452,21 +1485,27 @@
                 user: currentUser || 'ikii'
             };
 
+            let uploadedToCloud = false;
             if (isFirebaseReady && db && auth && auth.currentUser) {
                 try {
                     const galleryCol = collection(db, 'artifacts', appId, 'public', 'data', 'gallery');
                     await addDoc(galleryCol, newItem);
+                    uploadedToCloud = true;
                 } catch (err) {
                     console.error("Gagal menambah link drive ke Firestore:", err);
                 }
-            } else {
+            }
+
+            if (!uploadedToCloud) {
                 newItem.id = 'local_' + Date.now();
                 fallbackGallery.unshift(newItem);
-                localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                try {
+                    localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                } catch (e) {}
                 renderGalleryItems();
             }
 
-            input.value = '';
+            if (input) input.value = '';
         }
 
         // Render Galeri Items Grid
@@ -1542,7 +1581,9 @@
                 }
             } else {
                 fallbackGallery = fallbackGallery.filter(item => item.id !== id && item.url !== id);
-                localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                try {
+                    localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                } catch(e){}
                 renderGalleryItems();
             }
         }
@@ -1569,7 +1610,7 @@
                 const isVideo = file.type.startsWith('video');
 
                 if (file.type.startsWith('image')) {
-                    fileDataUrl = await compressImage(file, 800, 800, 0.7);
+                    fileDataUrl = await compressImage(file, 800, 800, 0.6);
                 } else {
                     fileDataUrl = await readFileAsDataURL(file);
                 }
@@ -1627,17 +1668,25 @@
                 mediaType: pendingFileAttachment ? pendingFileAttachment.type : null
             };
 
-            if (isFirebaseReady && db && auth && auth.currentUser) {
+            let uploadedToCloud = false;
+            const payloadLength = (newMsg.text || '').length + (newMsg.mediaUrl || '').length;
+
+            if (isFirebaseReady && db && auth && auth.currentUser && payloadLength < 850000) {
                 try {
                     const chatsCol = collection(db, 'artifacts', appId, 'public', 'data', 'chats');
                     await addDoc(chatsCol, newMsg);
+                    uploadedToCloud = true;
                 } catch (err) {
                     console.error("Gagal mengirim chat ke Firestore:", err);
                 }
-            } else {
+            }
+
+            if (!uploadedToCloud) {
                 newMsg.id = 'local_msg_' + Date.now();
                 fallbackChats.push(newMsg);
-                localStorage.setItem('ayyaa_ikii_chat', JSON.stringify(fallbackChats));
+                try {
+                    localStorage.setItem('ayyaa_ikii_chat', JSON.stringify(fallbackChats));
+                } catch(e){}
                 renderChatThread();
             }
 
