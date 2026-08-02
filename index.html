@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="referrer" content="no-referrer">
-    <title>About Us - Private Journal</title>
+    <title>About Us</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -118,7 +117,7 @@
             <div class="space-y-3.5 text-left">
                 <div>
                     <label class="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1 ml-1">Username</label>
-                    <input type="text" id="login-username" placeholder="••••" 
+                    <input type="text" id="login-username" placeholder="••••••••" 
                         class="w-full px-4 py-3 rounded-xl border border-[#e3d5c8] bg-[#fbf9f6] text-sm focus:ring-2 focus:ring-[#e79e8c] focus:outline-none transition-all placeholder:text-gray-300 text-[#4a3e3d]">
                 </div>
 
@@ -203,8 +202,8 @@
                         <!-- Main Photo Box -->
                         <div class="relative group rounded-2xl overflow-hidden border-4 border-white shadow-md rotate-[-1deg] transition-transform hover:rotate-0 duration-300 bg-white">
                             <div class="aspect-[16/9] w-full bg-[#f5ebe0] flex flex-col items-center justify-center text-center relative overflow-hidden">
-                                <img id="main-photo" src="https://drive.google.com/thumbnail?id=1jrcTIlvUwQPy0c1CcQQ3h8Zb_aH5BmJ9&sz=w1000" alt="Foto Utama"
-                                    onerror="this.src='https://lh3.googleusercontent.com/d/1jrcTIlvUwQPy0c1CcQQ3h8Zb_aH5BmJ9'; this.onerror=function(){this.style.display='none'; document.getElementById('main-photo-fallback').style.display='flex';};" 
+                                <img id="main-photo" src="https://lh3.googleusercontent.com/d/1jrcTIlvUwQPy0c1CcQQ3h8Zb_aH5BmJ9" alt="Foto Utama"
+                                    onerror="this.style.display='none'; document.getElementById('main-photo-fallback').style.display='flex';" 
                                     class="w-full h-full object-cover">
                                 <div id="main-photo-fallback" class="absolute inset-0 hidden flex-col items-center justify-center text-center p-4">
                                     <i data-lucide="image" class="w-12 h-12 text-[#e79e8c] mb-2"></i>
@@ -242,7 +241,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- LAGU 1 -->
-                    <div onclick="openMusicPopup('About You', 'Yogyakarta', 'Sekalinya sudah jatuh cinta, mau seluruh dunia bilang nggak boleh, kamu bakalan tetap jatuh cinta. -bandung after rain.', 'romantic_sunset', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/About%20You%20-%20The%201975%20%5BiqGAW57EudQ%5D.mp3', 'https://drive.google.com/thumbnail?id=122shN5knxsE9rCP8GckDax5xlxOUCk3i&sz=w1000')"
+                    <div onclick="openMusicPopup('About You', 'Yogyakarta', 'Sekalinya sudah jatuh cinta, mau seluruh dunia bilang nggak boleh, kamu bakalan tetap jatuh cinta. -bandung after rain.', 'romantic_sunset', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/About%20You%20-%20The%201975%20%5BiqGAW57EudQ%5D.mp3', 'https://lh3.googleusercontent.com/d/122shN5knxsE9rCP8GckDax5xlxOUCk3i')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -259,7 +258,7 @@
                     </div>
 
                     <!-- LAGU 2 -->
-                    <div onclick="openMusicPopup('Semua Aku Dirayakan', 'Yogyakarta', 'Sweet Seventeen september yang dirayain langsung sama tuhan. awal mula kite deket dan ternyata birthday kita cuma beda seminggu. HAPPY 12 and 19 september.', 'cozy_night', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadin%20Amizah%20-%20Semua%20Aku%20Dirayakan%20(Official%20Music%20Video)%20%5BCptnLrdF3_E%5D%20(1).mp3', 'https://drive.google.com/thumbnail?id=1en-sgqMk2rbE_DrL2dwfaFYt5D9OT4jQ&sz=w1000')"
+                    <div onclick="openMusicPopup('Semua Aku Dirayakan', 'Yogyakarta', 'Sweet Seventeen september yang dirayain langsung sama tuhan. awal mula kite deket dan ternyata birthday kita cuma beda seminggu. HAPPY 12 and 19 september.', 'cozy_night', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadin%20Amizah%20-%20Semua%20Aku%20Dirayakan%20(Official%20Music%20Video)%20%5BCptnLrdF3_E%5D%20(1).mp3', 'https://lh3.googleusercontent.com/d/1en-sgqMk2rbE_DrL2dwfaFYt5D9OT4jQ')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -276,7 +275,7 @@
                     </div>
 
                     <!-- LAGU 3 -->
-                    <div onclick="openMusicPopup('Jatuh Suka', 'Yogyakarta', 'Seperti 3726 mdpl, selalu butuh waktu yang lama untuk mendapatkan sesuatu di kehidupan ini. -3726 mdpl.', 'rainy_day', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/TULUS%20-%20Jatuh%20Suka%20(Official%20Lyric%20Video)%20%5B2uJut6USftQ%5D.mp3', 'https://drive.google.com/thumbnail?id=1jrcTIlvUwQPy0c1CcQQ3h8Zb_aH5BmJ9&sz=w1000')"
+                    <div onclick="openMusicPopup('Jatuh Suka', 'Yogyakarta', 'Seperti 3726 mdpl, selalu butuh waktu yang lama untuk mendapatkan sesuatu di kehidupan ini. -3726 mdpl.', 'rainy_day', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/TULUS%20-%20Jatuh%20Suka%20(Official%20Lyric%20Video)%20%5B2uJut6USftQ%5D.mp3', 'https://lh3.googleusercontent.com/d/1jrcTIlvUwQPy0c1CcQQ3h8Zb_aH5BmJ9')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -293,7 +292,7 @@
                     </div>
 
                     <!-- LAGU 4 -->
-                    <div onclick="openMusicPopup('Penjaga Hati', 'Yogyakarta', 'bahkan di bumi yang Sangat luas ini, bagian Paling menyenangkan adalah bertemu denganmu -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/nadhif%20basalamah%20-%20penjaga%20hati%20(Official%20Music%20Video)%20%5Bjia3fhBQ8qI%5D.mp3', 'https://drive.google.com/thumbnail?id=1mBTKZo7X21O2sStYglfICsRgizdj7xpz&sz=w1000')"
+                    <div onclick="openMusicPopup('Penjaga Hati', 'Yogyakarta', 'bahkan di bumi yang Sangat luas ini, bagian Paling menyenangkan adalah bertemu denganmu -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/nadhif%20basalamah%20-%20penjaga%20hati%20(Official%20Music%20Video)%20%5Bjia3fhBQ8qI%5D.mp3', 'https://lh3.googleusercontent.com/d/1mBTKZo7X21O2sStYglfICsRgizdj7xpz')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -310,7 +309,7 @@
                     </div>
 
                     <!-- LAGU 5 -->
-                    <div onclick="openMusicPopup('Bergema Sampai Selamanya', 'Yogyakarta', 'jatuh cinta harus menggunakan kesabaran, bukan agar dunia tahu. tapi agar dunia tidak menyeramkan saat dia bersama kita. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadhif%20Basalamah%20-%20bergema%20sampai%20selamanya%20(Official%20Lyric%20Video)%20%5BgvunApwKIiY%5D.mp3', 'https://drive.google.com/thumbnail?id=1uxhXiUlN4Hc3ijpuM8w0oYrSsxZnuyF6&sz=w1000')"
+                    <div onclick="openMusicPopup('Bergema Sampai Selamanya', 'Yogyakarta', 'jatuh cinta harus menggunakan kesabaran, bukan agar dunia tahu. tapi agar dunia tidak menyeramkan saat dia bersama kita. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadhif%20Basalamah%20-%20bergema%20sampai%20selamanya%20(Official%20Lyric%20Video)%20%5BgvunApwKIiY%5D.mp3', 'https://lh3.googleusercontent.com/d/1uxhXiUlN4Hc3ijpuM8w0oYrSsxZnuyF6')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -327,7 +326,7 @@
                     </div>
 
                     <!-- LAGU 6 -->
-                    <div onclick="openMusicPopup('Kota Ini Tak Sama Tanpamu', 'Yogyakarta', 'Di cerita gue yang membosankan ini, semoga lo tetap betah jadi tokoh utamanya. -3726 mdpl', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadhif%20Basalamah%20-%20kota%20ini%20tak%20sama%20tanpamu%20(Official%20Lyric%20Video)%20%5Bgrp6FCnioMM%5D.mp3', 'https://drive.google.com/thumbnail?id=1AEbIhKklIJeurldLt7tT5kmx4XoEh8eB&sz=w1000')"
+                    <div onclick="openMusicPopup('Kota Ini Tak Sama Tanpamu', 'Yogyakarta', 'Di cerita gue yang membosankan ini, semoga lo tetap betah jadi tokoh utamanya. -3726 mdpl', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadhif%20Basalamah%20-%20kota%20ini%20tak%20sama%20tanpamu%20(Official%20Lyric%20Video)%20%5Bgrp6FCnioMM%5D.mp3', 'https://lh3.googleusercontent.com/d/1AEbIhKklIJeurldLt7tT5kmx4XoEh8eB')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -344,7 +343,7 @@
                     </div>
 
                     <!-- LAGU 7 -->
-                    <div onclick="openMusicPopup('Senja Sudut Kota', 'Yogyakarta', 'Senja ALKID jadi saksi buat first date kitaa.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/SAMUEL%20CIPTA%20-%20SENJA%20SUDUT%20KOTA%20(OFFICIAL%20MUSIC%20VIDEO)%20%5BD89cIekJNH8%5D.mp3', 'https://drive.google.com/thumbnail?id=11sR9O-wcXukY-3V5KwxojFNts6oP9-_o&sz=w1000')"
+                    <div onclick="openMusicPopup('Senja Sudut Kota', 'Yogyakarta', 'Senja ALKID jadi saksi buat first date kitaa.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/SAMUEL%20CIPTA%20-%20SENJA%20SUDUT%20KOTA%20(OFFICIAL%20MUSIC%20VIDEO)%20%5BD89cIekJNH8%5D.mp3', 'https://lh3.googleusercontent.com/d/11sR9O-wcXukY-3V5KwxojFNts6oP9-_o')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -361,7 +360,7 @@
                     </div>
 
                     <!-- LAGU 8 -->
-                    <div onclick="openMusicPopup('Shape of My Heart', 'Yogyakarta', 'Untuk yang menyenangkan, semoga dia tidak pernah berubah. Terima kasih sudah datang sebagai tawa, senang, dan suka. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Backstreet%20Boys%20-%20Shape%20Of%20My%20Heart%20(Official%20HD%20Video)%20%5BOT5msu-dap8%5D.mp3', 'https://drive.google.com/thumbnail?id=1bu-fNJqZcA5XmYMlDh9K5bJ8KBEL_DHS&sz=w1000')"
+                    <div onclick="openMusicPopup('Shape of My Heart', 'Yogyakarta', 'Untuk yang menyenangkan, semoga dia tidak pernah berubah. Terima kasih sudah datang sebagai tawa, senang, dan suka. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Backstreet%20Boys%20-%20Shape%20Of%20My%20Heart%20(Official%20HD%20Video)%20%5BOT5msu-dap8%5D.mp3', 'https://lh3.googleusercontent.com/d/1bu-fNJqZcA5XmYMlDh9K5bJ8KBEL_DHS')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -378,7 +377,7 @@
                     </div>
 
                     <!-- LAGU 9 -->
-                    <div onclick="openMusicPopup('Celengan Rindu', 'Yogyakarta', 'Kangenn beratt, Nggamau nggaada kamuu..', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Fiersa%20besari%20-%20Celengan%20rindu%20%5BX_uIsIJD7fM%5D.mp3', 'https://drive.google.com/thumbnail?id=1u3xbfKpAMOyXZ6gSjByCRtmsAgreiwGW&sz=w1000')"
+                    <div onclick="openMusicPopup('Celengan Rindu', 'Yogyakarta', 'Kangenn beratt, Nggamau nggaada kamuu..', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Fiersa%20besari%20-%20Celengan%20rindu%20%5BX_uIsIJD7fM%5D.mp3', 'https://lh3.googleusercontent.com/d/1u3xbfKpAMOyXZ6gSjByCRtmsAgreiwGW')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -395,7 +394,7 @@
                     </div>
 
                     <!-- LAGU 10 -->
-                    <div onclick="openMusicPopup('Untuk Perempuan Yang Sedang Di Pelukan', 'Yogyakarta', 'Terimakasih selalu untuk genggaman dan pelukan hangatnyaa. nayyara sayangg...', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Untuk%20Perempuan%20Yang%20Sedang%20Di%20Pelukan%20%5BjAYviJQYcAo%5D.mp3', 'https://drive.google.com/thumbnail?id=1sbh1N50j0ixsqv96yYEG_5RB1Q_Qvm_2&sz=w1000')"
+                    <div onclick="openMusicPopup('Untuk Perempuan Yang Sedang Di Pelukan', 'Yogyakarta', 'Terimakasih selalu untuk genggaman dan pelukan hangatnyaa. nayyara sayangg...', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Untuk%20Perempuan%20Yang%20Sedang%20Di%20Pelukan%20%5BjAYviJQYcAo%5D.mp3', 'https://lh3.googleusercontent.com/d/1sbh1N50j0ixsqv96yYEG_5RB1Q_Qvm_2')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -412,7 +411,7 @@
                     </div>
 
                     <!-- LAGU 11 -->
-                    <div onclick="openMusicPopup('Mantra', 'Yogyakarta', 'Barangkali Manusia Juga Bisa Disebut Sebagai Kehidupan. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Dimansyah%20Laitupa%20-%20Mantra%20(Official%20Music%20Video)%20%5B_m7R0BB86Mw%5D.mp3', 'https://drive.google.com/thumbnail?id=1L8s3Yq8F6tWYOOe4BSSqZ4KJc_6u4Gxx&sz=w1000')"
+                    <div onclick="openMusicPopup('Mantra', 'Yogyakarta', 'Barangkali Manusia Juga Bisa Disebut Sebagai Kehidupan. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Dimansyah%20Laitupa%20-%20Mantra%20(Official%20Music%20Video)%20%5B_m7R0BB86Mw%5D.mp3', 'https://lh3.googleusercontent.com/d/1L8s3Yq8F6tWYOOe4BSSqZ4KJc_6u4Gxx')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -429,7 +428,7 @@
                     </div>
 
                     <!-- LAGU 12 -->
-                    <div onclick="openMusicPopup('Menceritakanmu', 'Yogyakarta', 'Terima kasih sudah ada di hidup gue yang sepi ini, ya. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/BATAS%20SENJA%20-%20Menceritakanmu%20(%20OFFICIAL%20LIRIK%20VIDEO%20%5B2r-jZMVDFzI%5D.mp3', 'https://drive.google.com/thumbnail?id=1N07bQZOV_5wkod4ltrr11iYzXeaKrW1-&sz=w1000')"
+                    <div onclick="openMusicPopup('Menceritakanmu', 'Yogyakarta', 'Terima kasih sudah ada di hidup gue yang sepi ini, ya. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/BATAS%20SENJA%20-%20Menceritakanmu%20(%20OFFICIAL%20LIRIK%20VIDEO%20%5B2r-jZMVDFzI%5D.mp3', 'https://lh3.googleusercontent.com/d/1N07bQZOV_5wkod4ltrr11iYzXeaKrW1-')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -446,7 +445,7 @@
                     </div>
 
                     <!-- LAGU 13 -->
-                    <div onclick="openMusicPopup('One Only', 'Yogyakarta', 'cuma mau kenal kamu, deket kamu, sama kamu, selamanyaa...', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Pamungkas%20-%20One%20Only%20(Lyrics%20Video)%20%5BdBFp0Ext0y8%5D.mp3', 'https://drive.google.com/thumbnail?id=1jXfUsLou2_f2ep_Zn3tvv9AHX_22MvJE&sz=w1000')"
+                    <div onclick="openMusicPopup('One Only', 'Yogyakarta', 'cuma mau kenal kamu, deket kamu, sama kamu, selamanyaa...', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Pamungkas%20-%20One%20Only%20(Lyrics%20Video)%20%5BdBFp0Ext0y8%5D.mp3', 'https://lh3.googleusercontent.com/d/1jXfUsLou2_f2ep_Zn3tvv9AHX_22MvJE')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -463,7 +462,7 @@
                     </div>
 
                     <!-- LAGU 14 -->
-                    <div onclick="openMusicPopup('Dunia Yang Nanti', 'Yogyakarta', 'Sore tidak selalu tentang jingganya langit, sore bisa saja tentang kepastian, bahwa ia sudah tersenyum hari ini. Jangan kekurangan kebahagiaan, ya?. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Raim%20Laode%20-%20Dunia%20Yang%20Nanti%20(%20Lirik%20video%20)%20%5BawWKxGftWh4%5D.mp3', 'https://drive.google.com/thumbnail?id=1W062pJnTANXyRt2OHe6paPSHqrT6UqUE&sz=w1000')"
+                    <div onclick="openMusicPopup('Dunia Yang Nanti', 'Yogyakarta', 'Sore tidak selalu tentang jingganya langit, sore bisa saja tentang kepastian, bahwa ia sudah tersenyum hari ini. Jangan kekurangan kebahagiaan, ya?. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Raim%20Laode%20-%20Dunia%20Yang%20Nanti%20(%20Lirik%20video%20)%20%5BawWKxGftWh4%5D.mp3', 'https://lh3.googleusercontent.com/d/1W062pJnTANXyRt2OHe6paPSHqrT6UqUE')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -480,7 +479,7 @@
                     </div>
 
                     <!-- LAGU 15 -->
-                    <div onclick="openMusicPopup('Kita Usahakan Rumah Itu', 'Yogyakarta', 'Kita usahakan untuk tetap jatuh cinta dengan menghargai. Semoga dia selalu mengagumkan, semoga dia selalu jadi wujud lagu sempurna untuk gue. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Sal%20Priadi%20-%20Kita%20usahakan%20rumah%20itu%20(Official%20Lyric%20Video)%20%5B7SqNVv98e8Q%5D.mp3', 'https://drive.google.com/thumbnail?id=1pmcpyjwGhHIyjQ85443fK8IEgPzfDVFL&sz=w1000')"
+                    <div onclick="openMusicPopup('Kita Usahakan Rumah Itu', 'Yogyakarta', 'Kita usahakan untuk tetap jatuh cinta dengan menghargai. Semoga dia selalu mengagumkan, semoga dia selalu jadi wujud lagu sempurna untuk gue. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Sal%20Priadi%20-%20Kita%20usahakan%20rumah%20itu%20(Official%20Lyric%20Video)%20%5B7SqNVv98e8Q%5D.mp3', 'https://lh3.googleusercontent.com/d/1pmcpyjwGhHIyjQ85443fK8IEgPzfDVFL')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -497,7 +496,7 @@
                     </div>
 
                     <!-- LAGU 16 -->
-                    <div onclick="openMusicPopup('Nanti Kita Seperti Ini', 'Yogyakarta', 'Di perjalanan yang panjang ini, jangan jadi milik siapa pun dulu, ya? -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/BATAS%20SENJA%20-%20Nanti%20Kita%20Like%20This%20(OFFICIAL%20MUSIC%20VIDEO%20)%20%5Bs6H6ffS6zJI%5D.mp3', 'https://drive.google.com/thumbnail?id=1AIWMfj-RQHfr4vIzHHC0GppW7AXbp8Nn&sz=w1000')"
+                    <div onclick="openMusicPopup('Nanti Kita Seperti Ini', 'Yogyakarta', 'Di perjalanan yang panjang ini, jangan jadi milik siapa pun dulu, ya? -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/BATAS%20SENJA%20-%20Nanti%20Kita%20Like%20This%20(OFFICIAL%20MUSIC%20VIDEO%20)%20%5Bs6H6ffS6zJI%5D.mp3', 'https://lh3.googleusercontent.com/d/1AIWMfj-RQHfr4vIzHHC0GppW7AXbp8Nn')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -514,7 +513,7 @@
                     </div>
 
                     <!-- LAGU 17 -->
-                    <div onclick="openMusicPopup('Taruh', 'Yogyakarta', 'Ayy, mekarlah dengan indah, meski nanti ternyata layu, lo tetap bunga. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadin%20Amizah%20-%20Taruh%20(Official%20Lyric%20Video)%20%5BVrp2Be-RVVM%5D.mp3', 'https://drive.google.com/thumbnail?id=1rujLxYGPqRLlh6dPQGsZTXlwinGHJQsO&sz=w1000')"
+                    <div onclick="openMusicPopup('Taruh', 'Yogyakarta', 'Ayy, mekarlah dengan indah, meski nanti ternyata layu, lo tetap bunga. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadin%20Amizah%20-%20Taruh%20(Official%20Lyric%20Video)%20%5BVrp2Be-RVVM%5D.mp3', 'https://lh3.googleusercontent.com/d/1rujLxYGPqRLlh6dPQGsZTXlwinGHJQsO')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -531,7 +530,7 @@
                     </div>
 
                     <!-- LAGU 18 -->
-                    <div onclick="openMusicPopup('Masa Ini, Nanti, dan Masa Indah Lainnya', 'Yogyakarta', 'Setiap orang hidup dalam kalimatnya yang pernah, and sekarang sudah. Pada hal-hal yang sudah berlalu, bolehkah untuk rindu?. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Masa%20ini,%20Nanti,%20dan%20Masa%20Indah%20Lainnya%20%5BdsOGH_ZBdCM%5D%20(1).mp3', 'https://drive.google.com/thumbnail?id=12gSY_QmYFohFe5luMfqZASsQDATWThsy&sz=w1000')"
+                    <div onclick="openMusicPopup('Masa Ini, Nanti, dan Masa Indah Lainnya', 'Yogyakarta', 'Setiap orang hidup dalam kalimatnya yang pernah, and sekarang sudah. Pada hal-hal yang sudah berlalu, bolehkah untuk rindu?. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Masa%20ini,%20Nanti,%20dan%20Masa%20Indah%20Lainnya%20%5BdsOGH_ZBdCM%5D%20(1).mp3', 'https://lh3.googleusercontent.com/d/12gSY_QmYFohFe5luMfqZASsQDATWThsy')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -548,7 +547,7 @@
                     </div>
 
                     <!-- LAGU 19 -->
-                    <div onclick="openMusicPopup('Foto Kita Blur', 'Yogyakarta', 'Diantara foto kita yang blur, semoga kamu tetep jelas buat bersinar. -3726 mdpl', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Sal%20Priadi%20-%20Foto%20kita%20blur%20(Official%20Lyric%20Video)%20%5BytMxh-_6EcI%5D.mp3', 'https://drive.google.com/thumbnail?id=14jkonrfeC_SGK8iNA0E75OmjjSULahlQ&sz=w1000')"
+                    <div onclick="openMusicPopup('Foto Kita Blur', 'Yogyakarta', 'Diantara foto kita yang blur, semoga kamu tetep jelas buat bersinar. -3726 mdpl', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Sal%20Priadi%20-%20Foto%20kita%20blur%20(Official%20Lyric%20Video)%20%5BytMxh-_6EcI%5D.mp3', 'https://lh3.googleusercontent.com/d/14jkonrfeC_SGK8iNA0E75OmjjSULahlQ')"
                         class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
@@ -870,7 +869,7 @@
 
                 <!-- Middle Photo (Drive Image / SVG Fallback) -->
                 <div class="w-full aspect-[4/3] rounded-2xl bg-[#f5ebe0] border border-[#ebdcd0] overflow-hidden flex flex-col items-center justify-center relative flex-shrink-0">
-                    <img id="popup-image" src="" alt="Foto Lagu" class="w-full h-full object-cover hidden">
+                    <img id="popup-image" src="" class="w-full h-full object-cover hidden" onerror="this.style.display='none'; document.getElementById('modal-icon-container').style.display='flex';">
                     
                     <div id="modal-icon-container" class="w-16 h-16 rounded-full bg-white/80 flex items-center justify-center text-[#bd7a6b] mb-3 shadow-xs">
                         <i data-lucide="music-3" class="w-8 h-8"></i>
@@ -948,7 +947,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ================= MANUAL FIREBASE CONFIGURATION FOR DEPLOYMENT =================
         const MANUAL_FIREBASE_CONFIG = {
@@ -971,9 +970,6 @@
 
         // File Attachment Pending State for Chat
         let pendingFileAttachment = null; // { url, type, name, size }
-
-        // Audio state
-        let currentPlayingUrl = '';
 
         // Referensi pembersih listener realtime
         let unsubscribeChats = null;
@@ -1082,7 +1078,7 @@
 
         const defaultGalleryItems = [
             {
-                url: "https://drive.google.com/thumbnail?id=1TvvkzFgSApHrYu-hMQMtiYZt9vZP-N-j&sz=w1000",
+                url: "https://lh3.googleusercontent.com/d/1TvvkzFgSApHrYu-hMQMtiYZt9vZP-N-j",
                 caption: "First Date di Gellato",
                 id: "default-1",
                 isDefault: true,
@@ -1174,10 +1170,12 @@
         }
 
         // Enter key event listeners for login
-        const userEl = document.getElementById('login-username');
-        const passEl = document.getElementById('login-password');
-        if (userEl) userEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkPassword(); });
-        if (passEl) passEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkPassword(); });
+        document.getElementById('login-username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
+        document.getElementById('login-password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
 
         // Update Profile View based on Current User
         function updateProfileView() {
@@ -1256,14 +1254,12 @@
             const tabs = ['home', 'search', 'plus', 'chat', 'profile'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`nav-${t}`);
-                if (btn) {
-                    if (t === tabName) {
-                        btn.classList.add('text-[#bd7a6b]', 'scale-110');
-                        btn.classList.remove('text-[#8e766e]');
-                    } else {
-                        btn.classList.remove('text-[#bd7a6b]', 'scale-110');
-                        btn.classList.add('text-[#8e766e]');
-                    }
+                if (t === tabName) {
+                    btn.classList.add('text-[#bd7a6b]', 'scale-110');
+                    btn.classList.remove('text-[#8e766e]');
+                } else {
+                    btn.classList.remove('text-[#bd7a6b]', 'scale-110');
+                    btn.classList.add('text-[#8e766e]');
                 }
             });
 
@@ -1312,12 +1308,10 @@
             if (bdayIkiiEl) bdayIkiiEl.innerHTML = `${daysI}d ${hoursI}h ${minutesI}m ${secondsI}s`;
         }
 
-        // Parse Google Drive Link and Thumbnail Formats
+        // Parse Google Drive Link
         function parseDriveUrl(url) {
             if (!url) return '';
             url = url.trim();
-            if (url.startsWith('data:') || url.startsWith('blob:')) return url;
-
             const regFileD = /\/file\/d\/([a-zA-Z0-9_-]+)/;
             const regIdParam = /[?&]id=([a-zA-Z0-9_-]+)/;
             const regLh3 = /\/d\/([a-zA-Z0-9_-]+)/;
@@ -1332,7 +1326,7 @@
             }
 
             if (id) {
-                return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+                return `https://lh3.googleusercontent.com/d/${id}`;
             }
             return url;
         }
@@ -1379,6 +1373,357 @@
                 reader.onerror = (err) => reject(err);
                 reader.readAsDataURL(file);
             });
+        }
+
+        // ================= FITUR UNGGAH FILE EXPLORER DI GALERI =================
+        async function handleGalleryFileSelect(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const isVideo = file.type.startsWith('video');
+
+                // Batas ukuran 20MB untuk video, 10MB untuk gambar
+                if (file.size > 20 * 1024 * 1024) {
+                    alert(`File "${file.name}" terlalu besar! Maksimal 20MB yaa 😊`);
+                    continue;
+                }
+
+                try {
+                    let fileDataUrl = '';
+                    if (file.type.startsWith('image')) {
+                        fileDataUrl = await compressImage(file, 1200, 1200, 0.75);
+                    } else {
+                        fileDataUrl = await readFileAsDataURL(file);
+                    }
+
+                    const newItem = {
+                        url: fileDataUrl,
+                        caption: file.name.replace(/\.[^/.]+$/, ""), // nama file tanpa ekstensi
+                        type: isVideo ? 'video' : 'image',
+                        createdAt: new Date().toISOString(),
+                        user: currentUser || 'ikii'
+                    };
+
+                    // Kirim ke Firestore jika online, atau lokal jika offline
+                    if (isFirebaseReady && db && auth && auth.currentUser) {
+                        const galleryCol = collection(db, 'artifacts', appId, 'public', 'data', 'gallery');
+                        await addDoc(galleryCol, newItem);
+                    } else {
+                        newItem.id = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+                        fallbackGallery.unshift(newItem);
+                        localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                        renderGalleryItems();
+                    }
+                } catch (err) {
+                    console.error("Gagal memproses file galeri:", err);
+                    alert("Gagal mengunggah file " + file.name + ". Silakan coba lagi!");
+                }
+            }
+
+            // Reset input file agar bisa pilih file yang sama kembali
+            event.target.value = '';
+        }
+
+        // Tambah link Drive / URL langsung di Galeri
+        async function addDriveItem() {
+            const input = document.getElementById('drive-link-input');
+            const rawUrl = input.value.trim();
+
+            if (!rawUrl) {
+                alert("Masukkan link Google Drive atau link gambar/video dulu yaa!");
+                return;
+            }
+
+            const parsedUrl = parseDriveUrl(rawUrl);
+            const isVideo = parsedUrl.includes('.mp4') || parsedUrl.includes('.webm');
+
+            const newItem = {
+                url: parsedUrl,
+                caption: "Foto Memori Kita",
+                type: isVideo ? 'video' : 'image',
+                createdAt: new Date().toISOString(),
+                user: currentUser || 'ikii'
+            };
+
+            if (isFirebaseReady && db && auth && auth.currentUser) {
+                try {
+                    const galleryCol = collection(db, 'artifacts', appId, 'public', 'data', 'gallery');
+                    await addDoc(galleryCol, newItem);
+                } catch (err) {
+                    console.error("Gagal menambah link drive ke Firestore:", err);
+                }
+            } else {
+                newItem.id = 'local_' + Date.now();
+                fallbackGallery.unshift(newItem);
+                localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                renderGalleryItems();
+            }
+
+            input.value = '';
+        }
+
+        // Render Galeri Items Grid
+        function renderGalleryItems(cloudItems = []) {
+            const grid = document.getElementById('gallery-grid');
+            if (!grid) return;
+
+            // Gabungkan default, lokal, dan Firestore data (hindari duplikat)
+            const combinedMap = new Map();
+
+            defaultGalleryItems.forEach(item => combinedMap.set(item.id, item));
+            fallbackGallery.forEach(item => combinedMap.set(item.id || item.url, item));
+            cloudItems.forEach(item => combinedMap.set(item.id, item));
+
+            const allItems = Array.from(combinedMap.values());
+
+            // Update statistik kiriman profil
+            const statPosts = document.getElementById('profile-stat-posts');
+            if (statPosts) {
+                statPosts.innerHTML = `<strong class="text-[#4a3e3d]">${allItems.length}</strong> Kiriman`;
+            }
+
+            if (allItems.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-gray-400 font-light">
+                        <i data-lucide="image" class="w-10 h-10 mx-auto mb-2 text-[#e79e8c]/50"></i>
+                        <p class="text-xs">Belum ada foto/video di galeri.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            grid.innerHTML = allItems.map(item => {
+                const isVideo = item.type === 'video' || (item.url && (item.url.startsWith('data:video') || item.url.includes('.mp4')));
+                
+                return `
+                    <div class="relative group rounded-2xl overflow-hidden bg-[#f5ebe0] border border-[#ebdcd0] shadow-sm aspect-square flex items-center justify-center">
+                        ${isVideo ? `
+                            <video src="${escapeHTML(item.url)}" controls class="w-full h-full object-cover rounded-2xl"></video>
+                        ` : `
+                            <img src="${escapeHTML(item.url)}" alt="${escapeHTML(item.caption || 'Foto')}" 
+                                class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-300"
+                                onerror="this.onerror=null; this.src='https://placehold.co/400x400/f5ebe0/bd7a6b?text=Foto+Galeri'">
+                        `}
+                        
+                        <!-- Overlay Caption & Delete -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-between pointer-events-none group-hover:pointer-events-auto">
+                            <div class="flex justify-end">
+                                ${!item.isDefault ? `
+                                    <button onclick="deleteGalleryItem('${item.id}')" class="bg-red-500/80 hover:bg-red-600 text-white p-1.5 rounded-full transition-colors" title="Hapus foto ini">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                            <p class="text-white text-xs font-medium truncate">${escapeHTML(item.caption || 'Memori Indah')}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        async function deleteGalleryItem(id) {
+            if (!id) return;
+            if (isFirebaseReady && db && auth && auth.currentUser && !id.startsWith('local_') && !id.startsWith('default-')) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'gallery', id);
+                    await deleteDoc(docRef);
+                } catch (err) {
+                    console.error("Gagal menghapus item galeri:", err);
+                }
+            } else {
+                fallbackGallery = fallbackGallery.filter(item => item.id !== id && item.url !== id);
+                localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                renderGalleryItems();
+            }
+        }
+
+        // ================= FITUR CHAT FILE ATTACHMENT =================
+        function triggerChatFileInput() {
+            const input = document.getElementById('chat-file-input');
+            if (input) input.click();
+        }
+
+        async function handleChatFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Batas ukuran 15MB
+            if (file.size > 15 * 1024 * 1024) {
+                alert("Ukuran file terlalu besar! Maksimal 15MB yaa 😊");
+                event.target.value = '';
+                return;
+            }
+
+            try {
+                let fileDataUrl = '';
+                const isVideo = file.type.startsWith('video');
+
+                if (file.type.startsWith('image')) {
+                    fileDataUrl = await compressImage(file, 800, 800, 0.7);
+                } else {
+                    fileDataUrl = await readFileAsDataURL(file);
+                }
+
+                pendingFileAttachment = {
+                    url: fileDataUrl,
+                    type: isVideo ? 'video' : 'image',
+                    name: file.name,
+                    size: (file.size / 1024).toFixed(1) + ' KB'
+                };
+
+                // Tampilkan preview attachment di UI
+                const container = document.getElementById('chat-file-preview-container');
+                const mediaBox = document.getElementById('chat-file-preview-media');
+                const nameEl = document.getElementById('chat-file-preview-name');
+                const sizeEl = document.getElementById('chat-file-preview-size');
+
+                if (container && mediaBox && nameEl && sizeEl) {
+                    nameEl.innerText = file.name;
+                    sizeEl.innerText = pendingFileAttachment.size;
+
+                    if (isVideo) {
+                        mediaBox.innerHTML = `<i data-lucide="video" class="w-5 h-5 text-[#bd7a6b]"></i>`;
+                    } else {
+                        mediaBox.innerHTML = `<img src="${fileDataUrl}" class="w-full h-full object-cover">`;
+                    }
+                    container.classList.remove('hidden');
+                    lucide.createIcons();
+                }
+            } catch (err) {
+                console.error("Gagal membaca file chat:", err);
+                alert("Gagal memuat file dari perangkat.");
+            }
+        }
+
+        function clearChatFileAttachment() {
+            pendingFileAttachment = null;
+            const container = document.getElementById('chat-file-preview-container');
+            const input = document.getElementById('chat-file-input');
+            if (container) container.classList.add('hidden');
+            if (input) input.value = '';
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input ? input.value.trim() : '';
+
+            if (!text && !pendingFileAttachment) return;
+
+            const newMsg = {
+                text: text,
+                sender: currentUser || 'ikii',
+                timestamp: new Date().toISOString(),
+                mediaUrl: pendingFileAttachment ? pendingFileAttachment.url : null,
+                mediaType: pendingFileAttachment ? pendingFileAttachment.type : null
+            };
+
+            if (isFirebaseReady && db && auth && auth.currentUser) {
+                try {
+                    const chatsCol = collection(db, 'artifacts', appId, 'public', 'data', 'chats');
+                    await addDoc(chatsCol, newMsg);
+                } catch (err) {
+                    console.error("Gagal mengirim chat ke Firestore:", err);
+                }
+            } else {
+                newMsg.id = 'local_msg_' + Date.now();
+                fallbackChats.push(newMsg);
+                localStorage.setItem('ayyaa_ikii_chat', JSON.stringify(fallbackChats));
+                renderChatThread();
+            }
+
+            if (input) input.value = '';
+            clearChatFileAttachment();
+        }
+
+        function renderChatThread(cloudChats = []) {
+            const thread = document.getElementById('chat-thread');
+            if (!thread) return;
+
+            const combinedMap = new Map();
+            fallbackChats.forEach(c => combinedMap.set(c.id || c.timestamp, c));
+            cloudChats.forEach(c => combinedMap.set(c.id || c.timestamp, c));
+
+            const sortedChats = Array.from(combinedMap.values()).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            if (sortedChats.length === 0) {
+                thread.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400">
+                        <i data-lucide="message-circle-heart" class="w-12 h-12 text-[#e79e8c]/50 mb-2"></i>
+                        <p class="text-xs font-light">Belum ada pesan. Yuk tulis pesan pertamamu!</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            thread.innerHTML = sortedChats.map(msg => {
+                const isMe = msg.sender === currentUser;
+                const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+                return `
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1">
+                        <div class="max-w-[78%] ${isMe ? 'chat-bubble-me' : 'chat-bubble-other'} px-4 py-2.5 shadow-xs text-xs sm:text-sm leading-relaxed font-light">
+                            ${msg.mediaUrl ? `
+                                <div class="mb-2 rounded-xl overflow-hidden max-w-xs">
+                                    ${msg.mediaType === 'video' ? `
+                                        <video src="${escapeHTML(msg.mediaUrl)}" controls class="w-full rounded-xl max-h-48 object-cover"></video>
+                                    ` : `
+                                        <img src="${escapeHTML(msg.mediaUrl)}" class="w-full rounded-xl max-h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/f5ebe0/bd7a6b?text=Gambar+Chat'">
+                                    `}
+                                </div>
+                            ` : ''}
+                            ${msg.text ? `<p class="break-words">${escapeHTML(msg.text)}</p>` : ''}
+                        </div>
+                        <span class="text-[9px] text-gray-400 px-1 font-mono">${timeStr}</span>
+                    </div>
+                `;
+            }).join('');
+
+            thread.scrollTop = thread.scrollHeight;
+            lucide.createIcons();
+        }
+
+        // Setup Firestore Realtime Listeners
+        function setupDataListeners() {
+            if (!isFirebaseReady || !db || !auth || !auth.currentUser) {
+                renderGalleryItems();
+                renderChatThread();
+                return;
+            }
+
+            try {
+                // Listener Chat
+                if (unsubscribeChats) unsubscribeChats();
+                const chatsCol = collection(db, 'artifacts', appId, 'public', 'data', 'chats');
+                unsubscribeChats = onSnapshot(chatsCol, (snapshot) => {
+                    const cloudChats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderChatThread(cloudChats);
+                }, (error) => {
+                    logDebug("Realtime Chat", "Error", error.message);
+                    renderChatThread();
+                });
+
+                // Listener Galeri
+                if (unsubscribeGallery) unsubscribeGallery();
+                const galleryCol = collection(db, 'artifacts', appId, 'public', 'data', 'gallery');
+                unsubscribeGallery = onSnapshot(galleryCol, (snapshot) => {
+                    const cloudItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderGalleryItems(cloudItems);
+                }, (error) => {
+                    logDebug("Realtime Galeri", "Error", error.message);
+                    renderGalleryItems();
+                });
+
+            } catch (err) {
+                logDebug("Setup Listener", "Gagal", err.message);
+                renderGalleryItems();
+                renderChatThread();
+            }
         }
 
         // Music Popup Handler (FIXED IMAGE DISPLAY & FALLBACK)
@@ -1479,355 +1824,7 @@
             lucide.createIcons();
         }
 
-        // FITUR UNGGAH FILE EXPLORER DI GALERI
-        async function handleGalleryFileSelect(event) {
-            const files = event.target.files;
-            if (!files || files.length === 0) return;
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const isVideo = file.type.startsWith('video');
-
-                if (file.size > 20 * 1024 * 1024) {
-                    alert(`File "${file.name}" terlalu besar! Maksimal 20MB yaa 😊`);
-                    continue;
-                }
-
-                try {
-                    let fileDataUrl = '';
-                    if (file.type.startsWith('image')) {
-                        fileDataUrl = await compressImage(file, 1200, 1200, 0.75);
-                    } else {
-                        fileDataUrl = await readFileAsDataURL(file);
-                    }
-
-                    const newItem = {
-                        url: fileDataUrl,
-                        caption: file.name.replace(/\.[^/.]+$/, ""),
-                        type: isVideo ? 'video' : 'image',
-                        createdAt: new Date().toISOString(),
-                        user: currentUser || 'ikii'
-                    };
-
-                    if (isFirebaseReady && db && auth && auth.currentUser) {
-                        const galleryCol = collection(db, 'artifacts', appId, 'public', 'data', 'gallery');
-                        await addDoc(galleryCol, newItem);
-                    } else {
-                        newItem.id = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-                        fallbackGallery.unshift(newItem);
-                        localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
-                        renderGalleryItems();
-                    }
-                } catch (err) {
-                    console.error("Gagal memproses file galeri:", err);
-                    alert("Gagal mengunggah file " + file.name + ". Silakan coba lagi!");
-                }
-            }
-
-            event.target.value = '';
-        }
-
-        async function addDriveItem() {
-            const input = document.getElementById('drive-link-input');
-            const rawUrl = input.value.trim();
-
-            if (!rawUrl) {
-                alert("Masukkan link Google Drive atau link gambar/video dulu yaa!");
-                return;
-            }
-
-            const parsedUrl = parseDriveUrl(rawUrl);
-            const isVideo = parsedUrl.includes('.mp4') || parsedUrl.includes('.webm');
-
-            const newItem = {
-                url: parsedUrl,
-                caption: "Foto Memori Kita",
-                type: isVideo ? 'video' : 'image',
-                createdAt: new Date().toISOString(),
-                user: currentUser || 'ikii'
-            };
-
-            if (isFirebaseReady && db && auth && auth.currentUser) {
-                try {
-                    const galleryCol = collection(db, 'artifacts', appId, 'public', 'data', 'gallery');
-                    await addDoc(galleryCol, newItem);
-                } catch (err) {
-                    console.error("Gagal menambah link drive ke Firestore:", err);
-                }
-            } else {
-                newItem.id = 'local_' + Date.now();
-                fallbackGallery.unshift(newItem);
-                localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
-                renderGalleryItems();
-            }
-
-            input.value = '';
-        }
-
-        async function deleteGalleryItem(id, isLocal) {
-            if (!confirm("Hapus kenangan foto ini dari galeri?")) return;
-
-            if (!isLocal && isFirebaseReady && db && auth && auth.currentUser) {
-                try {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'gallery', id);
-                    await deleteDoc(docRef);
-                } catch (err) {
-                    console.error("Gagal menghapus gambar dari Firestore:", err);
-                }
-            } else {
-                fallbackGallery = fallbackGallery.filter(item => item.id !== id);
-                localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
-                renderGalleryItems();
-            }
-        }
-
-        function renderGalleryItems(cloudItems = []) {
-            const grid = document.getElementById('gallery-grid');
-            if (!grid) return;
-
-            const combinedMap = new Map();
-
-            defaultGalleryItems.forEach(item => combinedMap.set(item.id, item));
-            fallbackGallery.forEach(item => combinedMap.set(item.id || item.url, item));
-            cloudItems.forEach(item => combinedMap.set(item.id, item));
-
-            const allItems = Array.from(combinedMap.values());
-
-            const statPosts = document.getElementById('profile-stat-posts');
-            if (statPosts) {
-                statPosts.innerHTML = `<strong class="text-[#4a3e3d]">${allItems.length}</strong> Kiriman`;
-            }
-
-            if (allItems.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full py-12 text-center text-gray-400 font-light">
-                        <i data-lucide="image" class="w-10 h-10 mx-auto mb-2 text-[#e79e8c]/50"></i>
-                        <p class="text-xs">Belum ada foto/video di galeri.</p>
-                    </div>
-                `;
-                lucide.createIcons();
-                return;
-            }
-
-            grid.innerHTML = allItems.map(item => {
-                const formattedUrl = parseDriveUrl(item.url);
-                const isLocal = item.id && item.id.toString().startsWith('local_');
-                const isVideo = item.type === 'video';
-
-                return `
-                    <div class="group relative rounded-2xl overflow-hidden bg-white border border-[#eaddd0] shadow-xs hover:shadow-md transition-all aspect-square flex items-center justify-center">
-                        ${isVideo ? `
-                            <video src="${escapeHTML(formattedUrl)}" controls class="w-full h-full object-cover"></video>
-                        ` : `
-                            <img src="${escapeHTML(formattedUrl)}" alt="${escapeHTML(item.caption)}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                onerror="this.src='https://placehold.co/400x400/f5ebe0/bd7a6b?text=Gambar+Gagal+Dimuat';">
-                        `}
-                        
-                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3 pointer-events-none">
-                            <div class="flex justify-end pointer-events-auto">
-                                ${!item.isDefault ? `
-                                    <button onclick="deleteGalleryItem('${item.id}', ${isLocal})" class="bg-red-500/80 hover:bg-red-600 text-white p-1.5 rounded-full transition-colors">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    </button>
-                                ` : ''}
-                            </div>
-                            <p class="text-white text-xs font-medium truncate drop-shadow-sm">${escapeHTML(item.caption || 'Foto Memori')}</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            lucide.createIcons();
-        }
-
-        // Chat File Input Triggers and Processing
-        function triggerChatFileInput() {
-            const input = document.getElementById('chat-file-input');
-            if (input) input.click();
-        }
-
-        async function handleChatFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (file.size > 15 * 1024 * 1024) {
-                alert("File gambar/video maksimal 15MB yaa 😊");
-                event.target.value = '';
-                return;
-            }
-
-            const isVideo = file.type.startsWith('video');
-
-            try {
-                let dataUrl = '';
-                if (file.type.startsWith('image')) {
-                    dataUrl = await compressImage(file, 800, 800, 0.7);
-                } else {
-                    dataUrl = await readFileAsDataURL(file);
-                }
-
-                pendingFileAttachment = {
-                    url: dataUrl,
-                    type: isVideo ? 'video' : 'image',
-                    name: file.name,
-                    size: (file.size / 1024).toFixed(1) + ' KB'
-                };
-
-                const previewContainer = document.getElementById('chat-file-preview-container');
-                const previewMedia = document.getElementById('chat-file-preview-media');
-                const previewName = document.getElementById('chat-file-preview-name');
-                const previewSize = document.getElementById('chat-file-preview-size');
-
-                if (previewName) previewName.textContent = file.name;
-                if (previewSize) previewSize.textContent = pendingFileAttachment.size;
-
-                if (previewMedia) {
-                    if (isVideo) {
-                        previewMedia.innerHTML = `<i data-lucide="video" class="w-5 h-5 text-[#bd7a6b]"></i>`;
-                    } else {
-                        previewMedia.innerHTML = `<img src="${dataUrl}" class="w-full h-full object-cover">`;
-                    }
-                }
-
-                if (previewContainer) previewContainer.classList.remove('hidden');
-                lucide.createIcons();
-
-            } catch (err) {
-                console.error("Gagal membaca attachment chat:", err);
-                alert("Gagal membaca file!");
-            }
-
-            event.target.value = '';
-        }
-
-        function clearChatFileAttachment() {
-            pendingFileAttachment = null;
-            const previewContainer = document.getElementById('chat-file-preview-container');
-            if (previewContainer) previewContainer.classList.add('hidden');
-        }
-
-        async function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const messageText = input.value.trim();
-
-            if (!messageText && !pendingFileAttachment) return;
-
-            const newMsg = {
-                sender: currentUser || 'ikii',
-                text: messageText,
-                attachment: pendingFileAttachment ? { ...pendingFileAttachment } : null,
-                createdAt: new Date().toISOString()
-            };
-
-            input.value = '';
-            clearChatFileAttachment();
-
-            if (isFirebaseReady && db && auth && auth.currentUser) {
-                try {
-                    const chatCol = collection(db, 'artifacts', appId, 'public', 'data', 'chat');
-                    await addDoc(chatCol, newMsg);
-                } catch (err) {
-                    console.error("Gagal mengirimi pesan ke Firestore:", err);
-                    saveMessageFallback(newMsg);
-                }
-            } else {
-                saveMessageFallback(newMsg);
-            }
-        }
-
-        function saveMessageFallback(msg) {
-            msg.id = 'local_' + Date.now();
-            fallbackChats.push(msg);
-            localStorage.setItem('ayyaa_ikii_chat', JSON.stringify(fallbackChats));
-            renderChatThread();
-        }
-
-        function renderChatThread(cloudChats = null) {
-            const thread = document.getElementById('chat-thread');
-            if (!thread) return;
-
-            const chatsToRender = cloudChats || fallbackChats;
-
-            if (chatsToRender.length === 0) {
-                thread.innerHTML = `
-                    <div class="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 font-light">
-                        <i data-lucide="heart" class="w-10 h-10 text-[#e79e8c]/40 mb-2"></i>
-                        <p class="text-xs">Belum ada pesan cinta. Tulis pesan pertamamu!</p>
-                    </div>
-                `;
-                lucide.createIcons();
-                return;
-            }
-
-            thread.innerHTML = chatsToRender.map(msg => {
-                const isMe = msg.sender === currentUser;
-                const timeStr = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                return `
-                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} my-1">
-                        <div class="max-w-[80%] ${isMe ? 'chat-bubble-me' : 'chat-bubble-other'} px-4 py-2.5 shadow-xs">
-                            ${msg.attachment ? `
-                                <div class="mb-2 rounded-xl overflow-hidden border border-white/20">
-                                    ${msg.attachment.type === 'video' ? `
-                                        <video src="${escapeHTML(msg.attachment.url)}" controls class="max-h-48 w-full object-cover"></video>
-                                    ` : `
-                                        <img src="${escapeHTML(msg.attachment.url)}" class="max-h-48 w-full object-cover cursor-pointer" onclick="window.open('${escapeHTML(msg.attachment.url)}')">
-                                    `}
-                                </div>
-                            ` : ''}
-                            ${msg.text ? `<p class="text-xs sm:text-sm leading-relaxed break-words">${escapeHTML(msg.text)}</p>` : ''}
-                        </div>
-                        <span class="text-[9px] text-gray-400 mt-1 px-1 font-mono">${timeStr}</span>
-                    </div>
-                `;
-            }).join('');
-
-            lucide.createIcons();
-            thread.scrollTop = thread.scrollHeight;
-        }
-
-        // Data Listener setup
-        function setupDataListeners() {
-            if (isFirebaseReady && db && auth && auth.currentUser) {
-                try {
-                    // Chat listener
-                    const chatCol = collection(db, 'artifacts', appId, 'public', 'data', 'chat');
-                    const chatQuery = query(chatCol, orderBy('createdAt', 'asc'));
-                    if (unsubscribeChats) unsubscribeChats();
-                    unsubscribeChats = onSnapshot(chatQuery, (snapshot) => {
-                        const items = [];
-                        snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
-                        renderChatThread(items);
-                    }, (err) => {
-                        logDebug("Chat Database", "Listener Error", err.message);
-                        renderChatThread();
-                    });
-
-                    // Gallery listener
-                    const galleryCol = collection(db, 'artifacts', appId, 'public', 'data', 'gallery');
-                    const galleryQuery = query(galleryCol, orderBy('createdAt', 'desc'));
-                    if (unsubscribeGallery) unsubscribeGallery();
-                    unsubscribeGallery = onSnapshot(galleryQuery, (snapshot) => {
-                        const items = [];
-                        snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
-                        renderGalleryItems(items);
-                    }, (err) => {
-                        logDebug("Galeri Database", "Listener Error", err.message);
-                        renderGalleryItems();
-                    });
-
-                } catch (e) {
-                    logDebug("Listener", "Gagal Memasang", e.message);
-                    renderChatThread();
-                    renderGalleryItems();
-                }
-            } else {
-                renderChatThread();
-                renderGalleryItems();
-            }
-        }
-
-        // Modals Controls (Debug & Cloud Config)
+        // ================= MODAL & CONFIG HELPERS =================
         function openDebugModal() {
             document.getElementById('debug-modal').classList.remove('hidden');
         }
@@ -1836,34 +1833,52 @@
         }
 
         function openCloudConfigModal() {
+            const saved = localStorage.getItem('custom_firebase_config');
+            if (saved) {
+                try {
+                    const cfg = JSON.parse(saved);
+                    document.getElementById('cfg-apiKey').value = cfg.apiKey || '';
+                    document.getElementById('cfg-authDomain').value = cfg.authDomain || '';
+                    document.getElementById('cfg-projectId').value = cfg.projectId || '';
+                    document.getElementById('cfg-storageBucket').value = cfg.storageBucket || '';
+                    document.getElementById('cfg-messagingSenderId').value = cfg.messagingSenderId || '';
+                    document.getElementById('cfg-appId').value = cfg.appId || '';
+                } catch(e){}
+            }
             document.getElementById('cloud-config-modal').classList.remove('hidden');
         }
+
         function closeCloudConfigModal() {
             document.getElementById('cloud-config-modal').classList.add('hidden');
         }
 
         function saveCloudConfig() {
-            const config = {
+            const cfg = {
                 apiKey: document.getElementById('cfg-apiKey').value.trim(),
                 authDomain: document.getElementById('cfg-authDomain').value.trim(),
                 projectId: document.getElementById('cfg-projectId').value.trim(),
                 storageBucket: document.getElementById('cfg-storageBucket').value.trim(),
                 messagingSenderId: document.getElementById('cfg-messagingSenderId').value.trim(),
-                appId: document.getElementById('cfg-appId').value.trim()
+                appId: document.getElementById('cfg-appId').value.trim(),
             };
 
-            localStorage.setItem('custom_firebase_config', JSON.stringify(config));
-            alert("Konfigurasi Cloud disimpan! Halaman akan dimuat ulang...");
+            if (!cfg.apiKey || !cfg.projectId) {
+                alert("API Key dan Project ID wajib diisi!");
+                return;
+            }
+
+            localStorage.setItem('custom_firebase_config', JSON.stringify(cfg));
+            alert("Konfigurasi tersimpan! Halaman akan dimuat ulang...");
             window.location.reload();
         }
 
         function resetCloudConfig() {
             localStorage.removeItem('custom_firebase_config');
-            alert("Konfigurasi dikembalikan ke standar! Halaman akan dimuat ulang...");
+            alert("Konfigurasi di-reset ke default! Halaman akan dimuat ulang...");
             window.location.reload();
         }
 
-        // Expose functions globally for HTML inline event handlers
+        // Expose functions to global window scope
         window.checkPassword = checkPassword;
         window.logout = logout;
         window.switchTab = switchTab;
@@ -1871,19 +1886,19 @@
         window.openMusicPopup = openMusicPopup;
         window.closeMusicPopup = closeMusicPopup;
         window.toggleGlobalAudio = toggleGlobalAudio;
-        window.handleGalleryFileSelect = handleGalleryFileSelect;
-        window.addDriveItem = addDriveItem;
-        window.deleteGalleryItem = deleteGalleryItem;
-        window.triggerChatFileInput = triggerChatFileInput;
-        window.handleChatFileSelect = handleChatFileSelect;
-        window.clearChatFileAttachment = clearChatFileAttachment;
-        window.sendChatMessage = sendChatMessage;
         window.openDebugModal = openDebugModal;
         window.closeDebugModal = closeDebugModal;
         window.openCloudConfigModal = openCloudConfigModal;
         window.closeCloudConfigModal = closeCloudConfigModal;
         window.saveCloudConfig = saveCloudConfig;
         window.resetCloudConfig = resetCloudConfig;
+        window.handleGalleryFileSelect = handleGalleryFileSelect;
+        window.addDriveItem = addDriveItem;
+        window.triggerChatFileInput = triggerChatFileInput;
+        window.handleChatFileSelect = handleChatFileSelect;
+        window.clearChatFileAttachment = clearChatFileAttachment;
+        window.sendChatMessage = sendChatMessage;
+        window.deleteGalleryItem = deleteGalleryItem;
     </script>
 </body>
 </html>
