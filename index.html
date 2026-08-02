@@ -564,23 +564,44 @@
                     <p class="text-xs text-gray-500 max-w-sm mx-auto">Potongan cerita yang harus diabadikan.</p>
                 </div>
 
-                <!-- Input Khusus Google Drive Link -->
+                <!-- Input Khusus Google Drive Link & Upload File Explorer -->
                 <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-5 shadow-sm space-y-4">
                     <div class="flex items-center gap-2 border-b border-[#ebdcd0] pb-2">
-                        <i data-lucide="link-2" class="w-5 h-5 text-[#bd7a6b]"></i>
-                        <h3 class="font-serif-aesthetic font-medium text-[#4a3e3d]">Tambah Foto/Video Baru</h3>
+                        <i data-lucide="plus-circle" class="w-5 h-5 text-[#bd7a6b]"></i>
+                        <h3 class="font-serif-aesthetic font-medium text-[#4a3e3d]">Tambah Foto / Video Baru</h3>
                     </div>
-                    <div class="flex flex-col sm:flex-row gap-2.5">
-                        <input type="text" id="drive-link-input" placeholder="Tempel link Google Drive atau URL gambar/video di sini..." 
-                            class="flex-grow px-4 py-3 bg-[#f7f3ed] border border-[#eaddd0] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#e79e8c] text-[#4a3e3d]">
-                        <button onclick="addDriveItem()" 
-                            class="bg-[#e79e8c] text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-[#db8d7b] transition-all flex items-center justify-center gap-1.5 shadow-sm">
-                            <i data-lucide="plus" class="w-4 h-4"></i> Tambah
+
+                    <!-- Hidden File Input for Gallery Explorer -->
+                    <input type="file" id="gallery-file-input" accept="image/*,video/*" multiple class="hidden" onchange="handleGalleryFileSelect(event)">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Option 1: Direct File Explorer Upload Button -->
+                        <button onclick="document.getElementById('gallery-file-input').click()" 
+                            class="w-full bg-[#f7f3ed] hover:bg-[#f1e5d9] border border-dashed border-[#e79e8c] text-[#bd7a6b] px-4 py-3.5 rounded-2xl text-sm font-medium transition-all flex items-center justify-center gap-2 shadow-xs group">
+                            <i data-lucide="folder-up" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                            <span>Pilih dari File Explorer HP / PC</span>
                         </button>
+
+                        <!-- Option 2: Google Drive / Direct URL Link Input -->
+                        <div class="flex gap-2">
+                            <input type="text" id="drive-link-input" placeholder="Atau paste link Drive / Web..." 
+                                class="flex-grow px-4 py-3 bg-[#f7f3ed] border border-[#eaddd0] rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-[#e79e8c] text-[#4a3e3d]">
+                            <button onclick="addDriveItem()" 
+                                class="bg-[#e79e8c] text-white px-5 py-3 rounded-xl text-sm font-medium hover:bg-[#db8d7b] transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Tambah
+                            </button>
+                        </div>
                     </div>
-                    <p class="text-[11px] text-gray-400">Mendukung link Google Drive share umum serta direct link gambar/video.</p>
+                    
+                    <p class="text-[11px] text-gray-400">Mendukung upload langsung foto & video dari perangkat, link Google Drive share, dan direct URL.</p>
                 </div>
 
+                <!-- Grid Galeri Utama -->
+                <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Dynamic Gallery Items Rendered Here -->
+                </div>
+            </section>
+            
                 <!-- Grid Galeri Utama -->
                 <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <!-- Foto-foto default akan dimuat dan digabungkan secara dinamis di JS -->
