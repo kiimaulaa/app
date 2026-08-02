@@ -19,47 +19,6 @@
   <!-- Canvas Confetti Library -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc
-} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyD-FaFv1_dLj35U1ht8AWG6A0iCU-5O0X0",
-    authDomain: "birthday-2ee9a.firebaseapp.com",
-    projectId: "birthday-2ee9a",
-    storageBucket: "birthday-2ee9a.firebasestorage.app",
-    messagingSenderId: "162432647198",
-    appId: "1:162432647198:web:27cc16a7a53c030e7b6e0f"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const replyRef = doc(db, "birthday", "reply");
-onSnapshot(replyRef, (snap) => {
-    if (snap.exists()) {
-        replyInput.value = snap.data().message || "";
-    }
-});
-async function loadReply() {
-    const snap = await getDoc(replyRef);
-
-    if (snap.exists()) {
-        replyInput.value = snap.data().message || "";
-    }
-}
-
-async function saveReply() {
-    await setDoc(replyRef, {
-        message: replyInput.value,
-        updatedAt: Date.now()
-    });
-}
-
   <script>
     tailwind.config = {
       theme: {
@@ -191,8 +150,31 @@ async function saveReply() {
       animation: shake 0.4s ease-in-out;
     }
   </style>
-</head>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+  // Config milik kamu
+  const firebaseConfig = {
+    apiKey: "AIzaSyBos7r12FLBLYyvNLU0bkLvRc7H9_J7Nf4",
+    authDomain: "birthday-131ca.firebaseapp.com",
+    projectId: "birthday-131ca",
+    storageBucket: "birthday-131ca.firebasestorage.app",
+    messagingSenderId: "501243279738",
+    appId: "1:501243279738:web:774b2d74505fc2dc45bec3"
+  };
+
+  // Inisialisasi Firebase & Firestore
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Buat variabel global agar fungsi simpan pesan bisa mengakses db & Firestore
+  window.db = db;
+  window.addDoc = addDoc;
+  window.collection = collection;
+  window.serverTimestamp = serverTimestamp;
+</script>
+</head>
 <body class="bg-[#EDE9DF] text-scrapbook-brownText min-h-screen font-sans overflow-x-hidden relative selection:bg-scrapbook-kraft/40 selection:text-scrapbook-brownText">
 
   <!-- Scrapbook Warm Ambient Background Drops -->
@@ -899,33 +881,66 @@ async function saveReply() {
       }, 50);
     }
 
-    // Explicit manual save button to trigger feedback UI & Confetti
-    document.getElementById('btn-save-reply').onclick = () => {
-      const replyMsg = replyInput.value;
-      localStorage.setItem('nayyara_reply_message', replyMsg);
-      
-      const savedStatus = document.getElementById('saved-status-text');
-      savedStatus.classList.remove('opacity-0');
-      savedStatus.classList.add('opacity-100');
-      
-      confetti({
-        particleCount: 40,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 }
-      });
-      confetti({
-        particleCount: 40,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 }
-      });
+// Tombol Simpan Pesan (Menyimpan ke Firebase Firestore + LocalStorage)
+document.getElementById('btn-save-reply').onclick = async () => {
+  const replyMsg = replyInput.value.trim();
 
-      setTimeout(() => {
-        savedStatus.classList.remove('opacity-100');
-        savedStatus.classList.add('opacity-0');
-      }, 3000);
-    };
+  if (!replyMsg) {
+    alert("Pesan tidak boleh kosong yaa ayy!");
+    return;
+  }
+
+  // 1. Tetap simpan ke LocalStorage agar tersimpan lokal
+  localStorage.setItem('nayyara_reply_message', replyMsg);
+
+  const savedStatus = document.getElementById('saved-status-text');
+  const btnSave = document.getElementById('btn-save-reply');
+
+  // Beri indikator proses menyimpan
+  btnSave.disabled = true;
+  btnSave.innerHTML = `menyimpan... <i class="fas fa-spinner fa-spin ml-1"></i>`;
+
+  try {
+    // 2. Kirim data ke koleksi 'pesan_balasan' di Firebase Firestore
+    if (window.db && window.addDoc && window.collection) {
+      await window.addDoc(window.collection(window.db, "pesan_balasan"), {
+        nama: "Nayyara",
+        pesan: replyMsg,
+        waktu: window.serverTimestamp()
+      });
+    }
+
+    // 3. Tampilkan efek visual sukses & confetti (sama seperti sebelumnya)
+    savedStatus.classList.remove('opacity-0');
+    savedStatus.classList.add('opacity-100');
+
+    confetti({
+      particleCount: 40,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 }
+    });
+    confetti({
+      particleCount: 40,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 }
+    });
+
+    setTimeout(() => {
+      savedStatus.classList.remove('opacity-100');
+      savedStatus.classList.add('opacity-0');
+    }, 3000);
+
+  } catch (error) {
+    console.error("Gagal menyimpan ke Firebase:", error);
+    alert("Pesan tersimpan lokal, namun gagal terkirim ke server.");
+  } finally {
+    // Kembalikan status tombol
+    btnSave.disabled = false;
+    btnSave.innerHTML = `simpan pesan <i class="fas fa-save ml-1"></i>`;
+  }
+};
 
     // Aesthetic Reasons Toggle
     document.querySelectorAll('.reason-item').forEach(item => {
@@ -1017,13 +1032,7 @@ async function saveReply() {
       }
       loop();
     }
-import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc,
-    onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
     document.getElementById('btn-restart').onclick = () => location.reload();
   </script>
 </body>
