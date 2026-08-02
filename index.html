@@ -1,1039 +1,1695 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>hbd ayy</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Google Fonts (Scrapbook & Handwritten aesthetics) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Fredoka:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
-  
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Canvas Confetti Library -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            scrapbook: {
-              kraft: '#D8C3A5',
-              cream: '#F4EFE6',
-              paper: '#FAF6EE',
-              ink: '#2B2D42',
-              peach: '#E8A87C',
-              sage: '#85DCB0',
-              rose: '#E98074',
-              brownText: '#4E3629',
-              tapeYellow: 'rgba(247, 212, 134, 0.45)',
-              tapePink: 'rgba(233, 128, 116, 0.45)',
-              tapeBlue: 'rgba(147, 197, 253, 0.45)',
-              tapeGreen: 'rgba(133, 220, 176, 0.45)'
-            }
-          },
-          fontFamily: {
-            sans: ['Plus Jakarta Sans', 'sans-serif'],
-            serif: ['Playfair Display', 'serif'],
-            cozy: ['Fredoka', 'sans-serif'],
-            handwritten: ['Caveat', 'cursive'],
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Playfair Display, Plus Jakarta Sans, Caveat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700&family=Playfair+Display:ital,wght=0,400;0,600;0,700;1,400&family=Caveat:wght=400;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        html {
+            scroll-behavior: smooth;
         }
-      }
-    }
-  </script>
-
-  <style>
-    /* Custom Minimalist Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: rgba(216, 195, 165, 0.3); }
-    ::-webkit-scrollbar-thumb { background: #D8C3A5; border-radius: 10px; }
-
-    /* Scrapbook Notebook Page Styling with layered shadow */
-    .scrapbook-card {
-      background: #FAF6EE;
-      border: 2px solid #E4DCD0;
-      box-shadow: 
-        4px 4px 0px #dccfbe,
-        8px 8px 0px #ebd9c5,
-        15px 15px 30px rgba(78, 54, 41, 0.08);
-      position: relative;
-    }
-
-    /* Grid paper pattern */
-    .notebook-grid {
-      background-size: 20px 20px;
-      background-image: 
-        linear-gradient(to right, rgba(216, 195, 165, 0.15) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(216, 195, 165, 0.15) 1px, transparent 1px);
-    }
-
-    /* Lined paper pattern */
-    .notebook-lines {
-      background-image: linear-gradient(#e5dec9 1px, transparent 1px);
-      background-size: 100% 26px;
-      line-height: 26px;
-    }
-
-    /* Sticker styling */
-    .sticker {
-      box-shadow: 1px 2px 3px rgba(0,0,0,0.1);
-      transform: rotate(var(--r, 0deg));
-    }
-
-    /* Ripped paper effect */
-    .ripped-edge {
-      background: radial-gradient(circle, transparent 40%, #FAF6EE 41%);
-      background-size: 10px 20px;
-      height: 10px;
-    }
-
-    /* Ambient Warm Kraft Lighting */
-    .warm-kraft-glow {
-      filter: blur(120px);
-      opacity: 0.55;
-      mix-blend-mode: multiply;
-    }
-
-    @keyframes vinyl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .animate-vinyl { animation: vinyl-spin 15s linear infinite; }
-
-    @keyframes soft-float {
-      0%, 100% { transform: translateY(0px) rotate(-1deg); }
-      50% { transform: translateY(-4px) rotate(1deg); }
-    }
-    .animate-scrapbook-float { animation: soft-float 5.5s ease-in-out infinite; }
-
-    /* Elegant Custom Spring transitions for scrapbook cards */
-    .page-card {
-      transition: opacity 0.85s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.85s cubic-bezier(0.34, 1.56, 0.64, 1);
-      transform-origin: center bottom;
-    }
-
-    /* Target state when sliding OUT (To the top left with slight tilt) */
-    .card-hidden-prev {
-      opacity: 0 !important;
-      transform: scale(0.92) translateY(-70px) rotate(-5deg) !important;
-      pointer-events: none;
-    }
-
-    /* Target state when sliding IN (From the bottom right with slight tilt) */
-    .card-hidden-next {
-      opacity: 0 !important;
-      transform: scale(0.92) translateY(70px) rotate(5deg) !important;
-      pointer-events: none;
-    }
-
-    /* Cake Candles Animation */
-    @keyframes flicker {
-      0%, 100% { transform: scale(1) rotate(-2deg); opacity: 0.9; }
-      50% { transform: scale(1.1) rotate(3deg); opacity: 1; filter: drop-shadow(0 0 10px rgba(245,158,11,0.8)); }
-    }
-    .candle-flame {
-      animation: flicker 0.6s ease-in-out infinite alternate;
-    }
-
-    /* Custom CSS shaking for invalid code */
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-6px); }
-      40%, 80% { transform: translateX(6px); }
-    }
-    .shake-anim {
-      animation: shake 0.4s ease-in-out;
-    }
-  </style>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-  // Config milik kamu
-  const firebaseConfig = {
-    apiKey: "AIzaSyBos7r12FLBLYyvNLU0bkLvRc7H9_J7Nf4",
-    authDomain: "birthday-131ca.firebaseapp.com",
-    projectId: "birthday-131ca",
-    storageBucket: "birthday-131ca.firebasestorage.app",
-    messagingSenderId: "501243279738",
-    appId: "1:501243279738:web:774b2d74505fc2dc45bec3"
-  };
-
-  // Inisialisasi Firebase & Firestore
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // Buat variabel global agar fungsi simpan pesan bisa mengakses db & Firestore
-  window.db = db;
-  window.addDoc = addDoc;
-  window.collection = collection;
-  window.serverTimestamp = serverTimestamp;
-</script>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f7f3ed; /* Krem hangat */
+            color: #4a3e3d;
+        }
+        .font-serif-aesthetic {
+            font-family: 'Playfair Display', serif;
+        }
+        .font-handwritten {
+            font-family: 'Caveat', cursive;
+        }
+        /* Custom scrollbar estetik */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f7f3ed;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e2d3c5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d0beae;
+        }
+        /* Efek transisi halus */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Animasi getar untuk input password salah */
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        /* Smooth Scroll Container */
+        .smooth-scroll-container {
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        /* Bubble chat Instagram style */
+        .chat-bubble-me {
+            background: linear-gradient(135deg, #e79e8c 0%, #bd7a6b 100%);
+            color: white;
+            border-radius: 20px 20px 4px 20px;
+        }
+        .chat-bubble-other {
+            background-color: #ffffff;
+            color: #4a3e3d;
+            border: 1px solid #ebdcd0;
+            border-radius: 20px 20px 20px 4px;
+        }
+    </style>
 </head>
-<body class="bg-[#EDE9DF] text-scrapbook-brownText min-h-screen font-sans overflow-x-hidden relative selection:bg-scrapbook-kraft/40 selection:text-scrapbook-brownText">
+<body class="min-h-screen flex flex-col overflow-x-hidden selection:bg-[#e79e8c] selection:text-white pb-32">
 
-  <!-- Scrapbook Warm Ambient Background Drops -->
-  <div class="absolute top-10 left-10 w-[300px] h-[300px] rounded-full bg-[#E3DAC9] warm-kraft-glow pointer-events-none"></div>
-  <div class="absolute bottom-10 right-10 w-[350px] h-[350px] rounded-full bg-[#E98074]/10 warm-kraft-glow pointer-events-none"></div>
+    <!-- Audio Element untuk memutar musik -->
+    <audio id="global-audio" loop></audio>
 
-  <!-- Ambient Audio Track -->
-  <audio id="bg-music" loop>
-    <source src="https://raw.githubusercontent.com/kiimaulaa/lagu/main/Nadin%20Amizah%20-%20Semua%20Aku%20Dirayakan%20(Official%20Music%20Video)%20%5BCptnLrdF3_E%5D.mp3" type="audio/mpeg">
-  </audio>
-
-  <!-- Retro Badge Music Player -->
-  <div class="fixed bottom-6 right-6 z-50">
-    <div id="music-player" class="bg-[#FAF6EE] border-2 border-scrapbook-kraft px-4 py-3 rounded-2xl flex items-center gap-3 shadow-lg transition-all duration-300 hover:scale-105">
-      <div class="relative w-10 h-10 rounded-full bg-[#2c2c2c] flex items-center justify-center overflow-hidden border-2 border-scrapbook-kraft shadow-inner">
-        <div id="vinyl-disk" class="w-full h-full bg-[radial-gradient(circle_at_center,_#444_10%,_#111_15%,_#333_30%,_#111_50%)] rounded-full flex items-center justify-center">
-          <div class="w-3 h-3 bg-scrapbook-rose rounded-full border border-white/20"></div>
-        </div>
-      </div>
-      <div class="text-left hidden sm:block">
-        <p class="text-[8px] text-scrapbook-brownText/50 uppercase tracking-widest font-mono font-bold">journal tune</p>
-        <p id="music-title" class="text-xs font-semibold text-scrapbook-brownText">lofi tape for ayya</p>
-      </div>
-      <button id="music-toggle" class="w-7 h-7 rounded-full bg-[#EAE7DC] hover:bg-scrapbook-kraft/40 text-scrapbook-brownText flex items-center justify-center transition-all border border-scrapbook-kraft/30">
-        <i id="music-icon" class="fas fa-play text-[10px] pl-0.5"></i>
-      </button>
-    </div>
-  </div>
-
-  <!-- Main Scrapbook Container -->
-  <main class="relative z-10 max-w-md mx-auto px-4 min-h-screen flex items-center justify-center py-8">
-
-    <!-- ================= LANDING PAGE: KODE KEAMANAN ================= -->
-    <section id="landing-page" class="page-card w-full scrapbook-card notebook-grid rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-6">
-      <!-- Washi tape decoration -->
-      <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-28 h-6 bg-scrapbook-tapePink transform rotate-1 border-l border-r border-dashed border-white/30 z-20"></div>
-      
-      <div class="w-20 h-20 bg-white border-2 border-scrapbook-kraft/40 flex items-center justify-center shadow-lg relative animate-scrapbook-float">
-        <div class="absolute -top-4 -left-3 w-12 h-5 bg-scrapbook-tapeYellow transform -rotate-12 z-10 border-l border-r border-dashed border-white/40"></div>
-        <i class="fa-solid fa-lock text-3xl text-scrapbook-rose transform rotate-2"></i>
-      </div>
-
-      <div class="space-y-2">
-        <p class="text-[10px] uppercase tracking-widest text-scrapbook-rose font-mono font-bold">private security entry...</p>
-        <h1 class="font-serif text-2xl font-semibold tracking-tight text-scrapbook-brownText leading-tight">hii ayyaa..💖</h1>
-        <p class="text-slate-600 text-xs leading-relaxed max-w-xs mx-auto">
-          masukin pin dulu yakk buat lanjut,  kodenya tanggal ulang tahun cowo lu (format: ddmmyy)
-        </p>
-      </div>
-
-      <div class="w-full space-y-3">
-        <div class="relative" id="pin-input-container">
-          <input type="password" id="pin-input" maxlength="6" placeholder="******" class="w-full py-3 bg-white text-center text-xl font-bold tracking-widest border-2 border-dashed border-scrapbook-kraft/60 rounded-xl focus:outline-none focus:border-scrapbook-rose transition-all placeholder:text-slate-300">
-        </div>
-        <button id="btn-pin-submit" class="w-full py-3.5 bg-scrapbook-rose hover:bg-scrapbook-rose/90 text-white font-semibold text-xs rounded-full shadow-md transition-all border-2 border-dashed border-white/40">
-          buka pintu masuk 🗝️
-        </button>
-        <p id="pin-error-msg" class="text-[11px] text-red-500 font-mono hidden"></p>
-      </div>
-      
-      <div class="absolute bottom-4 left-4 right-4 text-[9px] text-slate-400 font-mono">
-        hint: inget tanggal lahir gw kagaa?
-      </div>
-    </section>
-
-    <!-- ================= INTERACTIVE BIRTHDAY CAKE PAGE ================= -->
-    <section id="cake-page" class="page-card hidden w-full scrapbook-card notebook-grid rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-6">
-      
-      <!-- Spiral Binder Decoration -->
-      <div class="absolute -left-3 top-6 bottom-6 flex flex-col justify-around pointer-events-none z-20">
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-      </div>
-
-      <div class="space-y-1">
-        <p class="text-[10px] uppercase tracking-widest text-scrapbook-rose font-mono font-bold">make a wish...</p>
-        <h1 class="font-serif text-2xl font-semibold text-scrapbook-brownText">yeayy, </p> happy birthday ayyaa! 🎂</h1>
-        <p class="text-slate-600 text-xs">Tap lilinnya buat matiin dan lanjut ke lembar jurnal selanjutnya yaaa!</p>
-      </div>
-
-      <!-- 2D Interactive Cake with SVG candle and flames -->
-      <div class="relative py-8 flex flex-col items-center justify-center w-full">
-        <!-- The Candles (Lilin 18) -->
-        <div class="flex gap-4 justify-center items-end h-28 relative z-20">
-          <!-- Candle 1 (Satu) -->
-          <div id="candle-1" class="relative flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-105">
-            <!-- Flame 1 -->
-            <div id="flame-1" class="candle-flame w-6 h-10 bg-gradient-to-t from-orange-400 via-amber-400 to-yellow-200 rounded-full blur-[1px] absolute -top-11"></div>
-            <!-- Body of Candle with number "1" -->
-            <div class="w-7 h-20 bg-gradient-to-r from-sky-400 to-cyan-300 rounded-md border border-sky-500/40 flex items-center justify-center shadow-md relative overflow-hidden">
-              <span class="font-cozy text-2xl font-bold text-white drop-shadow-md">1</span>
-              <div class="absolute inset-y-0 left-1 w-1 bg-white/40"></div>
+    <!-- ================= INSTAGRAM LOGIN GATE ================= -->
+    <div id="password-gate" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#f7f3ed] px-6">
+        <div id="password-card" class="max-w-sm w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-8 shadow-sm text-center space-y-6 fade-in relative">
+            <!-- Ring Binder Atas Decorative -->
+            <div class="flex justify-center space-x-2 -mt-4 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#cbd5e1] inline-block shadow-inner"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#cbd5e1] inline-block shadow-inner"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#cbd5e1] inline-block shadow-inner"></span>
             </div>
-          </div>
-
-          <!-- Candle 8 (Delapan) -->
-          <div id="candle-8" class="relative flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-105">
-            <!-- Flame 8 -->
-            <div id="flame-8" class="candle-flame w-6 h-10 bg-gradient-to-t from-orange-400 via-amber-400 to-yellow-200 rounded-full blur-[1px] absolute -top-11"></div>
-            <!-- Body of Candle with number "8" -->
-            <div class="w-7 h-20 bg-gradient-to-r from-pink-400 to-rose-300 rounded-md border border-pink-500/40 flex items-center justify-center shadow-md relative overflow-hidden">
-              <span class="font-cozy text-2xl font-bold text-white drop-shadow-md">8</span>
-              <div class="absolute inset-y-0 left-1 w-1 bg-white/40"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- The Cake Layer 2D Aesthetic Scrapbook Style -->
-        <div class="w-56 h-28 bg-[#FFF2E2] border-2 border-scrapbook-kraft rounded-2xl relative shadow-md z-10 -mt-2">
-          <!-- Cream Drippings -->
-          <div class="absolute top-0 left-0 right-0 h-8 bg-scrapbook-rose rounded-t-[14px] flex justify-around items-end pb-0.5">
-            <div class="w-5 h-5 bg-scrapbook-rose rounded-full -mb-2"></div>
-            <div class="w-4 h-6 bg-scrapbook-rose rounded-full -mb-3"></div>
-            <div class="w-5 h-4 bg-scrapbook-rose rounded-full -mb-1"></div>
-            <div class="w-4 h-5 bg-scrapbook-rose rounded-full -mb-2"></div>
-            <div class="w-5 h-7 bg-scrapbook-rose rounded-full -mb-3.5"></div>
-            <div class="w-3 h-4 bg-scrapbook-rose rounded-full -mb-1.5"></div>
-          </div>
-          <!-- Little Cherries / Berries on top of cake -->
-          <div class="absolute top-[-8px] left-4 w-4 h-4 bg-red-500 rounded-full shadow-inner border border-red-600"></div>
-          <div class="absolute top-[-8px] right-4 w-4 h-4 bg-red-500 rounded-full shadow-inner border border-red-600"></div>
-          <div class="absolute top-[-10px] left-1/2 -translate-x-1/2 w-4 h-4 bg-red-500 rounded-full shadow-inner border border-red-600"></div>
-
-          <!-- Happy birthday text inside cake -->
-          <div class="absolute inset-0 flex flex-col items-center justify-center pt-8">
-            <p class="font-handwritten text-xl text-scrapbook-brownText tracking-wide font-bold">18th Sweetest Year</p>
-          </div>
-        </div>
-
-        <!-- Plate -->
-        <div class="w-64 h-3 bg-[#E9E1D2] border-b-2 border-scrapbook-kraft/70 rounded-full -mt-1 shadow-sm"></div>
-      </div>
-
-      <!-- Action Button after blowing candle -->
-      <div id="cake-success-container" class="w-full hidden scale-90 opacity-0 transition-all duration-500">
-        <button id="btn-to-page1" class="w-full py-3.5 bg-scrapbook-rose hover:bg-scrapbook-rose/90 text-white font-semibold text-xs rounded-full shadow-md border-2 border-dashed border-white/40">
-          ada sesuatu buat kamu ayy! <i class="fas fa-arrow-right ml-1"></i>
-        </button>
-      </div>
-    </section>
-
-    <!-- ================= PAGE 1: THE CRITICAL TRUTH ================= -->
-    <section id="page1" class="page-card hidden w-full scrapbook-card notebook-grid rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-6">
-      
-      <!-- Spiral Notebook Rings Binder Decoration (High-effort scrapbook feel) -->
-      <div class="absolute -left-3 top-6 bottom-6 flex flex-col justify-around pointer-events-none z-20">
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-      </div>
-
-      <!-- Cute Polaroid Icon Placeholder with multilayered tape -->
-      <div class="w-20 h-20 bg-white border-2 border-scrapbook-kraft/40 flex items-center justify-center shadow-lg relative animate-scrapbook-float">
-        <!-- Ripped Washi Tapes overlapping -->
-        <div class="absolute -top-4 -left-3 w-12 h-5 bg-scrapbook-tapePink transform -rotate-12 z-10 border-l border-r border-dashed border-white/40"></div>
-        <div class="absolute -top-3 right-0 w-10 h-4 bg-scrapbook-tapeYellow transform rotate-6 z-10 border-l border-r border-dashed border-white/40"></div>
-        <i class="fa-solid fa-camera text-3xl text-scrapbook-rose transform rotate-2"></i>
-      </div>
-      
-      <div class="space-y-3 relative">
-        <!-- Hand-drawn heart doodle -->
-        <div class="absolute -top-5 -right-2 text-scrapbook-rose opacity-60 text-lg transform rotate-12"><i class="fa-solid fa-heart-pulse"></i></div>
-        
-        <p class="text-[10px] uppercase tracking-widest text-scrapbook-rose font-mono font-bold">journal entry #01...</p>
-        <h1 class="font-serif text-3xl font-semibold tracking-tight text-scrapbook-brownText leading-tight">sayang a ikii tida?</h1>
-        <p class="text-slate-600 text-xs leading-relaxed max-w-xs mx-auto font-sans">
-          hihii jawab jujur yaa ama aku, gaboleh bohong ayy.
-        </p>
-      </div>
-      
-      <!-- Interactive Yes/No Area -->
-      <div class="w-full pt-2">
-        <div class="flex flex-col items-center justify-center gap-4 relative min-h-[170px] w-full" id="button-container">
-          
-          <!-- Cute Custom Speech Bubble for the "Tidak" button -->
-          <div id="bubble-comment" class="absolute bg-scrapbook-brownText text-[#FAF6EE] text-[10px] font-mono px-3 py-1.5 rounded-xl shadow-md opacity-0 pointer-events-none transition-all duration-200 after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-scrapbook-brownText">
-            males banget dih wkwk 😜
-          </div>
-
-          <!-- Stitched style Button Ya -->
-          <button id="btn-ya" class="px-8 py-3.5 bg-scrapbook-rose hover:bg-scrapbook-rose/90 text-white font-semibold text-xs rounded-full shadow-md transition-all duration-300 w-48 z-10 border-2 border-dashed border-white/50 relative overflow-hidden">
-            sayang bangeeet! 💖✨
-          </button>
-          
-          <!-- Ripped cardboard styled Button Tidak -->
-          <button id="btn-tidak" class="px-8 py-3 bg-white hover:bg-scrapbook-cream text-slate-500 border-2 border-dashed border-scrapbook-kraft/60 font-semibold text-xs rounded-lg shadow-sm transition-all duration-200 w-48 absolute">
-            enggak biasa aja tuh 😜
-          </button>
-        </div>
-      </div>
-      
-      <!-- Retro Postal Mark/Sticker -->
-      <div class="absolute bottom-4 right-4 w-12 h-12 rounded-full border-2 border-dashed border-scrapbook-rose/40 flex items-center justify-center text-scrapbook-rose/40 text-[9px] font-mono uppercase transform rotate-12 pointer-events-none">
-        certified bby
-      </div>
-    </section>
-
-    <!-- ================= PAGE 2: THE ENVELOPE (STATIONERY LETTERS) ================= -->
-    <section id="page2" class="page-card hidden w-full scrapbook-card rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-6">
-      
-      <!-- Spiral binder design -->
-      <div class="absolute -left-3 top-6 bottom-6 flex flex-col justify-around pointer-events-none z-20">
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-      </div>
-
-      <!-- Corner photo corner sticker decoration -->
-      <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-scrapbook-rose/30 rounded-tr-xl pointer-events-none"></div>
-
-      <div id="envelope-intro" class="space-y-2">
-        <div class="text-[9px] bg-scrapbook-cream border border-scrapbook-kraft text-scrapbook-brownText/70 font-mono px-3 py-1 rounded-full uppercase tracking-widest font-bold inline-block">chapter 01 — love letter</div>
-        <h1 class="font-serif text-3xl font-semibold text-scrapbook-brownText">happy 12 SEPTEMBER! 🥳🎂</h1>
-        <p class="text-slate-600 text-xs leading-relaxed">aku pengen nyampein sesuatu ke kamu lewat surat ini. tap segel LOVE di tengah buat buka suratnya yakk !</p>
-      </div>
-      
-      <!-- Kraft Envelope inside the Scrapbook Card -->
-      <div id="envelope-area" class="py-4 flex justify-center items-center w-full min-h-[200px]">
-        <div id="envelope-click" class="relative cursor-pointer transition-all hover:scale-105 active:scale-95">
-          <div class="w-56 h-36 bg-[#E3D1B4] rounded-2xl border-2 border-scrapbook-kraft shadow-lg flex items-center justify-center relative">
-            <!-- Washi tape on envelope -->
-            <div class="absolute -top-3 left-4 w-14 h-4 bg-scrapbook-tapeBlue transform rotate-6 z-10 border-l border-r border-dashed border-white/30"></div>
-            <!-- Envelope Flaps Design -->
-            <div class="absolute inset-0 z-20 pointer-events-none" style="background: linear-gradient(35deg, transparent 48%, rgba(0,0,0,0.03) 50%, transparent 52%);"></div>
             
-            <div id="wax-seal" class="absolute w-12 h-12 rounded-full bg-scrapbook-rose border-2 border-white flex items-center justify-center shadow-md z-30">
-              <i class="fa-solid fa-heart text-white text-sm animate-pulse"></i>
+            <div class="space-y-2">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#e79e8c]/20 text-[#bd7a6b] mb-1">
+                    <i data-lucide="instagram" class="w-6 h-6"></i>
+                </div>
+                <h1 class="text-3xl font-serif-aesthetic text-[#bd7a6b] font-semibold tracking-wider">About Us</h1>
+                <p class="text-xs text-gray-500 font-light">Login Dulu Yaaa..</p>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- FULL HEARTFELT LETTER DISPLAY (Paper Sheet design with lines) -->
-      <div id="full-letter-sheet" class="hidden scale-95 opacity-0 transition-all duration-700 w-full bg-[#FCFAF5] text-scrapbook-brownText rounded-xl p-5 text-left shadow-inner border border-scrapbook-kraft/50 space-y-4 max-h-[380px] overflow-y-auto relative">
-        <div class="absolute top-4 right-4 text-scrapbook-rose/20 text-4xl pointer-events-none">
-          <i class="fa-solid fa-feather-pointed"></i>
-        </div>
-        
-        <!-- Washi tape holding paper inside binder -->
-        <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-20 h-5 bg-scrapbook-tapeYellow transform rotate-1 border-l border-r border-dashed border-white/30"></div>
+            <!-- Login Form -->
+            <div class="space-y-3.5 text-left">
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1 ml-1">Username</label>
+                    <input type="text" id="login-username" placeholder="••••••••" 
+                        class="w-full px-4 py-3 rounded-xl border border-[#e3d5c8] bg-[#fbf9f6] text-sm focus:ring-2 focus:ring-[#e79e8c] focus:outline-none transition-all placeholder:text-gray-300 text-[#4a3e3d]">
+                </div>
 
-        <div class="flex justify-between items-center border-b border-scrapbook-kraft/30 pb-2 pt-2">
-          <span class="font-serif text-xs font-bold text-scrapbook-rose italic">buat ayyaa, dibaca yups..</span>
-          <span class="text-[8px] text-slate-400 font-mono">12.09.2026</span>
-        </div>
-        
-        <div class="space-y-4 font-sans text-xs text-slate-700 leading-relaxed notebook-lines">
-          <p>haii kamu! HAPPY BIRTHDAY SAYANGG 🥳, SLAMAT ATAS  18-nya yaakk! buat satu-satunya cewe yang bikin aku slalu ngerasa dihargain, dingertiin, dicintain, and disayangin yang ampe sesayang itu.. 🥳🎂</p>
-          <p>aku cuma pengen bilang trimakasii banyak-banyak karna kamu udaa hadir di 17-nya aku and bikin sweet seventeenku jadi seindah itu. makasih udah jadi 'tempat' yang bisa nenangin aku, jadi tempatt ternyaman aku yang slalu ngertiin aku, makasih udah slalu sabar ama sikap nggajelas aku and dengerin semua ceritaku yang anehh itu, and always support aku buat semua inii.. 💖✨</p>
-          <p>apalagii yang udaa ngertiin aku tentang segala hal, jadi tempat cerita aku satu-satunya, yang sebelomnya aku belom pernah ngerasa se-dingertiin ini.. sampe aku slalu ngerasa nyaman dan emang kamu 'rumah' buat aku balik.. 🫶🏻💖 </p>
-          <p>trimakasii banyaak slalu jadi support system terbesarku, yang slalu support aku buat berubah jadi lebii baik dan sabar nanggepin aku, semangatt terus jugaa buat hijrah jadi lebih baik yaa!! pastii bisa sayangg, jangan jadiin hubungan kita tu jadi penghambat hijrahnya kita yaa, semangat teruss sayangg buat nambah dan murojaah hafalannya.. pokonyaa kita bareng-bareng terus yaaa, gabolee nggak..🫶🏻💖💝</p>
-          <p> SEMANGATT TERUSS BLAJARNYAA SAYANGG, SMOGA KITA BISA LOLOS ELIGIBLE SAMPE TEMBUS KE UNIV IMPIAN KITA.. SUKSESS SLALU YAPP! SMOGA KITA SLALU DIMUDAHKAN DAN DILANCARKAN DISEGALA SESUATUNYAA DAN UJIAN-UJIANNYA✨️✨️
-          <p>maaf aku gabisa dateng langsung buat ngucapin ke kamu, and maaf juga kalo masih ada kurang and salah dari aku yang bikin kamu ngga enak, dan belom bisa jadi kayak apa yang kamu harapkann.</p>
-          <p>tapii, semoga di umur ke-18 inii, kita slalu panjang umur, sehat slalu, bisa sama-sama terus, and slalu tambah-tambah buat dikelilingi banyak kebahagiaan, dijauhkan dari hal-hal yang ngga-ngga, and please... tetep jadi nayyaa yang aku kenal yaa, yang slalu sabar and support apapun yang aku lakuin. jangan pernah berubah yaa cantikk. hihii. 💝💖</p>
-          <p>kangen gasii ama hari-hari yang udaa kita laluin? aku adaa inii buat kamu, diliat yakk! 👇</p>
-        </div>
-        
-        <div class="border-t border-scrapbook-kraft/30 pt-3 flex justify-between items-center">
-          <span class="font-handwritten text-2xl text-scrapbook-rose">sayangg ayyaa, dari ikii 🤍</span>
-        </div>
-      </div>
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-1 ml-1">Password</label>
+                    <input type="password" id="login-password" placeholder="••••" 
+                        class="w-full px-4 py-3 rounded-xl border border-[#e3d5c8] bg-[#fbf9f6] text-sm focus:ring-2 focus:ring-[#e79e8c] focus:outline-none transition-all placeholder:text-gray-300 text-[#4a3e3d]">
+                </div>
 
-      <div id="next-to-gallery" class="w-full hidden scale-90 opacity-0 transition-all">
-        <button id="to-page3" class="w-full py-3.5 bg-scrapbook-rose text-white font-semibold text-xs rounded-full shadow-md border-2 border-dashed border-white/40">
-          foto kitaa ada disinii!! <i class="fas fa-arrow-right ml-2 text-[10px]"></i>
-        </button>
-      </div>
-
-      <div id="tap-wax-hint" class="text-xs font-semibold text-scrapbook-rose animate-bounce flex items-center gap-1.5 justify-center">
-        <i class="fas fa-hand-pointer text-[10px]"></i> pencet segel LOVE di atas
-      </div>
-    </section>
-
-    <!-- ================= PAGE 3: THE SCRAPBOOK PHOTO COLLAGE ================= -->
-    <section id="page3" class="page-card hidden w-full scrapbook-card rounded-2xl p-6 shadow-xl flex flex-col items-center space-y-5">
-      
-      <!-- Ring binder design -->
-      <div class="absolute -left-3 top-6 bottom-6 flex flex-col justify-around pointer-events-none z-20">
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-        <div class="w-6 h-4 bg-gradient-to-r from-zinc-300 to-zinc-400 rounded-full border border-zinc-500/40"></div>
-      </div>
-
-      <div class="text-center space-y-1 relative w-full">
-        <div class="text-[9px] bg-scrapbook-cream border border-scrapbook-kraft text-scrapbook-brownText/70 font-mono px-3 py-1 rounded-full uppercase tracking-widest font-bold inline-block">chapter 02 — memory board</div>
-        <h1 class="font-serif text-2xl font-semibold text-scrapbook-brownText">our digital scrapbook 📸</h1>
-        <p class="text-slate-500 text-[11px] leading-relaxed">ingett moment inii kahh? tap salah satu foto buat liat fullnya yak!</p>
-        
-        <!-- Retro Star Sticker -->
-        <div class="absolute -top-1 right-2 w-8 h-8 text-amber-300 text-lg animate-pulse pointer-events-none"><i class="fa-solid fa-star"></i></div>
-      </div>
-
-      <!-- Tactile Scrapbook grid collage with realistic overlapping elements -->
-      <div class="w-full grid grid-cols-2 gap-4 py-2 relative min-h-[290px] px-1">
-        
-        <!-- Polaroid Item 1 -->
-        <div onclick="openLightbox(0)" class="bg-white p-2 pb-5 rounded-md shadow-md transform -rotate-3 hover:rotate-0 hover:scale-105 transition-all duration-300 cursor-pointer border border-scrapbook-kraft/30 relative">
-          <!-- Realistic wooden peg peg/clip at the top -->
-          <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-2 h-5 bg-[#D7A15C] rounded-sm border border-amber-800/20 shadow-sm z-10 flex flex-col items-center">
-            <div class="w-1.5 h-0.5 bg-slate-400 mt-1"></div> <!-- metallic peg ring -->
-          </div>
-          <div class="w-full aspect-square bg-[#FCFAF5] rounded-sm overflow-hidden mb-2">
-            <img src="https://lh3.googleusercontent.com/d/1rxhWjY-eNjUp6j0DuXJAHxFTpCZilv5s" class="w-full aspect-square object-cover">
-          </div>
-          <p class="text-[9px] text-center font-handwritten text-xl text-scrapbook-brownText">ciee yang Level UP!!... 🤍</p>
-        </div>
-
-        <!-- Polaroid Item 2 -->
-        <div onclick="openLightbox(1)" class="bg-white p-2 pb-5 rounded-md shadow-md transform rotate-3 hover:rotate-0 hover:scale-105 transition-all duration-300 cursor-pointer border border-scrapbook-kraft/30 relative">
-          <!-- Layered crossed Washi Tapes -->
-          <div class="absolute -top-2 -right-1 w-10 h-4 bg-scrapbook-tapeGreen transform rotate-12 z-10 border-l border-r border-dashed border-white/30"></div>
-          <div class="absolute -top-3 right-2 w-8 h-4 bg-scrapbook-tapePink transform -rotate-12 z-10 border-l border-r border-dashed border-white/30"></div>
-          <div class="w-full aspect-square bg-[#FCFAF5] rounded-sm overflow-hidden mb-2">
-            <img src="https://lh3.googleusercontent.com/d/1TvvkzFgSApHrYu-hMQMtiYZt9vZP-N-j" class="w-full aspect-square object-cover">
-          </div>
-          <p class="text-[9px] text-center font-handwritten text-xl text-scrapbook-brownText">kangenn genggam tidaa? 🤍</p>
-        </div>
-
-        <!-- Polaroid Item 3 -->
-        <div onclick="openLightbox(2)" class="bg-white p-2 pb-5 rounded-md shadow-md transform -rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-300 cursor-pointer border border-scrapbook-kraft/30 relative">
-          <!-- Paper clip graphic element -->
-          <div class="absolute -top-2 left-6 w-3 h-6 border-2 border-slate-400 rounded-full z-10 transform -rotate-12"></div>
-          <div class="w-full aspect-square bg-[#FCFAF5] rounded-sm overflow-hidden mb-2">
-            <img src="https://lh3.googleusercontent.com/d/1-3B6onz5Y86nUu13aKHsXEmHKyBYIVkH" class="w-full aspect-square object-cover">
-          </div>
-          <p class="text-[9px] text-center font-handwritten text-xl text-scrapbook-brownText">sayangg bangt ama poto ini 🤍</p>
-        </div>
-
-        <!-- Polaroid Item 4 -->
-        <div onclick="openLightbox(3)" class="bg-white p-2 pb-5 rounded-md shadow-md transform rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-300 cursor-pointer border border-scrapbook-kraft/30 relative">
-          <!-- Wooden peg at the top -->
-          <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-2 h-5 bg-[#D7A15C] rounded-sm border border-amber-800/20 shadow-sm z-10 flex flex-col items-center">
-            <div class="w-1.5 h-0.5 bg-slate-400 mt-1"></div>
-          </div>
-          <div class="w-full aspect-square bg-[#FCFAF5] rounded-sm overflow-hidden mb-2">
-            <img src="https://lh3.googleusercontent.com/d/1M43Rm4L3kNYG0zm_dVMjSmDJvAgtjPWK" class="w-full aspect-square object-cover">
-          </div>
-          <p class="text-[9px] text-center font-handwritten text-xl text-scrapbook-brownText">kangenn sumpaa sengg pen pelukk 🤍</p>
-        </div>
-
-      </div>
-
-      <!-- Next Slide Trigger Button styled like torn paper strip -->
-      <button id="to-page4" class="w-full py-4 bg-gradient-to-r from-scrapbook-rose to-scrapbook-brownText hover:opacity-95 text-white font-semibold text-xs rounded-full shadow-md transition-all border-2 border-dashed border-white/30">
-        terakhir dehh, inii buat kamuu! ✨
-      </button>
-    </section>
-
-    <!-- ================= PAGE 4: THE GRAND FINALE ================= -->
-    <section id="page4" class="page-card hidden w-full bg-[#2C211A] text-[#FAF6EE] rounded-2xl p-6 shadow-2xl border-2 border-scrapbook-kraft flex flex-col items-center space-y-6 relative overflow-hidden">
-      
-      <!-- Star dust fairy lights particles backdrop -->
-      <canvas id="sky-canvas" class="absolute inset-0 w-full h-full pointer-events-auto z-0 rounded-2xl"></canvas>
-
-      <!-- Corner photo corner sticker decoration -->
-      <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-scrapbook-rose/30 rounded-tr-xl pointer-events-none z-10"></div>
-      <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-scrapbook-rose/30 rounded-bl-xl pointer-events-none z-10"></div>
-
-      <div class="relative z-10 text-center w-full flex flex-col items-center space-y-5">
-        <div class="text-[9px] bg-white/10 text-scrapbook-kraft border border-white/10 font-mono px-3 py-1 rounded-full uppercase tracking-widest font-bold">chapter 03 — final memory</div>
-        
-        <div class="space-y-1">
-          <p class="text-xs text-scrapbook-rose font-mono tracking-widest uppercase">happy level up day, ayyaa!</p>
-          <h1 class="font-serif text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#FAF6EE] via-[#E8A87C] to-[#E98074]">
-            HAPPY BIRTH DAY SAYANGG! 🎂
-          </h1>
-        </div>
-
-        <!-- Scrapbook-styled list of reason items -->
-        <div class="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 text-left shadow-inner">
-          <h3 class="text-[10px] uppercase tracking-widest text-scrapbook-peach font-mono font-bold mb-3 flex items-center gap-1.5">
-            <i class="fa-solid fa-heart text-scrapbook-rose text-[9px] animate-pulse"></i> impression for you:
-          </h3>
-          <div class="grid grid-cols-1 gap-2 text-xs" id="reasons-container">
-            <!-- Modern minimalistic reason cards -->
-            <div class="reason-item bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-xl p-3 cursor-pointer transition-all flex items-start gap-3" data-active="false">
-              <span class="text-scrapbook-rose text-xs mt-0.5"><i class="fa-regular fa-star"></i></span>
-              <div class="space-y-1">
-                <p class="text-slate-300 font-medium">tempat ter-nyaman aku!</p>
-                <p class="hidden text-[#FAF6EE] text-[10px] font-mono leading-relaxed pt-1.5 border-t border-white/5">haii. trimakasii udaa jadi tempat ter-nyaman aku, yang mau dengerin semua cerita gajelas aku, slalu ngertiin aku, tempat curhat aku, sampe jadi sandaran ternyamannya aku, gatau kenapaa kalo sama kamu tu udah ilang semua beban akuu ayy..</p>
-              </div>
+                <button onclick="checkPassword()" 
+                    class="w-full mt-2 bg-[#e79e8c] text-white py-3 rounded-xl font-medium tracking-wide shadow-sm hover:bg-[#db8d7b] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 text-sm">
+                    Login <i data-lucide="log-in" class="w-4 h-4"></i>
+                </button>
+                
+                <p id="password-error" class="text-xs text-red-400 font-light text-center hidden pt-1">Username atau password salah boloo 🥺</p>
             </div>
-            <div class="reason-item bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-xl p-3 cursor-pointer transition-all flex items-start gap-3" data-active="false">
-              <span class="text-scrapbook-rose text-xs mt-0.5"><i class="fa-regular fa-star"></i></span>
-              <div class="space-y-1">
-                <p class="text-slate-300 font-medium font-sans">sipalingg.</p>
-                <p class="hidden text-[#FAF6EE] text-[10px] font-mono leading-relaxed pt-1.5 border-t border-white/5">trimakasii juga udah slalu ngingetinn orang yang batu kek aku ini untuk brubah jadi lebih baik, slalu nanyainn sampe ngasii kabar tiap hari, dan slalu jadi support systemku buat berubah lebih baikk.</p>
-              </div>
+
+            <div class="text-[11px] text-gray-400 pt-4 border-t border-[#f3eae1] font-light">
+                All About Us • Private Account
             </div>
-            <div class="reason-item bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-xl p-3 cursor-pointer transition-all flex items-start gap-3" data-active="false">
-              <span class="text-scrapbook-rose text-xs mt-0.5"><i class="fa-regular fa-star"></i></span>
-              <div class="space-y-1">
-                <p class="text-slate-300 font-medium">17th.</p>
-                <p class="hidden text-[#FAF6EE] text-[10px] font-mono leading-relaxed pt-1.5 border-t border-white/5">aku sering ngerasa, hadirnya kamu di sweet seventeen ku tu bukan sekedar hadir doang ayy, tapi hadiah dari tuhan buat aku yang udah di rencanain sedemikian rupa!.</p>
-              </div>
-            </div>
-          </div>
-          <p class="text-[9px] text-center text-slate-400 mt-2 italic"><i class="fas fa-info-circle"></i> klik tiap kotak di atas buat liat kesan dari aku!</p>
         </div>
-
-        <!-- Custom Typewriter Box with Notion look -->
-        <div class="w-full bg-black/40 backdrop-blur-sm border border-white/5 p-4 rounded-xl text-left text-xs text-[#EAE7DC] font-mono leading-relaxed h-32 overflow-y-auto" id="typewriter-box">
-          <span id="typewriter-text"></span><span class="animate-pulse font-bold text-scrapbook-rose">|</span>
-        </div>
-
-        <!-- ================= PENULISAN PESAN UNTUK KITA ================= -->
-        <div class="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 text-left shadow-inner space-y-3">
-          <h3 class="text-[10px] uppercase tracking-widest text-scrapbook-peach font-mono font-bold flex items-center gap-1.5">
-            <i class="fa-solid fa-pen-nib text-scrapbook-rose text-[9px]"></i> tulis pesan balasanmu di sini ya ayy:
-          </h3>
-          <textarea id="nayy-reply-input" rows="3" placeholder="bolee tinggalin pesan buat a ikii?..." class="w-full p-3 bg-black/20 text-[#FAF6EE] text-xs font-mono rounded-xl border border-white/10 focus:outline-none focus:border-scrapbook-rose transition-all resize-none"></textarea>
-          <div class="flex justify-between items-center">
-            <span id="saved-status-text" class="text-[10px] text-emerald-400 font-mono italic opacity-0"><i class="fas fa-check-circle"></i> pesan tersimpan aman!</span>
-            <button id="btn-save-reply" class="px-4 py-2 bg-scrapbook-rose hover:bg-scrapbook-rose/90 text-white font-semibold text-[10px] rounded-lg transition-all shadow-sm">
-              simpan pesan <i class="fas fa-save ml-1"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Small User Interactive Tip -->
-        <p class="text-[9px] text-scrapbook-kraft/70 flex items-center gap-1.5 justify-center">
-          <i class="fa-solid fa-wand-magic-sparkles text-scrapbook-rose animate-pulse"></i> klik di mana aja buat terbangkan peri lampu hangat! 🏮
-        </p>
-
-        <!-- Minimalist restart button -->
-        <button id="btn-restart" class="mt-2 px-5 py-2 bg-white/5 text-scrapbook-kraft hover:text-white text-xs rounded-full border border-white/10 transition-all flex items-center gap-1.5">
-          <i class="fas fa-redo-alt text-[9px]"></i> mulai ulang
-        </button>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ================= LIGHTBOX MODAL FOR IMAGES ================= -->
-  <div id="lightbox" class="fixed inset-0 bg-[#07080f]/90 z-50 flex flex-col items-center justify-center p-6 hidden opacity-0 transition-opacity duration-300">
-    <button onclick="closeLightbox()" class="absolute top-6 right-6 text-white text-2xl hover:text-scrapbook-rose transition-colors"><i class="fa-solid fa-xmark"></i></button>
-    <div class="bg-white p-4 pb-8 rounded-lg max-w-[310px] w-full shadow-2xl border border-white/10 transform scale-95 transition-transform duration-300 relative" id="lightbox-card">
-      <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-14 h-5 bg-scrapbook-tapePink border-l border-r border-dashed border-white/30 transform -rotate-6 z-10"></div>
-      <img id="lightbox-img" src="" class="w-full aspect-square object-cover rounded-sm mb-4">
-      <p id="lightbox-caption" class="font-handwritten text-2xl text-center text-scrapbook-brownText leading-snug px-2"></p>
     </div>
-  </div>
 
-  <script>
-    const momentsData = [
-      { image: "https://lh3.googleusercontent.com/d/1rxhWjY-eNjUp6j0DuXJAHxFTpCZilv5s", caption: "ciee yang Level UP!!... 🤍" },
-      { image: "https://lh3.googleusercontent.com/d/1TvvkzFgSApHrYu-hMQMtiYZt9vZP-N-j", caption: "kangenn genggam tidaa? 🤍" },
-      { image: "https://lh3.googleusercontent.com/d/1-3B6onz5Y86nUu13aKHsXEmHKyBYIVkH", caption: "sayangg bangt ama poto ini 🤍" },
-      { image: "https://lh3.googleusercontent.com/d/1TT4vSXW09_nssWlU3R06mltMCUAt4334", caption: "kangenn sumpaa sengg pen pelukk 🤍" }
-    ];
-    const typewriterMessage = "hari ini, hari dimana seorang NAYYARA RAMADHANI PUTRI IRHANTO lahir ke duniaa. slamat ulang tahun ke-18 yaa. aku mau bilang, trimakasii banyak udah mau ketemu, kenal, dan deket sama aku. trimakasi jugaa udah jadi BEST PART buat aku, yang slalu ngertiin sampe sayang ama aku. and trimakasi udah hadir di sweet seventeen aku, jangan berubah yaa!! tetepp jadi NAYYARAA yang aku kenal. semoga di 18 ini, semesta slalu dengerin semua wish list baik kamu. kalo ada apa-apaa, bilang aku yaa! aku gaakan kemana mana kok, aku bakal sama kayak yang kamu kenal! i always support and pround of you. happy birthday, ketua sayangg!  LOVE YOU ❤️";
+    <!-- ================= MAIN WEBSITE CONTENT (HIDDEN UNTIL LOGIN) ================= -->
+    <div id="main-content" class="hidden min-h-screen flex flex-col">
+        
+        <!-- HEADER / NAVIGATION (INSTAGRAM STYLE TOP BAR) -->
+        <header class="sticky top-0 z-40 bg-[#f7f3ed]/90 backdrop-blur-md border-b border-[#ebdcd0]">
+            <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <span class="text-2xl font-serif-aesthetic font-semibold text-[#bd7a6b] tracking-wider cursor-pointer" onclick="switchTab('home')">About Us</span>
+                    <span id="header-user-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-[#f1e4d8] text-[#8e766e] font-medium font-serif-aesthetic flex items-center gap-1">
+                        <!-- Filled by JS -->
+                    </span>
+                    
+                    <!-- Indikator Koneksi Realtime -->
+                    <span id="db-status-badge" class="text-[10px] px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-medium flex items-center gap-1 cursor-pointer transition-all hover:bg-red-200" onclick="openDebugModal()" title="Klik untuk cek status error detail">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span> Menyambungkan...
+                    </span>
+                </div>
+                
+                <!-- Instagram Top Icons -->
+                <div class="flex items-center space-x-5 text-[#8e766e]">
+                    <button onclick="switchTab('profile')" class="hover:text-[#bd7a6b] transition-colors relative" title="Momen Spesial">
+                        <i data-lucide="heart" class="w-6 h-6"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-400"></span>
+                    </button>
+                    <button onclick="switchTab('chat')" class="hover:text-[#bd7a6b] transition-colors relative" title="Pesan Cinta">
+                        <i data-lucide="message-circle" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
 
-    let isPlaying = false;
-    let typewriterIndex = 0;
-    let typewriterInterval;
-    let countAttempts = 0;
+        <!-- CONTAINER JURNAL -->
+        <main class="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 py-8">
 
-    // Lilin status tiup
-    let candle1Blown = false;
-    let candle8Blown = false;
+            <!-- ================= HOME SECTION (Notebook Style) ================= -->
+            <section id="home-sec" class="fade-in space-y-6">
+                <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 sm:p-10 shadow-sm relative overflow-hidden">
+                    
+                    <!-- Notebook Ring Bindings (Left Side Decorative) -->
+                    <div class="absolute left-2 sm:left-4 top-12 bottom-12 flex flex-col justify-between pointer-events-none z-10 w-4">
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner mb-4"></div>
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner mb-4"></div>
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner mb-4"></div>
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner mb-4"></div>
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner mb-4"></div>
+                        <div class="w-3 h-5 rounded-full bg-[#cfc3b7] shadow-inner"></div>
+                    </div>
 
-    // DOM Elements
-    const bgMusic = document.getElementById('bg-music');
-    const musicToggle = document.getElementById('music-toggle');
-    const musicIcon = document.getElementById('music-icon');
-    const vinylDisk = document.getElementById('vinyl-disk');
-    const musicTitle = document.getElementById('music-title');
+                    <!-- Inner Page with Lines -->
+                    <div class="pl-8 sm:pl-12 pr-2 sm:pr-4 space-y-8 relative">
+                        <!-- Tape Decoration -->
+                        <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 w-28 h-6 bg-[#f0e3d5]/70 border-dashed border-b border-[#ebdcd0] rotate-1 pointer-events-none"></div>
 
-    const landingPage = document.getElementById('landing-page');
-    const cakePage = document.getElementById('cake-page');
-    const p1 = document.getElementById('page1');
-    const p2 = document.getElementById('page2');
-    const p3 = document.getElementById('page3');
-    const p4 = document.getElementById('page4');
-    
-    const pinInput = document.getElementById('pin-input');
-    const btnPinSubmit = document.getElementById('btn-pin-submit');
-    const pinErrorMsg = document.getElementById('pin-error-msg');
-    
-    const flame1 = document.getElementById('flame-1');
-    const flame8 = document.getElementById('flame-8');
-    const candle1 = document.getElementById('candle-1');
-    const candle8 = document.getElementById('candle-8');
-    const cakeSuccessContainer = document.getElementById('cake-success-container');
-    const btnToPage1 = document.getElementById('btn-to-page1');
+                        <!-- Date & Header -->
+                        <div class="flex justify-between items-center border-b border-[#ebdcd0] pb-3">
+                            <span class="font-handwritten text-[#bd7a6b] text-2xl sm:text-3xl font-bold">About Us..</span>
+                        </div>
 
-    const btnYa = document.getElementById('btn-ya');
-    const btnTidak = document.getElementById('btn-tidak');
-    const bubbleComment = document.getElementById('bubble-comment');
-    const replyInput = document.getElementById('nayy-reply-input');
+                        <!-- Main Photo Box -->
+                        <div class="relative group rounded-2xl overflow-hidden border-4 border-white shadow-md rotate-[-1deg] transition-transform hover:rotate-0 duration-300 bg-white">
+                            <div class="aspect-[16/9] w-full bg-[#f5ebe0] flex flex-col items-center justify-center text-center relative overflow-hidden">
+                                <img id="main-photo" src="https://lh3.googleusercontent.com/d/1jrcTIlvUwQPy0c1CcQQ3h8Zb_aH5BmJ9" alt="Foto Utama"
+                                    onerror="this.style.display='none'; document.getElementById('main-photo-fallback').style.display='flex';" 
+                                    class="w-full h-full object-cover">
+                                <div id="main-photo-fallback" class="absolute inset-0 hidden flex-col items-center justify-center text-center p-4">
+                                    <i data-lucide="image" class="w-12 h-12 text-[#e79e8c] mb-2"></i>
+                                    <span class="text-sm text-gray-400">Foto Utama Jurnal</span>
+                                </div>
+                            </div>
+                        </div>
 
-    const funnyComments = [
-      "males banget dih wkwk 😜",
-      "pencet 'sayang banget' aja napa!",
-      "eh jempolnya meleset ya? 😂",
-      "ganti haluan cepet ayyy!",
-      "tombol ini mogok kerja dulu 🤔",
-      "ga usah maksa deh, klik 'Ya' aja ❤️"
-    ];
+                        <!-- Cute Note Text -->
+                        <div class="space-y-4 text-sm sm:text-base leading-relaxed text-[#5c4a47] font-light">
+                            <p class="indent-6">
+                                https://kiimaulaa.github.io/HBD/
+                            </p>
+                            <p class="indent-6 font-handwritten text-2xl text-[#bd7a6b] pt-2 text-center">
+                                Love You! 🤍
+                            </p>
+                        </div>
 
-    // Autoload reply message from localStorage so it persists across refreshes
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedReply = localStorage.getItem('nayyara_reply_message');
-      if (savedReply) {
-        replyInput.value = savedReply;
-      }
-    });
+                        <!-- Photo Button Trigger -->
+                        <div class="pt-4 text-center">
+                            <button onclick="scrollToSection('gallery-sec')" class="inline-flex items-center gap-2 bg-[#e79e8c] text-white px-8 py-3.5 rounded-full text-sm font-medium hover:bg-[#db8d7b] shadow-sm hover:shadow transition-all transform hover:-translate-y-0.5">
+                                foto kita ada disini!! <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    // Real-time autosave as Nayyara types so nothing is lost even on crash/refresh
-    replyInput.addEventListener('input', () => {
-      localStorage.setItem('nayyara_reply_message', replyInput.value);
-    });
+            <!-- ================= PLAYLIST SECTION ================= -->
+            <section id="playlist-sec" class="hidden space-y-6 fade-in">
+                <div class="text-center space-y-2">
+                    <h2 class="text-2xl font-serif-aesthetic font-semibold text-[#4a3e3d]">Our Playlist</h2>
+                    <p class="text-xs text-gray-500 max-w-sm mx-auto">Setiap lagu punya cerita pasti punya ceritaa.</p>
+                </div>
 
-    // Control Audio Track Play / Pause
-    function toggleMusic(forcePlay = null) {
-      if (forcePlay === true) {
-        bgMusic.play().then(() => {
-          isPlaying = true;
-          musicIcon.className = "fas fa-pause text-[10px]";
-          vinylDisk.classList.add('animate-vinyl');
-        }).catch(e => {
-          console.log("Musik tertahan sistem browser. Menunggu klik user.");
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- LAGU 1 -->
+                    <div onclick="openMusicPopup('About You', 'Yogyakarta', 'Sekalinya sudah jatuh cinta, mau seluruh dunia bilang nggak boleh, kamu bakalan tetap jatuh cinta. -bandung after rain.', 'romantic_sunset', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/About%20You%20-%20The%201975%20%5BiqGAW57EudQ%5D.mp3', 'https://lh3.googleusercontent.com/d/122shN5knxsE9rCP8GckDax5xlxOUCk3i')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">About You</h3>
+                                <p class="text-xs text-gray-400">The 1975</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 2 -->
+                    <div onclick="openMusicPopup('Semua Aku Dirayakan', 'Yogyakarta', 'Sweet Seventeen september yang dirayain langsung sama tuhan. awal mula kite deket dan ternyata birthday kita cuma beda seminggu. HAPPY 12 and 19 september.', 'cozy_night', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadin%20Amizah%20-%20Semua%20Aku%20Dirayakan%20(Official%20Music%20Video)%20%5BCptnLrdF3_E%5D%20(1).mp3', 'https://lh3.googleusercontent.com/d/1en-sgqMk2rbE_DrL2dwfaFYt5D9OT4jQ')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Semua Aku Dirayakan</h3>
+                                <p class="text-xs text-gray-400">Nadin Amizah</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 3 -->
+                    <div onclick="openMusicPopup('Jatuh Suka', 'Yogyakarta', 'Seperti 3726 mdpl, selalu butuh waktu yang lama untuk mendapatkan sesuatu di kehidupan ini. -3726 mdpl.', 'rainy_day', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/TULUS%20-%20Jatuh%20Suka%20(Official%20Lyric%20Video)%20%5B2uJut6USftQ%5D.mp3', 'https://lh3.googleusercontent.com/d/1jrcTIlvUwQPy0c1CcQQ3h8Zb_aH5BmJ9')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Jatuh Suka</h3>
+                                <p class="text-xs text-gray-400">Tulus</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 4 -->
+                    <div onclick="openMusicPopup('Penjaga Hati', 'Yogyakarta', 'bahkan di bumi yang Sangat luas ini, bagian Paling menyenangkan adalah bertemu denganmu -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/nadhif%20basalamah%20-%20penjaga%20hati%20(Official%20Music%20Video)%20%5Bjia3fhBQ8qI%5D.mp3', 'https://lh3.googleusercontent.com/d/1mBTKZo7X21O2sStYglfICsRgizdj7xpz')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Penjaga Hati</h3>
+                                <p class="text-xs text-gray-400">Nadhif Basalamah</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 5 -->
+                    <div onclick="openMusicPopup('Bergema Sampai Selamanya', 'Yogyakarta', 'jatuh cinta harus menggunakan kesabaran, bukan agar dunia tahu. tapi agar dunia tidak menyeramkan saat dia bersama kita. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadhif%20Basalamah%20-%20bergema%20sampai%20selamanya%20(Official%20Lyric%20Video)%20%5BgvunApwKIiY%5D.mp3', 'https://lh3.googleusercontent.com/d/1uxhXiUlN4Hc3ijpuM8w0oYrSsxZnuyF6')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Bergema Sampai Selamanya</h3>
+                                <p class="text-xs text-gray-400">Nadhif Basalamah</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 6 -->
+                    <div onclick="openMusicPopup('Kota Ini Tak Sama Tanpamu', 'Yogyakarta', 'Di cerita gue yang membosankan ini, semoga lo tetap betah jadi tokoh utamanya. -3726 mdpl', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadhif%20Basalamah%20-%20kota%20ini%20tak%20sama%20tanpamu%20(Official%20Lyric%20Video)%20%5Bgrp6FCnioMM%5D.mp3', 'https://lh3.googleusercontent.com/d/1AEbIhKklIJeurldLt7tT5kmx4XoEh8eB')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Kota Ini Tak Sama Tanpamu</h3>
+                                <p class="text-xs text-gray-400">Nadhif Basalamah</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 7 -->
+                    <div onclick="openMusicPopup('Senja Sudut Kota', 'Yogyakarta', 'Senja ALKID jadi saksi buat first date kitaa.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/SAMUEL%20CIPTA%20-%20SENJA%20SUDUT%20KOTA%20(OFFICIAL%20MUSIC%20VIDEO)%20%5BD89cIekJNH8%5D.mp3', 'https://lh3.googleusercontent.com/d/11sR9O-wcXukY-3V5KwxojFNts6oP9-_o')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Senja Sudut Kota</h3>
+                                <p class="text-xs text-gray-400">SAMUEL Cipta</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 8 -->
+                    <div onclick="openMusicPopup('Shape of My Heart', 'Yogyakarta', 'Untuk yang menyenangkan, semoga dia tidak pernah berubah. Terima kasih sudah datang sebagai tawa, senang, dan suka. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Backstreet%20Boys%20-%20Shape%20Of%20My%20Heart%20(Official%20HD%20Video)%20%5BOT5msu-dap8%5D.mp3', 'https://lh3.googleusercontent.com/d/1bu-fNJqZcA5XmYMlDh9K5bJ8KBEL_DHS')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Shape of My Heart</h3>
+                                <p class="text-xs text-gray-400">Backstreet Boys</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 9 -->
+                    <div onclick="openMusicPopup('Celengan Rindu', 'Yogyakarta', 'Kangenn beratt, Nggamau nggaada kamuu..', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Fiersa%20besari%20-%20Celengan%20rindu%20%5BX_uIsIJD7fM%5D.mp3', 'https://lh3.googleusercontent.com/d/1u3xbfKpAMOyXZ6gSjByCRtmsAgreiwGW')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Celengan Rindu</h3>
+                                <p class="text-xs text-gray-400">Fiersa Besari</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 10 -->
+                    <div onclick="openMusicPopup('Untuk Perempuan Yang Sedang Di Pelukan', 'Yogyakarta', 'Terimakasih selalu untuk genggaman dan pelukan hangatnyaa. nayyara sayangg...', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Untuk%20Perempuan%20Yang%20Sedang%20Di%20Pelukan%20%5BjAYviJQYcAo%5D.mp3', 'https://lh3.googleusercontent.com/d/1sbh1N50j0ixsqv96yYEG_5RB1Q_Qvm_2')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Untuk Perempuan Yang Sedang Di Pelukan</h3>
+                                <p class="text-xs text-gray-400">Payung Teduh</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 11 -->
+                    <div onclick="openMusicPopup('Mantra', 'Yogyakarta', 'Barangkali Manusia Juga Bisa Disebut Sebagai Kehidupan. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Dimansyah%20Laitupa%20-%20Mantra%20(Official%20Music%20Video)%20%5B_m7R0BB86Mw%5D.mp3', 'https://lh3.googleusercontent.com/d/1L8s3Yq8F6tWYOOe4BSSqZ4KJc_6u4Gxx')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Mantra</h3>
+                                <p class="text-xs text-gray-400">Dimansyah Laitupa</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 12 -->
+                    <div onclick="openMusicPopup('Menceritakanmu', 'Yogyakarta', 'Terima kasih sudah ada di hidup gue yang sepi ini, ya. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/BATAS%20SENJA%20-%20Menceritakanmu%20(%20OFFICIAL%20LIRIK%20VIDEO%20%5B2r-jZMVDFzI%5D.mp3', 'https://lh3.googleusercontent.com/d/1N07bQZOV_5wkod4ltrr11iYzXeaKrW1-')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Menceritakanmu</h3>
+                                <p class="text-xs text-gray-400">BATAS SENJA</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 13 -->
+                    <div onclick="openMusicPopup('One Only', 'Yogyakarta', 'cuma mau kenal kamu, deket kamu, sama kamu, selamanyaa...', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Pamungkas%20-%20One%20Only%20(Lyrics%20Video)%20%5BdBFp0Ext0y8%5D.mp3', 'https://lh3.googleusercontent.com/d/1jXfUsLou2_f2ep_Zn3tvv9AHX_22MvJE')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">One Only</h3>
+                                <p class="text-xs text-gray-400">Pamungkas</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 14 -->
+                    <div onclick="openMusicPopup('Dunia Yang Nanti', 'Yogyakarta', 'Sore tidak selalu tentang jingganya langit, sore bisa saja tentang kepastian, bahwa ia sudah tersenyum hari ini. Jangan kekurangan kebahagiaan, ya?. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Raim%20Laode%20-%20Dunia%20Yang%20Nanti%20(%20Lirik%20video%20)%20%5BawWKxGftWh4%5D.mp3', 'https://lh3.googleusercontent.com/d/1W062pJnTANXyRt2OHe6paPSHqrT6UqUE')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Dunia Yang Nanti</h3>
+                                <p class="text-xs text-gray-400">Raim Laode</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 15 -->
+                    <div onclick="openMusicPopup('Kita Usahakan Rumah Itu', 'Yogyakarta', 'Kita usahakan untuk tetap jatuh cinta dengan menghargai. Semoga dia selalu mengagumkan, semoga dia selalu jadi wujud lagu sempurna untuk gue. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Sal%20Priadi%20-%20Kita%20usahakan%20rumah%20itu%20(Official%20Lyric%20Video)%20%5B7SqNVv98e8Q%5D.mp3', 'https://lh3.googleusercontent.com/d/1pmcpyjwGhHIyjQ85443fK8IEgPzfDVFL')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Kita Usahakan Rumah Itu</h3>
+                                <p class="text-xs text-gray-400">Sal Priadi</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 16 -->
+                    <div onclick="openMusicPopup('Nanti Kita Seperti Ini', 'Yogyakarta', 'Di perjalanan yang panjang ini, jangan jadi milik siapa pun dulu, ya? -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/BATAS%20SENJA%20-%20Nanti%20Kita%20Like%20This%20(OFFICIAL%20MUSIC%20VIDEO%20)%20%5Bs6H6ffS6zJI%5D.mp3', 'https://lh3.googleusercontent.com/d/1AIWMfj-RQHfr4vIzHHC0GppW7AXbp8Nn')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Nanti Kita Seperti Ini</h3>
+                                <p class="text-xs text-gray-400">Batas Senja</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 17 -->
+                    <div onclick="openMusicPopup('Taruh', 'Yogyakarta', 'Ayy, mekarlah dengan indah, meski nanti ternyata layu, lo tetap bunga. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Nadin%20Amizah%20-%20Taruh%20(Official%20Lyric%20Video)%20%5BVrp2Be-RVVM%5D.mp3', 'https://lh3.googleusercontent.com/d/1rujLxYGPqRLlh6dPQGsZTXlwinGHJQsO')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Taruh</h3>
+                                <p class="text-xs text-gray-400">Nadin Amizah</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 18 -->
+                    <div onclick="openMusicPopup('Masa Ini, Nanti, dan Masa Indah Lainnya', 'Yogyakarta', 'Setiap orang hidup dalam kalimatnya yang pernah, and sekarang sudah. Pada hal-hal yang sudah berlalu, bolehkah untuk rindu?. -3726 mdpl.', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Masa%20ini,%20Nanti,%20dan%20Masa%20Indah%20Lainnya%20%5BdsOGH_ZBdCM%5D%20(1).mp3', 'https://lh3.googleusercontent.com/d/12gSY_QmYFohFe5luMfqZASsQDATWThsy')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Masa Ini, Nanti, dan Masa Indah Lainnya</h3>
+                                <p class="text-xs text-gray-400">Nuca</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+
+                    <!-- LAGU 19 -->
+                    <div onclick="openMusicPopup('Foto Kita Blur', 'Yogyakarta', 'Diantara foto kita yang blur, semoga kamu tetep jelas buat bersinar. -3726 mdpl', 'sparkles', 'https://github.com/kiimaulaa/lagu-web/raw/refs/heads/main/Sal%20Priadi%20-%20Foto%20kita%20blur%20(Official%20Lyric%20Video)%20%5BytMxh-_6EcI%5D.mp3', 'https://lh3.googleusercontent.com/d/14jkonrfeC_SGK8iNA0E75OmjjSULahlQ')"
+                        class="flex items-center justify-between p-4 bg-[#fcfaf7] hover:bg-[#fbf4ed] border border-[#eaddd0] rounded-2xl cursor-pointer transition-all group shadow-sm hover:shadow">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-[#e79e8c]/20 flex items-center justify-center text-[#bd7a6b] group-hover:scale-110 transition-transform">
+                                <i data-lucide="music" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-[#4a3e3d] text-sm sm:text-base group-hover:text-[#bd7a6b] transition-colors">Foto Kita Blur</h3>
+                                <p class="text-xs text-gray-400">Sal Priadi</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-[#bd7a6b] font-medium flex items-center gap-1 bg-[#f7f3ed] px-3 py-1.5 rounded-lg border border-[#eaddd0]">
+                            Buka Memoar <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= GALLERY SECTION ================= -->
+            <section id="gallery-sec" class="hidden space-y-6 fade-in">
+                <div class="text-center space-y-2">
+                    <h2 class="text-2xl font-serif-aesthetic font-semibold text-[#4a3e3d]">Galeri Memori</h2>
+                    <p class="text-xs text-gray-500 max-w-sm mx-auto">Potongan cerita yang harus diabadikan.</p>
+                </div>
+
+                <!-- Input Khusus Google Drive Link -->
+                <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center gap-2 border-b border-[#ebdcd0] pb-2">
+                        <i data-lucide="link-2" class="w-5 h-5 text-[#bd7a6b]"></i>
+                        <h3 class="font-serif-aesthetic font-medium text-[#4a3e3d]">Tambah Foto/Video Baru</h3>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2.5">
+                        <input type="text" id="drive-link-input" placeholder="Tempel link Google Drive atau URL gambar/video di sini..." 
+                            class="flex-grow px-4 py-3 bg-[#f7f3ed] border border-[#eaddd0] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#e79e8c] text-[#4a3e3d]">
+                        <button onclick="addDriveItem()" 
+                            class="bg-[#e79e8c] text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-[#db8d7b] transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Tambah
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-gray-400">Mendukung link Google Drive share umum serta direct link gambar/video.</p>
+                </div>
+
+                <!-- Grid Galeri Utama -->
+                <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Foto-foto default akan dimuat dan digabungkan secara dinamis di JS -->
+                </div>
+            </section>
+
+            <!-- ================= MESSAGES CHAT SECTION (INSTAGRAM DM STYLE) ================= -->
+            <section id="chat-sec" class="hidden space-y-6 fade-in">
+                <!-- Chat Box Container -->
+                <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl shadow-sm flex flex-col h-[560px] overflow-hidden">
+                    
+                    <!-- Instagram Header Chat Bar -->
+                    <div class="bg-white px-5 py-3.5 border-b border-[#ebdcd0] flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <div id="dm-partner-avatar" class="w-10 h-10 rounded-full bg-[#bd7a6b] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                                    <!-- Dynamic Partner Avatar -->
+                                </div>
+                                <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white"></span>
+                            </div>
+                            <div>
+                                <h3 id="dm-partner-name" class="font-semibold text-[#4a3e3d] text-sm flex items-center gap-1">
+                                    <!-- Partner Name -->
+                                </h3>
+                                <p class="text-[10px] text-emerald-600 font-medium">Aktif sekarang</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Message Thread Area -->
+                    <div id="chat-thread" class="flex-grow overflow-y-auto p-4 space-y-3 bg-[#faf7f2] smooth-scroll-container">
+                        <!-- Chat messages rendered dynamically -->
+                    </div>
+
+                    <!-- Warning Banner Database Cloud -->
+                    <div id="db-warning-banner" class="hidden bg-amber-50 border-t border-amber-200 text-amber-800 text-xs p-3 space-y-1">
+                        <p class="font-bold flex items-center gap-1.5 text-[11px]">
+                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600"></i> Mode Luring (Tersimpan di HP ini)
+                        </p>
+                    </div>
+
+                    <!-- Instagram Chat Input Field -->
+                    <div class="p-3 bg-white border-t border-[#ebdcd0]">
+                        <div class="flex items-center bg-[#f7f3ed] border border-[#eaddd0] rounded-full px-4 py-1.5 focus-within:ring-2 focus-within:ring-[#e79e8c] transition-all">
+                            <input type="text" id="chat-input" placeholder="Kirim pesan..." 
+                                class="flex-grow bg-transparent text-sm text-[#4a3e3d] focus:outline-none py-1.5">
+                            <button onclick="sendChatMessage()" 
+                                class="text-[#bd7a6b] font-semibold hover:text-[#e79e8c] text-sm pl-2 transition-colors flex items-center gap-1">
+                                Send
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= PROFILE SECTION (CUSTOM INSTAGRAM PROFILE) ================= -->
+            <section id="profile-sec" class="hidden space-y-6 fade-in">
+                <!-- Profile Header Card -->
+                <div class="bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                    <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-[#f3eae1]">
+                        <!-- Dynamic User Avatar -->
+                        <div class="relative flex-shrink-0">
+                            <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 via-[#e79e8c] to-[#bd7a6b] p-1 shadow-md">
+                                <div id="profile-avatar-circle" class="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden font-serif-aesthetic text-2xl font-bold text-[#bd7a6b]">
+                                    <!-- Dynamic Avatar Letter -->
+                                </div>
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 bg-red-400 text-white rounded-full p-1.5 border-2 border-white shadow-xs">
+                                <i data-lucide="heart" class="w-3.5 h-3.5 fill-current"></i>
+                            </div>
+                        </div>
+
+                        <!-- Stats & Dynamic Profile Info -->
+                        <div class="flex-grow text-center sm:text-left space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <h2 id="profile-username-heading" class="text-xl font-bold text-[#4a3e3d]">username</h2>
+                                <span class="inline-flex items-center gap-1 bg-[#e79e8c]/20 text-[#bd7a6b] px-2.5 py-0.5 rounded-full text-xs font-semibold self-center sm:self-auto">
+                                    Official Account <i data-lucide="badge-check" class="w-3.5 h-3.5 fill-current"></i>
+                                </span>
+                            </div>
+
+                            <!-- Followers / Following Stats -->
+                            <div class="flex justify-center sm:justify-start gap-6 text-sm">
+                                <div id="profile-stat-posts"><strong class="text-[#4a3e3d]">1</strong> Kiriman</div>
+                                <div><strong class="text-[#4a3e3d]">1</strong> Pengikut</div>
+                                <div><strong class="text-[#4a3e3d]">1</strong> Mengikuti</div>
+                            </div>
+
+                            <!-- Instagram Bio Layout -->
+                            <div id="profile-bio-container" class="text-sm space-y-1 text-gray-600">
+                                <!-- Dynamic bio loaded via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Birthday Countdown Area -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Hitung Mundur Ayyaa -->
+                        <div class="bg-[#f7ebe0]/50 rounded-2xl p-5 text-center border border-[#ebdcd0] flex flex-col justify-center items-center">
+                            <p class="text-xs uppercase tracking-wider text-[#bd7a6b] font-semibold flex items-center gap-1">
+                                <i data-lucide="cake" class="w-3.5 h-3.5"></i> Ulang Tahun Ayyaa 🎀
+                            </p>
+                            <h3 id="ayyaa-birthday-countdown" class="text-lg font-serif-aesthetic font-semibold text-[#4a3e3d] mt-2">
+                                Menghitung waktu...
+                            </h3>
+                            <p class="text-[10px] text-gray-400 mt-1">12 September</p>
+                        </div>
+
+                        <!-- Hitung Mundur Ikii -->
+                        <div class="bg-[#f7ebe0]/50 rounded-2xl p-5 text-center border border-[#ebdcd0] flex flex-col justify-center items-center">
+                            <p class="text-xs uppercase tracking-wider text-[#bd7a6b] font-semibold flex items-center gap-1">
+                                <i data-lucide="cake" class="w-3.5 h-3.5"></i> Ulang Tahun Ikii 🧸
+                            </p>
+                            <h3 id="ikii-birthday-countdown" class="text-lg font-serif-aesthetic font-semibold text-[#4a3e3d] mt-2">
+                                Menghitung waktu...
+                            </h3>
+                            <p class="text-[10px] text-gray-400 mt-1">19 September</p>
+                        </div>
+                    </div>
+
+                    <!-- Buttons: Cloud Config & Logout -->
+                    <div class="flex flex-wrap justify-center gap-3 pt-4 border-t border-[#f3eae1]">
+                        <button onclick="openCloudConfigModal()" class="inline-flex items-center gap-1.5 text-xs text-[#bd7a6b] bg-[#e79e8c]/10 hover:bg-[#e79e8c]/20 px-4 py-2.5 rounded-xl font-medium transition-all">
+                            <i data-lucide="settings" class="w-3.5 h-3.5"></i> Pengaturan Cloud
+                        </button>
+
+                        <button onclick="logout()" class="inline-flex items-center gap-1.5 text-xs text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-xl font-medium transition-all">
+                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- ================= DIAGNOSTIC LOG MODAL (DETEKTOR ERROR) ================= -->
+        <div id="debug-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-6 hidden transition-all duration-300">
+            <div class="max-w-md w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-xl fade-in space-y-4 max-h-[80vh] flex flex-col">
+                <div class="flex items-center justify-between border-b border-[#f3eae1] pb-2 flex-shrink-0">
+                    <h3 class="text-lg font-serif-aesthetic font-semibold text-[#4a3e3d] flex items-center gap-1.5">
+                        <i data-lucide="terminal" class="w-5 h-5 text-amber-500"></i> Laporan Detektor Error
+                    </h3>
+                    <button onclick="closeDebugModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="flex-grow overflow-y-auto space-y-4 pr-1 text-xs text-gray-600 leading-relaxed font-light smooth-scroll-container">
+                    <p class="font-medium text-[#bd7a6b]">Kenapa websitemu berstatus "Luring (Offline)"?</p>
+                    <p>Status offline terjadi karena koneksi ke server database Firebase gagal dilakukan. Silakan periksa daftar baris error di bawah untuk mengetahui akar masalahnya:</p>
+                    
+                    <div class="p-3 bg-gray-900 text-gray-100 rounded-xl">
+                        <p class="font-bold text-[10px] text-gray-400 mb-1 font-mono">Daftar Diagnostik Server (Error Log):</p>
+                        <div id="debug-log-list" class="space-y-1.5 max-h-48 overflow-y-auto font-mono text-[10px]">
+                            <!-- Pesan error dari server akan masuk di sini secara otomatis -->
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-2 flex-shrink-0">
+                    <button onclick="closeDebugModal()" class="w-full bg-[#e79e8c] hover:bg-[#db8d7b] text-white py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm">
+                        Mengerti, Tutup Laporan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= CLOUD SYNC CONFIG POPUP (MODAL) ================= -->
+        <div id="cloud-config-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6 hidden transition-all duration-300">
+            <div class="max-w-md w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-xl fade-in space-y-4 max-h-[85vh] overflow-y-auto smooth-scroll-container">
+                <div class="flex items-center justify-between border-b border-[#f3eae1] pb-2">
+                    <h3 class="text-lg font-serif-aesthetic font-semibold text-[#4a3e3d] flex items-center gap-1.5">
+                        <i data-lucide="cloud" class="w-5 h-5 text-[#bd7a6b]"></i> Pengaturan Cloud Sync
+                    </h3>
+                    <button onclick="closeCloudConfigModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 leading-relaxed">
+                    Agar pesan, chat, dan foto tersinkron otomatis di semua perangkat dan browser saat dibuka melalui link GitHub Pages, silakan masukkan Firebase Project Config Anda di bawah ini:
+                </p>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">API Key</label>
+                        <input type="text" id="cfg-apiKey" placeholder="AIzaSy..." class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">Auth Domain</label>
+                        <input type="text" id="cfg-authDomain" placeholder="nama-project.firebaseapp.com" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">Project ID</label>
+                        <input type="text" id="cfg-projectId" placeholder="nama-project" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">Storage Bucket</label>
+                        <input type="text" id="cfg-storageBucket" placeholder="nama-project.appspot.com" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">Messaging Sender ID</label>
+                        <input type="text" id="cfg-messagingSenderId" placeholder="1234567890" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-0.5">App ID</label>
+                        <input type="text" id="cfg-appId" placeholder="1:12345:web:abcd" class="w-full px-3 py-2 border border-[#eaddd0] rounded-xl bg-white text-xs focus:ring-1 focus:ring-[#e79e8c] focus:outline-none">
+                    </div>
+                </div>
+
+                <p id="cloud-status-msg" class="text-xs text-center hidden font-medium"></p>
+
+                <div class="flex gap-2 pt-2">
+                    <button onclick="saveCloudConfig()" class="flex-grow bg-[#e79e8c] hover:bg-[#db8d7b] text-white py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm">
+                        Simpan & Hubungkan
+                    </button>
+                    <button onclick="resetCloudConfig()" class="px-4 bg-gray-200 hover:bg-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-medium transition-all" title="Reset Konfigurasi">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PLAYLIST DETAIL POPUP (MODAL) ================= -->
+        <div id="music-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6 hidden transition-all duration-300">
+            <div class="max-w-md w-full bg-[#fcfaf7] border border-[#eaddd0] rounded-3xl p-6 shadow-xl fade-in space-y-5 relative max-h-[85vh] overflow-y-auto scroll-smooth smooth-scroll-container pr-2">
+                
+                <!-- Close Button -->
+                <button onclick="closeMusicPopup()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10 bg-[#fcfaf7] rounded-full p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+
+                <!-- Date (Top) -->
+                <div class="border-b border-[#f3eae1] pb-2 pt-2">
+                    <span id="modal-date" class="text-xs font-mono text-[#bd7a6b] uppercase tracking-wider">12 SEPTEMBER 2024</span>
+                </div>
+
+                <!-- Title -->
+                <h3 id="modal-title" class="text-xl font-serif-aesthetic font-semibold text-[#4a3e3d]">Semua Aku Dirayakan</h3>
+
+                <!-- Middle Photo (Drive Image / SVG Fallback) -->
+                <div class="w-full aspect-[4/3] rounded-2xl bg-[#f5ebe0] border border-[#ebdcd0] overflow-hidden flex flex-col items-center justify-center relative flex-shrink-0">
+                    <img id="popup-image" src="" class="w-full h-full object-cover hidden" onerror="this.style.display='none'; document.getElementById('modal-icon-container').style.display='flex';">
+                    
+                    <div id="modal-icon-container" class="w-16 h-16 rounded-full bg-white/80 flex items-center justify-center text-[#bd7a6b] mb-3 shadow-xs">
+                        <i data-lucide="music-3" class="w-8 h-8"></i>
+                    </div>
+                </div>
+
+                <!-- Description (Bottom) -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-semibold text-[#bd7a6b] uppercase tracking-wide">Pesan Kenangan:</h4>
+                    <p id="modal-desc" class="text-sm text-[#5c4a47] leading-relaxed font-light break-words">
+                        About Us
+                    </p>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="closeMusicPopup()" 
+                        class="w-full bg-[#f1e4d8] text-[#8e766e] py-2.5 rounded-xl text-sm font-medium hover:bg-[#eaddd0] transition-colors">
+                        Okeyy..
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= STICKY AUDIO PLAYER ================= -->
+        <div class="fixed bottom-24 right-4 z-40 bg-[#fbf9f6] border border-[#eaddd0] rounded-2xl p-3 shadow-md max-w-xs flex items-center space-x-3.5 fade-in">
+            <div class="relative flex-shrink-0">
+                <div id="vinyl-record" class="w-10 h-10 rounded-full bg-[#27272a] flex items-center justify-center">
+                    <span class="w-3 h-3 rounded-full bg-[#fbf9f6]"></span>
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                </div>
+            </div>
+            <div class="flex-grow min-w-0 pr-1">
+                <p class="text-[10px] font-mono tracking-widest text-[#bd7a6b] uppercase font-bold">Journal Tune</p>
+                <p id="now-playing-title" class="text-xs font-medium text-[#4a3e3d] truncate">Pilih Melodi...</p>
+            </div>
+            <button onclick="toggleGlobalAudio()" id="global-play-btn" class="w-8 h-8 rounded-full bg-[#e79e8c]/20 hover:bg-[#e79e8c]/30 text-[#bd7a6b] flex items-center justify-center transition-colors">
+                <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+            </button>
+        </div>
+
+        <!-- ================= INSTAGRAM-STYLE FIXED BOTTOM NAVIGATION ================= -->
+        <div class="fixed bottom-0 left-0 right-0 bg-[#fcfaf7] border-t border-[#ebdcd0] z-50 py-3.5 px-6 flex justify-around items-center md:max-w-4xl md:mx-auto md:rounded-t-3xl md:border-x shadow-lg">
+            <!-- Home Tab Button -->
+            <button id="nav-home" onclick="switchTab('home')" class="flex flex-col items-center justify-center text-[#bd7a6b] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Beranda">
+                <i data-lucide="home" class="w-6 h-6"></i>
+            </button>
+            
+            <!-- Search Tab Button (Lagu) -->
+            <button id="nav-search" onclick="switchTab('search')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Melodi">
+                <i data-lucide="music" class="w-6 h-6"></i>
+            </button>
+            
+            <!-- Create Post Tab Button (Galeri) -->
+            <button id="nav-plus" onclick="switchTab('plus')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Galeri">
+                <i data-lucide="image" class="w-6 h-6"></i>
+            </button>
+            
+            <!-- Chat Tab Button (Pesan Kita) -->
+            <button id="nav-chat" onclick="switchTab('chat')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Pesan Cinta">
+                <i data-lucide="message-circle" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Profile Tab Button (Insta Profile Page) -->
+            <button id="nav-profile" onclick="switchTab('profile')" class="flex flex-col items-center justify-center text-[#8e766e] hover:text-[#bd7a6b] transition-all transform hover:scale-105" title="Profil Kita">
+                <div class="w-6 h-6 rounded-full border border-current flex items-center justify-center overflow-hidden">
+                    <span id="nav-profile-initial" class="text-[9px] font-bold font-serif-aesthetic">AI</span>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase App dan Services -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ================= MANUAL FIREBASE CONFIGURATION FOR DEPLOYMENT =================
+        const MANUAL_FIREBASE_CONFIG = {
+          apiKey: "AIzaSyDlRPLT4wj9Z5Ty4E9zHiWM2J1XsFt5lH4",
+          authDomain: "kiiayyaa.firebaseapp.com",
+          projectId: "kiiayyaa",
+          storageBucket: "kiiayyaa.firebasestorage.app",
+          messagingSenderId: "493602497047",
+          appId: "1:493602497047:web:df1dd4f9f96f8fb8eeb252"
+        };
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ayyaa-ikii-couplegram';
+        let db = null;
+        let auth = null;
+        let isFirebaseReady = false;
+        let currentAuthUser = null;
+
+        // User Account Logged-In State
+        let currentUser = localStorage.getItem('couplegram_current_user') || null; // 'ikii' or 'ayyaa'
+
+        // Referensi pembersih listener realtime
+        let unsubscribeChats = null;
+        let unsubscribeGallery = null;
+
+        // Debug Logger
+        function logDebug(stage, status, detail = "") {
+            console.log(`[DEBUG] ${stage}: ${status} ${detail}`);
+            const logEl = document.getElementById('debug-log-list');
+            if (logEl) {
+                const time = new Date().toLocaleTimeString();
+                logEl.innerHTML += `<div class="py-1 border-b border-gray-800 text-[10px]"><span class="text-gray-500">[${time}]</span> <span class="text-amber-400 font-semibold">${stage}</span>: ${status} <span class="text-red-400 break-all font-mono font-medium">${detail}</span></div>`;
+            }
+        }
+
+        let firebaseConfig = null;
+
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            try {
+                firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+            } catch (e) {
+                console.error("Gagal melakukan inisialisasi platform Firebase: ", e);
+            }
+        } else {
+            const savedConfig = localStorage.getItem('custom_firebase_config');
+            if (savedConfig) {
+                try {
+                    firebaseConfig = JSON.parse(savedConfig);
+                } catch (e) {
+                    console.error("Gagal memproses config dari localStorage: ", e);
+                }
+            } else {
+                firebaseConfig = MANUAL_FIREBASE_CONFIG;
+            }
+        }
+
+        if (firebaseConfig) {
+            try {
+                logDebug("Sistem", "Menginisialisasi Firebase...");
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                isFirebaseReady = true;
+                logDebug("Sistem", "Berhasil dimuat.");
+
+                const initAuth = async () => {
+                    try {
+                        logDebug("Autentikasi", "Mencoba masuk...");
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (err) {
+                        logDebug("Autentikasi", "Masuk Gagal!", err.code + " - " + err.message);
+                        updateUIConnectionStatus(false);
+                    }
+                };
+
+                initAuth().then(() => {
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            currentAuthUser = user;
+                            logDebug("Autentikasi", "Pengguna Terdaftar UID: " + user.uid);
+                            updateUIConnectionStatus(true);
+                            if (currentUser) {
+                                setupDataListeners();
+                            }
+                        } else {
+                            logDebug("Autentikasi", "Status berubah menjadi keluar.");
+                            updateUIConnectionStatus(false);
+                        }
+                    });
+                });
+
+            } catch (e) {
+                logDebug("Sistem", "Inisialisasi Gagal!", e.message);
+                updateUIConnectionStatus(false);
+            }
+        } else {
+            logDebug("Sistem", "Konfigurasi tidak ditemukan.");
+            updateUIConnectionStatus(false);
+        }
+
+        function updateUIConnectionStatus(connected) {
+            const badge = document.getElementById('db-status-badge');
+            if (!badge) return;
+
+            if (connected) {
+                badge.className = "text-[10px] px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-medium flex items-center gap-1 cursor-pointer transition-all hover:bg-green-200";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Terhubung (Cloud)`;
+                const warn = document.getElementById('db-warning-banner');
+                if (warn) warn.classList.add('hidden');
+            } else {
+                badge.className = "text-[10px] px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-medium flex items-center gap-1 cursor-pointer transition-all hover:bg-red-200";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Luring (Offline)`;
+                const warn = document.getElementById('db-warning-banner');
+                if (warn) warn.classList.remove('hidden');
+            }
+        }
+
+        let fallbackChats = JSON.parse(localStorage.getItem('ayyaa_ikii_chat')) || [];
+        let fallbackGallery = JSON.parse(localStorage.getItem('ayyaa_ikii_gallery_custom')) || [];
+
+        lucide.createIcons();
+
+        const defaultGalleryItems = [
+            {
+                url: "https://lh3.googleusercontent.com/d/1TvvkzFgSApHrYu-hMQMtiYZt9vZP-N-j",
+                caption: "First Date di Gellato",
+                id: "default-1",
+                isDefault: true
+            }
+        ];
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // Auto Login if session exists
+        window.addEventListener('DOMContentLoaded', () => {
+            if (currentUser === 'ikii' || currentUser === 'ayyaa') {
+                document.getElementById('password-gate').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                updateProfileView();
+                switchTab('home');
+                setupDataListeners();
+
+                setInterval(() => {
+                    updateBirthdayCountdowns();
+                }, 1000);
+                updateBirthdayCountdowns();
+            }
         });
-      } else if (forcePlay === false) {
-        bgMusic.pause();
-        isPlaying = false;
-        musicIcon.className = "fas fa-play text-[10px] pl-0.5";
-        vinylDisk.classList.remove('animate-vinyl');
-      } else {
-        if (!isPlaying) {
-          bgMusic.play().then(() => {
-            isPlaying = true;
-            musicIcon.className = "fas fa-pause text-[10px]";
-            vinylDisk.classList.add('animate-vinyl');
-          }).catch(e => {
-            console.log("Musik tertahan browser.");
-          });
-        } else {
-          bgMusic.pause();
-          isPlaying = false;
-          musicIcon.className = "fas fa-play text-[10px] pl-0.5";
-          vinylDisk.classList.remove('animate-vinyl');
+
+        // Instagram System Login Check
+        async function checkPassword() {
+            const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
+            const passwordInput = document.getElementById('login-password').value.trim();
+            const errorText = document.getElementById('password-error');
+            const passwordGate = document.getElementById('password-gate');
+            const passwordCard = document.getElementById('password-card');
+            const mainContent = document.getElementById('main-content');
+
+            let isValid = false;
+
+            if (usernameInput === 'ikii' && passwordInput === '1909') {
+                currentUser = 'ikii';
+                isValid = true;
+            } else if (usernameInput === 'ayyaa' && passwordInput === '1209') {
+                currentUser = 'ayyaa';
+                isValid = true;
+            }
+
+            if (isValid) {
+                localStorage.setItem('couplegram_current_user', currentUser);
+                errorText.classList.add('hidden');
+                
+                passwordGate.style.opacity = '0';
+                passwordGate.style.transition = 'opacity 0.3s ease-out';
+                
+                setTimeout(() => {
+                    passwordGate.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    updateProfileView();
+                    switchTab('home');
+
+                    setupDataListeners();
+                    
+                    setInterval(() => {
+                        updateBirthdayCountdowns();
+                    }, 1000);
+                    updateBirthdayCountdowns();
+                }, 300);
+            } else {
+                errorText.classList.remove('hidden');
+                passwordCard.classList.add('shake');
+                setTimeout(() => {
+                    passwordCard.classList.remove('shake');
+                }, 800);
+            }
         }
-      }
-    }
 
-    // Event listener tombol musik manual
-    musicToggle.addEventListener('click', () => toggleMusic());
-
-    // PIN Submit logic
-    function validatePin() {
-      const enteredPin = pinInput.value.trim();
-      if (enteredPin === "190908") {
-        pinErrorMsg.classList.add('hidden');
-        musicTitle.textContent = "Semua Aku Dirayakan";
-        toggleMusic(true); 
-        
-        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
-        navigateToPage(landingPage, cakePage);
-      } else {
-        landingPage.classList.add('shake-anim');
-        pinErrorMsg.textContent = "kodenya salah ayy, coba diinget lagi format ddmmyy!";
-        pinErrorMsg.classList.remove('hidden');
-        
-        // Shake animation on container
-        const container = document.getElementById('pin-input-container');
-        container.classList.add('shake-anim');
-        setTimeout(() => {
-          landingPage.classList.remove('shake-anim');
-          container.classList.remove('shake-anim');
-        }, 400);
-      }
-    }
-
-    btnPinSubmit.onclick = validatePin;
-    pinInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') validatePin(); });
-
-    // Tiup lilin logic
-    function checkCandles() {
-      if (candle1Blown && candle8Blown) {
-        confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
-        cakeSuccessContainer.classList.remove('hidden');
-        setTimeout(() => {
-          cakeSuccessContainer.classList.add('scale-100', 'opacity-100');
-        }, 50);
-      }
-    }
-
-    candle1.onclick = () => {
-      if (!candle1Blown) {
-        flame1.style.display = 'none';
-        candle1Blown = true;
-        confetti({ particleCount: 10, spread: 30, origin: { y: 0.5 } });
-        checkCandles();
-      }
-    };
-
-    candle8.onclick = () => {
-      if (!candle8Blown) {
-        flame8.style.display = 'none';
-        candle8Blown = true;
-        confetti({ particleCount: 10, spread: 30, origin: { y: 0.5 } });
-        checkCandles();
-      }
-    };
-
-    btnToPage1.onclick = () => {
-      navigateToPage(cakePage, p1);
-    };
-
-    btnTidak.onmouseover = () => {
-      const containerRect = document.getElementById('button-container').getBoundingClientRect();
-      const x = Math.random() * (containerRect.width - 100), y = (Math.random() * 100) - 50;
-      btnTidak.style.position = 'absolute';
-      btnTidak.style.left = `${x}px`; btnTidak.style.top = `${y + 55}px`;
-      
-      countAttempts++;
-      bubbleComment.textContent = funnyComments[countAttempts % funnyComments.length];
-      bubbleComment.style.opacity = '1';
-      bubbleComment.style.left = `${x - 15}px`; bubbleComment.style.top = `${y + 12}px`;
-    };
-
-    btnYa.onclick = () => { 
-      navigateToPage(p1, p2); 
-      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } }); 
-      toggleMusic(true); 
-    };
-
-    // Highly-stylized physical page swipe transition
-    function navigateToPage(from, to) {
-      // 1. Slide 'from' card up, tilt and fade out
-      from.classList.add('card-hidden-prev');
-      
-      setTimeout(() => { 
-        // 2. Unrender the 'from' card
-        from.classList.add('hidden'); 
-        
-        // 3. Position the 'to' card in its start off-screen state (from bottom/tilted)
-        to.classList.remove('hidden'); 
-        to.classList.add('card-hidden-next');
-        
-        // Force Reflow
-        void to.offsetWidth; 
-        
-        // 4. Elastic glide 'to' card beautifully into center stage
-        to.classList.remove('card-hidden-next'); 
-      }, 350); // Balanced timing for seamless overlapping crossfade
-    }
-
-    document.getElementById('wax-seal').onclick = () => {
-      document.getElementById('envelope-area').classList.add('hidden');
-      document.getElementById('envelope-intro').classList.add('hidden');
-      document.getElementById('tap-wax-hint').classList.add('hidden');
-      const letter = document.getElementById('full-letter-sheet');
-      letter.classList.remove('hidden'); 
-      setTimeout(() => letter.classList.add('scale-100', 'opacity-100'), 50);
-      const btn = document.getElementById('next-to-gallery');
-      btn.classList.remove('hidden'); 
-      setTimeout(() => btn.classList.add('scale-100', 'opacity-100'), 300);
-    };
-
-    document.getElementById('to-page3').onclick = () => navigateToPage(p2, p3);
-    document.getElementById('to-page4').onclick = () => { 
-      navigateToPage(p3, p4); 
-      startTypewriter(); 
-      initSkyCanvas(); 
-    };
-
-    function openLightbox(i) {
-      document.getElementById('lightbox-img').src = momentsData[i].image;
-      document.getElementById('lightbox-caption').textContent = momentsData[i].caption;
-      const lb = document.getElementById('lightbox'); 
-      lb.classList.remove('hidden'); 
-      setTimeout(() => lb.classList.add('opacity-100'), 50);
-    }
-    
-    function closeLightbox() { 
-      document.getElementById('lightbox').classList.add('opacity-0'); 
-      setTimeout(() => document.getElementById('lightbox').classList.add('hidden'), 300); 
-    }
-
-    function startTypewriter() {
-      const el = document.getElementById('typewriter-text'); 
-      el.textContent = ""; 
-      typewriterIndex = 0;
-      clearInterval(typewriterInterval);
-      typewriterInterval = setInterval(() => {
-        if (typewriterIndex < typewriterMessage.length) { 
-          el.textContent += typewriterMessage.charAt(typewriterIndex++); 
-        } else {
-          clearInterval(typewriterInterval);
+        function logout() {
+            localStorage.removeItem('couplegram_current_user');
+            currentUser = null;
+            window.location.reload();
         }
-      }, 50);
-    }
 
-// Tombol Simpan Pesan (Menyimpan ke Firebase Firestore + LocalStorage)
-document.getElementById('btn-save-reply').onclick = async () => {
-  const replyMsg = replyInput.value.trim();
-
-  if (!replyMsg) {
-    alert("Pesan tidak boleh kosong yaa ayy!");
-    return;
-  }
-
-  // 1. Tetap simpan ke LocalStorage agar tersimpan lokal
-  localStorage.setItem('nayyara_reply_message', replyMsg);
-
-  const savedStatus = document.getElementById('saved-status-text');
-  const btnSave = document.getElementById('btn-save-reply');
-
-  // Beri indikator proses menyimpan
-  btnSave.disabled = true;
-  btnSave.innerHTML = `menyimpan... <i class="fas fa-spinner fa-spin ml-1"></i>`;
-
-  try {
-    // 2. Kirim data ke koleksi 'pesan_balasan' di Firebase Firestore
-    if (window.db && window.addDoc && window.collection) {
-      await window.addDoc(window.collection(window.db, "pesan_balasan"), {
-        nama: "Nayyara",
-        pesan: replyMsg,
-        waktu: window.serverTimestamp()
-      });
-    }
-
-    // 3. Tampilkan efek visual sukses & confetti (sama seperti sebelumnya)
-    savedStatus.classList.remove('opacity-0');
-    savedStatus.classList.add('opacity-100');
-
-    confetti({
-      particleCount: 40,
-      angle: 60,
-      spread: 55,
-      origin: { x: 0 }
-    });
-    confetti({
-      particleCount: 40,
-      angle: 120,
-      spread: 55,
-      origin: { x: 1 }
-    });
-
-    setTimeout(() => {
-      savedStatus.classList.remove('opacity-100');
-      savedStatus.classList.add('opacity-0');
-    }, 3000);
-
-  } catch (error) {
-    console.error("Gagal menyimpan ke Firebase:", error);
-    alert("Pesan tersimpan lokal, namun gagal terkirim ke server.");
-  } finally {
-    // Kembalikan status tombol
-    btnSave.disabled = false;
-    btnSave.innerHTML = `simpan pesan <i class="fas fa-save ml-1"></i>`;
-  }
-};
-
-    // Aesthetic Reasons Toggle
-    document.querySelectorAll('.reason-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const isActive = item.getAttribute('data-active') === 'true';
-        const hiddenMsg = item.querySelector('p.hidden');
-        const icon = item.querySelector('i');
-
-        if (!isActive) {
-          item.setAttribute('data-active', 'true');
-          item.classList.add('border-white/20', 'bg-white/[0.08]');
-          if (hiddenMsg) hiddenMsg.classList.remove('hidden');
-          if (icon) {
-            icon.className = "fa-solid fa-heart text-scrapbook-rose animate-pulse";
-          }
-          confetti({
-            particleCount: 15,
-            spread: 25,
-            origin: { y: 0.8 }
-          });
-        } else {
-          item.setAttribute('data-active', 'false');
-          item.classList.remove('border-white/20', 'bg-white/[0.08]');
-          if (hiddenMsg) hiddenMsg.classList.add('hidden');
-          if (icon) {
-            icon.className = "fa-regular fa-star text-scrapbook-rose";
-          }
-        }
-      });
-    });
-
-    // Fairy Lights canvas upward floating particles loop
-    let canvasResizeListener = null;
-    function initSkyCanvas() {
-      const canvas = document.getElementById('sky-canvas'); 
-      const ctx = canvas.getContext('2d');
-      
-      const handleResize = () => {
-        canvas.width = canvas.offsetWidth; 
-        canvas.height = canvas.offsetHeight;
-      };
-      
-      handleResize();
-      if (!canvasResizeListener) {
-        window.addEventListener('resize', handleResize);
-        canvasResizeListener = true;
-      }
-
-      let particles = [];
-      
-      function create(clickX, clickY) { 
-        return { 
-          x: clickX !== undefined ? clickX : Math.random() * canvas.width, 
-          y: clickY !== undefined ? clickY : canvas.height + 10, 
-          s: Math.random() * 4 + 2, 
-          a: 1,
-          speedY: Math.random() * 0.5 + 0.3
-        }; 
-      }
-      
-      setInterval(() => {
-        if (!p4.classList.contains('hidden')) {
-          particles.push(create());
-        }
-      }, 150);
-
-      // Add interactivity on tap
-      canvas.addEventListener('click', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const clickY = e.clientY - rect.top;
-        for (let j = 0; j < 10; j++) {
-          particles.push(create(clickX, clickY));
-        }
-      });
-
-      function loop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach((p, i) => {
-          p.y -= p.speedY; 
-          p.a -= 0.0025; 
-          ctx.fillStyle = `rgba(233,128,116,${p.a})`;
-          ctx.beginPath(); 
-          ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); 
-          ctx.fill();
-          if(p.a <= 0) particles.splice(i, 1);
+        // Enter key event listeners for login
+        document.getElementById('login-username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
         });
-        requestAnimationFrame(loop);
-      }
-      loop();
-    }
+        document.getElementById('login-password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
 
-    document.getElementById('btn-restart').onclick = () => location.reload();
-  </script>
+        // Update Profile View based on Current User
+        function updateProfileView() {
+            const headerBadge = document.getElementById('header-user-badge');
+            const avatarCircle = document.getElementById('profile-avatar-circle');
+            const usernameHeading = document.getElementById('profile-username-heading');
+            const bioContainer = document.getElementById('profile-bio-container');
+            const partnerAvatar = document.getElementById('dm-partner-avatar');
+            const partnerNameEl = document.getElementById('dm-partner-name');
+            const navInitial = document.getElementById('nav-profile-initial');
+
+            if (currentUser === 'ikii') {
+                if (headerBadge) headerBadge.innerHTML = `ikii`;
+                if (avatarCircle) avatarCircle.innerHTML = `🧸`;
+                if (usernameHeading) usernameHeading.innerHTML = `ikii`;
+                if (navInitial) navInitial.innerHTML = `I`;
+                if (bioContainer) {
+                    bioContainer.innerHTML = `
+                        <p class="font-semibold text-[#4a3e3d]">Ikii </p>
+                        <p class="text-xs italic text-[#bd7a6b]">"Ada orang yang hadir sebentar lalu pergi, and ada kamu yang datang lalu menjadi rumah." — 0mdpl</p>
+                        <p class="flex items-center justify-center sm:justify-start gap-1 text-xs pt-1">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Ulang Tahun: <span class="font-medium">19 September 2008</span>
+                        </p>
+                        <p class="flex items-center justify-center sm:justify-start gap-1 text-xs">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Ulang Tahun ayyaa: <span class="font-medium">12 September 2008</span>
+                        </p>
+                    `;
+                }
+                if (partnerAvatar) partnerAvatar.innerHTML = `🎀`;
+                if (partnerNameEl) partnerNameEl.innerHTML = `ayyaa <i data-lucide="badge-check" class="w-3.5 h-3.5 text-[#bd7a6b] fill-current"></i>`;
+
+            } else if (currentUser === 'ayyaa') {
+                if (headerBadge) headerBadge.innerHTML = `ayyaa`;
+                if (avatarCircle) avatarCircle.innerHTML = `🎀`;
+                if (usernameHeading) usernameHeading.innerHTML = `ayyaa`;
+                if (navInitial) navInitial.innerHTML = `A`;
+                if (bioContainer) {
+                    bioContainer.innerHTML = `
+                        <p class="font-semibold text-[#4a3e3d]">Ayyaa </p>
+                        <p class="text-xs italic text-[#bd7a6b]">"di dunia yang hanya sekali, semoga masih ada kita selanjutnya." — 0mdpl</p>
+                        <p class="flex items-center justify-center sm:justify-start gap-1 text-xs pt-1">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Ulang Tahun: <span class="font-medium">12 September 2008</span>
+                        </p>
+                        <p class="flex items-center justify-center sm:justify-start gap-1 text-xs">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Ulang Tahun ikii: <span class="font-medium">19 September 2008</span>
+                        </p>
+                    `;
+                }
+                if (partnerAvatar) partnerAvatar.innerHTML = `🧸`;
+                if (partnerNameEl) partnerNameEl.innerHTML = `ikii <i data-lucide="badge-check" class="w-3.5 h-3.5 text-[#bd7a6b] fill-current"></i>`;
+            }
+
+            lucide.createIcons();
+        }
+
+        // Tab Switcher Logic
+        function switchTab(tabName) {
+            document.getElementById('home-sec').classList.add('hidden');
+            document.getElementById('playlist-sec').classList.add('hidden');
+            document.getElementById('gallery-sec').classList.add('hidden');
+            document.getElementById('chat-sec').classList.add('hidden');
+            document.getElementById('profile-sec').classList.add('hidden');
+
+            if (tabName === 'home') {
+                document.getElementById('home-sec').classList.remove('hidden');
+            } else if (tabName === 'search') {
+                document.getElementById('playlist-sec').classList.remove('hidden');
+            } else if (tabName === 'plus') {
+                document.getElementById('gallery-sec').classList.remove('hidden');
+            } else if (tabName === 'chat') {
+                document.getElementById('chat-sec').classList.remove('hidden');
+            } else if (tabName === 'profile') {
+                document.getElementById('profile-sec').classList.remove('hidden');
+            }
+
+            const tabs = ['home', 'search', 'plus', 'chat', 'profile'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                if (t === tabName) {
+                    btn.classList.add('text-[#bd7a6b]', 'scale-110');
+                    btn.classList.remove('text-[#8e766e]');
+                } else {
+                    btn.classList.remove('text-[#bd7a6b]', 'scale-110');
+                    btn.classList.add('text-[#8e766e]');
+                }
+            });
+
+            lucide.createIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function scrollToSection(sectionId) {
+            if (sectionId === 'home-sec') switchTab('home');
+            else if (sectionId === 'playlist-sec') switchTab('search');
+            else if (sectionId === 'gallery-sec') switchTab('plus');
+            else if (sectionId === 'chat-sec') switchTab('chat');
+        }
+
+        // Countdown Ulang Tahun
+        function getNextBirthday(month, day) {
+            const now = new Date();
+            let bday = new Date(now.getFullYear(), month - 1, day, 0, 0, 0);
+            if (now > bday) {
+                bday.setFullYear(now.getFullYear() + 1);
+            }
+            return bday;
+        }
+
+        function updateBirthdayCountdowns() {
+            const now = new Date();
+
+            const ayyaaBday = getNextBirthday(9, 12);
+            const diffAyyaa = ayyaaBday - now;
+            const daysA = Math.floor(diffAyyaa / (1000 * 60 * 60 * 24));
+            const hoursA = Math.floor((diffAyyaa % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutesA = Math.floor((diffAyyaa % (1000 * 60 * 60)) / (1000 * 60));
+            const secondsA = Math.floor((diffAyyaa % (1000 * 60)) / 1000);
+
+            const ikiiBday = getNextBirthday(9, 19);
+            const diffIkii = ikiiBday - now;
+            const daysI = Math.floor(diffIkii / (1000 * 60 * 60 * 24));
+            const hoursI = Math.floor((diffIkii % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutesI = Math.floor((diffIkii % (1000 * 60 * 60)) / (1000 * 60));
+            const secondsI = Math.floor((diffIkii % (1000 * 60)) / 1000);
+
+            const bdayAyyaaEl = document.getElementById('ayyaa-birthday-countdown');
+            const bdayIkiiEl = document.getElementById('ikii-birthday-countdown');
+
+            if (bdayAyyaaEl) bdayAyyaaEl.innerHTML = `${daysA}d ${hoursA}h ${minutesA}m ${secondsA}s`;
+            if (bdayIkiiEl) bdayIkiiEl.innerHTML = `${daysI}d ${hoursI}h ${minutesI}m ${secondsI}s`;
+        }
+
+        // Parse Google Drive Link
+        function parseDriveUrl(url) {
+            url = url.trim();
+            const regFileD = /\/file\/d\/([a-zA-Z0-9_-]+)/;
+            const regIdParam = /[?&]id=([a-zA-Z0-9_-]+)/;
+            const regLh3 = /\/d\/([a-zA-Z0-9_-]+)/;
+
+            let id = null;
+            if (regFileD.test(url)) {
+                id = url.match(regFileD)[1];
+            } else if (regIdParam.test(url)) {
+                id = url.match(regIdParam)[1];
+            } else if (regLh3.test(url)) {
+                id = url.match(regLh3)[1];
+            }
+
+            if (id) {
+                return `https://lh3.googleusercontent.com/d/${id}`;
+            }
+            return url;
+        }
+
+        // Listener Real-time & Sinkronisasi Data Firestore
+        function setupDataListeners() {
+            if (unsubscribeChats) {
+                unsubscribeChats();
+                unsubscribeChats = null;
+            }
+            if (unsubscribeGallery) {
+                unsubscribeGallery();
+                unsubscribeGallery = null;
+            }
+
+            if (isFirebaseReady && currentAuthUser) {
+                logDebug("Database", "Membuka sinkronisasi real-time...");
+                
+                unsubscribeChats = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), (snapshot) => {
+                    let messages = [];
+                    snapshot.forEach(doc => {
+                        messages.push({ id: doc.id, ...doc.data() });
+                    });
+                    messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                    renderMessages(messages);
+                    updateUIConnectionStatus(true);
+                }, (error) => {
+                    logDebug("Database (Chat)", "Gagal Membuka Obrolan!", error.code + " - " + error.message);
+                    updateUIConnectionStatus(false);
+                    renderMessages(fallbackChats);
+                });
+
+                unsubscribeGallery = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'gallery'), (snapshot) => {
+                    let customItems = [];
+                    snapshot.forEach(doc => {
+                        customItems.push({ id: doc.id, ...doc.data() });
+                    });
+                    customItems.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                    renderGallery(customItems);
+                }, (error) => {
+                    logDebug("Database (Galeri)", "Gagal Membuka Galeri!", error.code + " - " + error.message);
+                    renderGallery(fallbackGallery.map((url, i) => ({ id: `local-${i}`, url })));
+                });
+
+            } else {
+                renderMessages(fallbackChats);
+                renderGallery(fallbackGallery.map((url, i) => ({ id: `local-${i}`, url })));
+            }
+        }
+
+        // Simpan Foto Baru
+        async function addDriveItem() {
+            const inputElement = document.getElementById('drive-link-input');
+            const rawUrl = inputElement.value.trim();
+            if (!rawUrl) return;
+
+            const finalUrl = parseDriveUrl(rawUrl);
+
+            if (isFirebaseReady && currentAuthUser) {
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'gallery'), {
+                        url: finalUrl,
+                        timestamp: Date.now(),
+                        uploader: currentUser
+                    });
+                } catch (e) {
+                    console.error("Gagal mengunggah foto: ", e);
+                    logDebug("Tambah Galeri", "Gagal!", e.message);
+                }
+            } else {
+                fallbackGallery.push(finalUrl);
+                localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                renderGallery(fallbackGallery.map((url, i) => ({ id: `local-${i}`, url })));
+            }
+
+            inputElement.value = '';
+        }
+
+        // Hapus Foto
+        async function deleteDriveItem(id, index) {
+            if (isFirebaseReady && !id.startsWith('local-') && currentAuthUser) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'gallery', id));
+                } catch (e) {
+                    console.error("Gagal menghapus foto: ", e);
+                    logDebug("Hapus Galeri", "Gagal!", e.message);
+                }
+            } else {
+                const fallbackIndex = parseInt(id.replace('local-', '')) || index;
+                fallbackGallery.splice(fallbackIndex, 1);
+                localStorage.setItem('ayyaa_ikii_gallery_custom', JSON.stringify(fallbackGallery));
+                renderGallery(fallbackGallery.map((url, i) => ({ id: `local-${i}`, url })));
+            }
+        }
+
+        // Render Galeri Grid
+        function renderGallery(customItems = []) {
+            const grid = document.getElementById('gallery-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const statPosts = document.getElementById('profile-stat-posts');
+            if (statPosts) {
+                statPosts.innerHTML = `<strong class="text-[#4a3e3d]">${defaultGalleryItems.length + customItems.length}</strong> Kiriman`;
+            }
+
+            defaultGalleryItems.forEach((item, idx) => {
+                const defaultCardHTML = `
+                    <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer">
+                        <img src="${item.url}" 
+                             onerror="this.style.display='none'; document.getElementById('fb-foto-${idx}').style.display='flex';" 
+                             class="w-full h-full object-cover">
+                        <div id="fb-foto-${idx}" class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#f7ebe0]">
+                            <i data-lucide="image" class="w-8 h-8 text-[#dbbc9d] mb-2"></i>
+                            <span class="text-xs font-serif-aesthetic italic text-[#8e766e]">"${item.caption}"</span>
+                            <span class="text-[10px] text-gray-400 mt-2 font-mono">[Foto ${idx + 1}]</span>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', defaultCardHTML);
+            });
+
+            customItems.forEach((item, index) => {
+                const customCardHTML = `
+                    <div class="group relative aspect-square bg-[#fcfaf7] border border-[#eaddd0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+                        <img src="${item.url}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect width=%22100%22 height=%22100%22 fill=%22%23f5ebe0%22/><text x=%2250%%22 y=%2250%%22 font-family=%22sans-serif%22 font-size=%2210%22 fill=%22%23bd7a6b%22 text-anchor=%22middle%22 dy=%22.3em%22>Media Ditambahkan</text></svg>';" />
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button onclick="deleteDriveItem('${item.id}', ${index})" class="bg-red-500 hover:bg-red-600 text-white p-2.5 rounded-full shadow-lg transition-transform hover:scale-110">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', customCardHTML);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Audio Player Global
+        let isAudioPlaying = false; 
+        const audioEl = document.getElementById('global-audio');
+
+        function toggleGlobalAudio() {
+            const playBtn = document.getElementById('global-play-btn');
+            const nowPlaying = document.getElementById('now-playing-title');
+            const vinyl = document.getElementById('vinyl-record');
+            
+            if (!audioEl.src || audioEl.src === window.location.href) {
+                nowPlaying.innerText = "Pilih Memoar Lagu...";
+                return;
+            }
+
+            if (isAudioPlaying) {
+                audioEl.pause();
+                playBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-current"></i>';
+                nowPlaying.classList.add('opacity-60');
+                vinyl.classList.remove('animate-spin');
+                isAudioPlaying = false;
+            } else {
+                audioEl.play().then(() => {
+                    playBtn.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i>';
+                    nowPlaying.classList.remove('opacity-60');
+                    vinyl.classList.add('animate-spin');
+                    vinyl.style.animationDuration = '8s';
+                    isAudioPlaying = true;
+                }).catch(err => {
+                    console.log("Audio play blocked / error:", err);
+                });
+            }
+            lucide.createIcons();
+        }
+
+        function openMusicPopup(title, date, story, theme, musicUrl, imageUrl) {
+            const modal = document.getElementById('music-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalDate = document.getElementById('modal-date');
+            const modalDesc = document.getElementById('modal-desc');
+            const nowPlayingTitle = document.getElementById('now-playing-title');
+            const iconContainer = document.getElementById('modal-icon-container');
+            const vinyl = document.getElementById('vinyl-record');
+            const playBtn = document.getElementById('global-play-btn');
+            const popupImage = document.getElementById('popup-image');
+
+            if (imageUrl && !imageUrl.includes("ID_FOTO_LAGU")) {
+                popupImage.src = imageUrl;
+                popupImage.style.display = 'block';
+                iconContainer.style.display = 'none';
+            } else {
+                popupImage.style.display = 'none';
+                iconContainer.style.display = 'flex';
+            }
+
+            modalTitle.innerText = title;
+            modalDate.innerText = date.toUpperCase();
+            modalDesc.innerText = story;
+            nowPlayingTitle.innerText = title;
+
+            if (theme === 'romantic_sunset') {
+                iconContainer.innerHTML = '<i data-lucide="sun" class="w-8 h-8 text-amber-500"></i>';
+            } else if (theme === 'cozy_night') {
+                iconContainer.innerHTML = '<i data-lucide="moon" class="w-8 h-8 text-indigo-500"></i>';
+            } else if (theme === 'rainy_day') {
+                iconContainer.innerHTML = '<i data-lucide="cloud-rain" class="w-8 h-8 text-blue-400"></i>';
+            } else {
+                iconContainer.innerHTML = '<i data-lucide="sparkles" class="w-8 h-8 text-yellow-500"></i>';
+            }
+
+            if (musicUrl && !musicUrl.includes("raw.githubusercontent.com/username/")) {
+                audioEl.src = musicUrl;
+                audioEl.load();
+                audioEl.play().then(() => {
+                    isAudioPlaying = true;
+                    playBtn.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i>';
+                    nowPlayingTitle.classList.remove('opacity-60');
+                    vinyl.classList.add('animate-spin');
+                    vinyl.style.animationDuration = '8s';
+                }).catch(e => console.log("Gagal memutar audio otomatis:", e));
+            } else {
+                isAudioPlaying = true;
+                playBtn.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i>';
+                nowPlayingTitle.classList.remove('opacity-60');
+                vinyl.classList.add('animate-spin');
+                vinyl.style.animationDuration = '8s';
+            }
+
+            modal.classList.remove('hidden');
+            const scrollContainer = modal.querySelector('.smooth-scroll-container');
+            if (scrollContainer) scrollContainer.scrollTop = 0;
+            lucide.createIcons();
+        }
+
+        function closeMusicPopup() {
+            const modal = document.getElementById('music-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // Kirim Chat DM
+        async function sendChatMessage() {
+            const chatInput = document.getElementById('chat-input');
+            if (!chatInput) return;
+            const messageText = chatInput.value.trim();
+
+            if (messageText === '') return;
+
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const safeText = escapeHTML(messageText);
+
+            const messageObj = {
+                sender: currentUser || 'ikii',
+                text: safeText,
+                time: timeString,
+                timestamp: Date.now()
+            };
+
+            if (isFirebaseReady && currentAuthUser) {
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), messageObj);
+                } catch (e) {
+                    console.error("Gagal mengirim pesan: ", e);
+                    logDebug("Kirim Chat", "Gagal!", e.message);
+                }
+            } else {
+                fallbackChats.push(messageObj);
+                localStorage.setItem('ayyaa_ikii_chat', JSON.stringify(fallbackChats));
+                renderMessages(fallbackChats);
+            }
+
+            chatInput.value = '';
+        }
+
+        // Render Thread DM dalam gaya Instagram
+        function renderMessages(messagesList = []) {
+            const thread = document.getElementById('chat-thread');
+            if (!thread) return;
+            thread.innerHTML = '';
+
+            messagesList.forEach(msg => {
+                const isMyMessage = (msg.sender === currentUser);
+                const senderAvatarLetter = msg.sender === 'ikii' ? '🧸' : '🎀';
+
+                let itemHTML = '';
+
+                if (isMyMessage) {
+                    itemHTML = `
+                        <div class="flex items-end justify-end space-x-2 my-1">
+                            <div class="max-w-[75%] px-4 py-2.5 chat-bubble-me text-sm shadow-xs break-words">
+                                <p class="leading-relaxed">${msg.text}</p>
+                                <span class="block text-[9px] text-white/70 text-right mt-1 font-light">${msg.time}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    itemHTML = `
+                        <div class="flex items-end space-x-2 my-1">
+                            <div class="w-7 h-7 rounded-full bg-[#bd7a6b] text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-xs mb-1">
+                                ${senderAvatarLetter}
+                            </div>
+                            <div class="max-w-[75%] px-4 py-2.5 chat-bubble-other text-sm shadow-xs break-words">
+                                <p class="leading-relaxed">${msg.text}</p>
+                                <span class="block text-[9px] text-gray-400 mt-1 font-light">${msg.time}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                thread.insertAdjacentHTML('beforeend', itemHTML);
+            });
+
+            thread.scrollTo({
+                top: thread.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        const chatInputEl = document.getElementById('chat-input');
+        if (chatInputEl) {
+            chatInputEl.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendChatMessage();
+                }
+            });
+        }
+
+        // Cloud Config Handlers
+        function openCloudConfigModal() {
+            const modal = document.getElementById('cloud-config-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+
+            const savedConfigRaw = localStorage.getItem('custom_firebase_config');
+            let savedConfig = null;
+            if (savedConfigRaw) {
+                try { savedConfig = JSON.parse(savedConfigRaw); } catch(e) {}
+            } else {
+                savedConfig = MANUAL_FIREBASE_CONFIG;
+            }
+
+            if (savedConfig) {
+                document.getElementById('cfg-apiKey').value = savedConfig.apiKey || '';
+                document.getElementById('cfg-authDomain').value = savedConfig.authDomain || '';
+                document.getElementById('cfg-projectId').value = savedConfig.projectId || '';
+                document.getElementById('cfg-storageBucket').value = savedConfig.storageBucket || '';
+                document.getElementById('cfg-messagingSenderId').value = savedConfig.messagingSenderId || '';
+                document.getElementById('cfg-appId').value = savedConfig.appId || '';
+            }
+        }
+
+        function closeCloudConfigModal() {
+            const modal = document.getElementById('cloud-config-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function showCloudStatus(text, isError = false) {
+            const statusEl = document.getElementById('cloud-status-msg');
+            if (!statusEl) return;
+            statusEl.innerText = text;
+            statusEl.className = `text-xs text-center font-medium ${isError ? 'text-red-500' : 'text-green-600'}`;
+            statusEl.classList.remove('hidden');
+        }
+
+        function saveCloudConfig() {
+            const config = {
+                apiKey: document.getElementById('cfg-apiKey').value.trim(),
+                authDomain: document.getElementById('cfg-authDomain').value.trim(),
+                projectId: document.getElementById('cfg-projectId').value.trim(),
+                storageBucket: document.getElementById('cfg-storageBucket').value.trim(),
+                messagingSenderId: document.getElementById('cfg-messagingSenderId').value.trim(),
+                appId: document.getElementById('cfg-appId').value.trim()
+            };
+
+            if (!config.apiKey || !config.projectId) {
+                showCloudStatus("Harap masukkan setidaknya API Key dan Project ID!", true);
+                return;
+            }
+
+            localStorage.setItem('custom_firebase_config', JSON.stringify(config));
+            showCloudStatus("Konfigurasi disimpan! Memuat ulang halaman...");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        }
+
+        function resetCloudConfig() {
+            localStorage.removeItem('custom_firebase_config');
+            showCloudStatus("Konfigurasi dihapus! Memuat ulang halaman...");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        }
+
+        function openDebugModal() {
+            const modal = document.getElementById('debug-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeDebugModal() {
+            const modal = document.getElementById('debug-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // Attach to global window
+        window.checkPassword = checkPassword;
+        window.logout = logout;
+        window.switchTab = switchTab;
+        window.scrollToSection = scrollToSection;
+        window.addDriveItem = addDriveItem;
+        window.deleteDriveItem = deleteDriveItem;
+        window.toggleGlobalAudio = toggleGlobalAudio;
+        window.openMusicPopup = openMusicPopup;
+        window.closeMusicPopup = closeMusicPopup;
+        window.sendChatMessage = sendChatMessage;
+        window.openCloudConfigModal = openCloudConfigModal;
+        window.closeCloudConfigModal = closeCloudConfigModal;
+        window.saveCloudConfig = saveCloudConfig;
+        window.resetCloudConfig = resetCloudConfig;
+        window.openDebugModal = openDebugModal;
+        window.closeDebugModal = closeDebugModal;
+
+    </script>
 </body>
 </html>
