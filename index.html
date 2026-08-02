@@ -202,7 +202,7 @@
                         <!-- Main Photo Box -->
                         <div class="relative group rounded-2xl overflow-hidden border-4 border-white shadow-md rotate-[-1deg] transition-transform hover:rotate-0 duration-300 bg-white">
                             <div class="aspect-[16/9] w-full bg-[#f5ebe0] flex flex-col items-center justify-center text-center relative overflow-hidden">
-                                <img id="main-photo" src="https://lh3.googleusercontent.com/d/1jrcTIlvUwQPy0c1CcQQ3h8Zb_aH5BmJ9" alt="Foto Utama"
+                                <img id="main-photo" src="https://lh3.googleusercontent.com/d/1jrcTIlvUwQPy0c1CcQQ3h8Zb_aH5BmJ9" referrerpolicy="no-referrer" alt="Foto Utama"
                                     onerror="this.style.display='none'; document.getElementById('main-photo-fallback').style.display='flex';" 
                                     class="w-full h-full object-cover">
                                 <div id="main-photo-fallback" class="absolute inset-0 hidden flex-col items-center justify-center text-center p-4">
@@ -869,7 +869,8 @@
 
                 <!-- Middle Photo (Drive Image / SVG Fallback) -->
                 <div class="w-full aspect-[4/3] rounded-2xl bg-[#f5ebe0] border border-[#ebdcd0] overflow-hidden flex flex-col items-center justify-center relative flex-shrink-0">
-                    <img id="popup-image" src="" class="w-full h-full object-cover hidden" onerror="this.style.display='none'; document.getElementById('modal-icon-container').style.display='flex';">
+                    <img id="popup-image" src="" referrerpolicy="no-referrer" alt="Cover Lagu" class="w-full h-full object-cover hidden" 
+                        onerror="this.style.display='none'; this.classList.add('hidden'); const ic = document.getElementById('modal-icon-container'); if(ic) ic.style.display='flex';">
                     
                     <div id="modal-icon-container" class="w-16 h-16 rounded-full bg-white/80 flex items-center justify-center text-[#bd7a6b] mb-3 shadow-xs">
                         <i data-lucide="music-3" class="w-8 h-8"></i>
@@ -1113,6 +1114,13 @@
                 }, 1000);
                 updateBirthdayCountdowns();
             }
+
+            document.getElementById('login-username')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') checkPassword();
+            });
+            document.getElementById('login-password')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') checkPassword();
+            });
         });
 
         // Instagram System Login Check
@@ -1168,14 +1176,6 @@
             currentUser = null;
             window.location.reload();
         }
-
-        // Enter key event listeners for login
-        document.getElementById('login-username').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') checkPassword();
-        });
-        document.getElementById('login-password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') checkPassword();
-        });
 
         // Update Profile View based on Current User
         function updateProfileView() {
@@ -1254,12 +1254,14 @@
             const tabs = ['home', 'search', 'plus', 'chat', 'profile'];
             tabs.forEach(t => {
                 const btn = document.getElementById(`nav-${t}`);
-                if (t === tabName) {
-                    btn.classList.add('text-[#bd7a6b]', 'scale-110');
-                    btn.classList.remove('text-[#8e766e]');
-                } else {
-                    btn.classList.remove('text-[#bd7a6b]', 'scale-110');
-                    btn.classList.add('text-[#8e766e]');
+                if (btn) {
+                    if (t === tabName) {
+                        btn.classList.add('text-[#bd7a6b]', 'scale-110');
+                        btn.classList.remove('text-[#8e766e]');
+                    } else {
+                        btn.classList.remove('text-[#bd7a6b]', 'scale-110');
+                        btn.classList.add('text-[#8e766e]');
+                    }
                 }
             });
 
@@ -1315,6 +1317,7 @@
             const regFileD = /\/file\/d\/([a-zA-Z0-9_-]+)/;
             const regIdParam = /[?&]id=([a-zA-Z0-9_-]+)/;
             const regLh3 = /\/d\/([a-zA-Z0-9_-]+)/;
+            const regUc = /drive\.google\.com\/uc\?.*id=([a-zA-Z0-9_-]+)/;
 
             let id = null;
             if (regFileD.test(url)) {
@@ -1323,6 +1326,8 @@
                 id = url.match(regIdParam)[1];
             } else if (regLh3.test(url)) {
                 id = url.match(regLh3)[1];
+            } else if (regUc.test(url)) {
+                id = url.match(regUc)[1];
             }
 
             if (id) {
@@ -1503,7 +1508,7 @@
                         ${isVideo ? `
                             <video src="${escapeHTML(item.url)}" controls class="w-full h-full object-cover rounded-2xl"></video>
                         ` : `
-                            <img src="${escapeHTML(item.url)}" alt="${escapeHTML(item.caption || 'Foto')}" 
+                            <img src="${escapeHTML(item.url)}" referrerpolicy="no-referrer" alt="${escapeHTML(item.caption || 'Foto')}" 
                                 class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-300"
                                 onerror="this.onerror=null; this.src='https://placehold.co/400x400/f5ebe0/bd7a6b?text=Foto+Galeri'">
                         `}
@@ -1589,7 +1594,7 @@
                     if (isVideo) {
                         mediaBox.innerHTML = `<i data-lucide="video" class="w-5 h-5 text-[#bd7a6b]"></i>`;
                     } else {
-                        mediaBox.innerHTML = `<img src="${fileDataUrl}" class="w-full h-full object-cover">`;
+                        mediaBox.innerHTML = `<img src="${fileDataUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
                     }
                     container.classList.remove('hidden');
                     lucide.createIcons();
@@ -1673,7 +1678,7 @@
                                     ${msg.mediaType === 'video' ? `
                                         <video src="${escapeHTML(msg.mediaUrl)}" controls class="w-full rounded-xl max-h-48 object-cover"></video>
                                     ` : `
-                                        <img src="${escapeHTML(msg.mediaUrl)}" class="w-full rounded-xl max-h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/f5ebe0/bd7a6b?text=Gambar+Chat'">
+                                        <img src="${escapeHTML(msg.mediaUrl)}" referrerpolicy="no-referrer" class="w-full rounded-xl max-h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/f5ebe0/bd7a6b?text=Gambar+Chat'">
                                     `}
                                 </div>
                             ` : ''}
@@ -1726,83 +1731,66 @@
             }
         }
 
-        // Music Popup Handler (FIXED IMAGE DISPLAY & FALLBACK)
-        function openMusicPopup(title, location, desc, theme, audioUrl, imageUrl) {
+        // ================= PLAYLIST & AUDIO CONTROL =================
+        function openMusicPopup(title, date, desc, theme, audioUrl, imageUrl) {
             const modal = document.getElementById('music-modal');
             const modalTitle = document.getElementById('modal-title');
-            const modalDesc = document.getElementById('modal-desc');
-            const popupImg = document.getElementById('popup-image');
-            const iconContainer = document.getElementById('modal-icon-container');
             const modalDate = document.getElementById('modal-date');
+            const modalDesc = document.getElementById('modal-desc');
+            const popupImage = document.getElementById('popup-image');
+            const iconBox = document.getElementById('modal-icon-container');
 
-            if (modalTitle) modalTitle.textContent = title;
-            if (modalDesc) modalDesc.textContent = desc;
-            if (modalDate) modalDate.textContent = location || "MEMOAR KITA";
+            if (modalTitle) modalTitle.innerText = title;
+            if (modalDate) modalDate.innerText = date;
+            if (modalDesc) modalDesc.innerText = desc;
 
-            if (imageUrl && imageUrl.trim() !== '') {
-                const formattedUrl = parseDriveUrl(imageUrl);
-                popupImg.src = formattedUrl;
-                popupImg.style.display = 'block';
-                popupImg.classList.remove('hidden');
-                if (iconContainer) iconContainer.style.display = 'none';
-
-                // Double fallback logic if Google Drive image fails
-                popupImg.onerror = function() {
-                    if (this.src.includes('drive.google.com/thumbnail')) {
-                        const idMatch = this.src.match(/id=([a-zA-Z0-9_-]+)/);
-                        if (idMatch && idMatch[1]) {
-                            this.src = `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
-                            return;
-                        }
-                    }
-                    this.style.display = 'none';
-                    if (iconContainer) iconContainer.style.display = 'flex';
-                };
+            if (imageUrl) {
+                const cleanUrl = parseDriveUrl(imageUrl);
+                if (popupImage) {
+                    popupImage.removeAttribute('style'); // Reset style inline terdahulu (seperti display:none)
+                    popupImage.style.display = 'block';
+                    popupImage.classList.remove('hidden');
+                    popupImage.src = cleanUrl;
+                }
+                if (iconBox) iconBox.style.display = 'none';
             } else {
-                popupImg.src = '';
-                popupImg.style.display = 'none';
-                popupImg.classList.add('hidden');
-                if (iconContainer) iconContainer.style.display = 'flex';
-            }
-
-            if (audioUrl) {
-                playGlobalAudio(audioUrl, title);
+                if (popupImage) {
+                    popupImage.style.display = 'none';
+                    popupImage.classList.add('hidden');
+                }
+                if (iconBox) iconBox.style.display = 'flex';
             }
 
             if (modal) modal.classList.remove('hidden');
+
+            // Play Audio
+            if (audioUrl) {
+                const audio = document.getElementById('global-audio');
+                const titleEl = document.getElementById('now-playing-title');
+                const playBtn = document.getElementById('global-play-btn');
+                const vinyl = document.getElementById('vinyl-record');
+
+                if (audio) {
+                    audio.src = audioUrl;
+                    audio.play().then(() => {
+                        if (titleEl) titleEl.innerText = title;
+                        if (playBtn) playBtn.innerHTML = `<i data-lucide="pause" class="w-4 h-4 fill-current"></i>`;
+                        if (vinyl) vinyl.classList.add('spin-slow');
+                        lucide.createIcons();
+                    }).catch(e => {
+                        console.log("Auto-play blocked:", e);
+                        if (titleEl) titleEl.innerText = title;
+                        if (playBtn) playBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4 fill-current"></i>`;
+                        if (vinyl) vinyl.classList.remove('spin-slow');
+                        lucide.createIcons();
+                    });
+                }
+            }
         }
 
         function closeMusicPopup() {
             const modal = document.getElementById('music-modal');
             if (modal) modal.classList.add('hidden');
-        }
-
-        // Audio Player Controls
-        function playGlobalAudio(url, title) {
-            const audio = document.getElementById('global-audio');
-            const playBtn = document.getElementById('global-play-btn');
-            const titleEl = document.getElementById('now-playing-title');
-            const vinyl = document.getElementById('vinyl-record');
-
-            if (!audio) return;
-
-            if (currentPlayingUrl === url && !audio.paused) {
-                audio.pause();
-                if (playBtn) playBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4 fill-current"></i>`;
-                if (vinyl) vinyl.classList.remove('spin-slow');
-            } else {
-                audio.src = url;
-                currentPlayingUrl = url;
-                audio.play().then(() => {
-                    if (playBtn) playBtn.innerHTML = `<i data-lucide="pause" class="w-4 h-4 fill-current"></i>`;
-                    if (titleEl) titleEl.textContent = title || 'Playing...';
-                    if (vinyl) vinyl.classList.add('spin-slow');
-                    lucide.createIcons();
-                }).catch(err => {
-                    console.error("Audio playback error:", err);
-                });
-            }
-            lucide.createIcons();
         }
 
         function toggleGlobalAudio() {
